@@ -336,7 +336,16 @@ textarea{resize:none;line-height:1.5}
         <label>Ürün klasmanı <span class="opt">isteğe bağlı</span></label>
         <div class="sd" id="sd-kl"><button type="button" class="sd-trigger placeholder" onclick="toggleSD('sd-kl')"><span class="sd-val">—</span><svg width="12" height="7" viewBox="0 0 12 7" fill="none"><path d="M1 1l5 4.5L11 1" stroke="#aeaea9" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></button></div>
       </div>
-      <div class="sf"><label>Not içeriği <span style="color:var(--red)">*</span></label><textarea id="nTX" placeholder="Gözlem veya talebi yazın..." rows="4"></textarea></div>
+      <div class="sf">
+        <label>Not içeriği <span style="color:var(--red)">*</span></label>
+        <textarea id="nTX" placeholder="Gözlem veya talebi yazın..." rows="4"></textarea>
+        <div style="display:flex;gap:8px;margin-top:8px">
+          <button type="button" class="btn-sm" onclick="trigPhInline('gallery')" style="display:flex;align-items:center;gap:5px;font-size:13px">📁 Galeri</button>
+          <button type="button" class="btn-sm" onclick="trigPhInline('camera')" style="display:flex;align-items:center;gap:5px;font-size:13px">📷 Kamera</button>
+          <span id="inlinePhCount" style="font-size:12px;color:var(--text3);align-self:center"></span>
+        </div>
+        <div id="inlinePhStrip" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px"></div>
+      </div>
       <div class="err" id="nerr">Buyer grup ve not zorunludur.</div>
     </div>
     <div class="sact"><button class="btn-p" onclick="saveNote()" id="sheetSaveBtn">Ekle</button><button class="btn-s" onclick="closeSheet()">İptal</button></div>
@@ -348,7 +357,22 @@ textarea{resize:none;line-height:1.5}
 <!-- SD backdrop -->
 <div id="sd-backdrop" style="position:fixed;inset:0;z-index:9998;display:none" onclick="closeSD()"></div>
 
+<!-- Camera picker sheet -->
+<div class="overlay" id="camPicker" onclick="closeCamPicker(event)">
+  <div class="sheet" style="animation:su .2s ease">
+    <div class="shandle"></div>
+    <div class="stitle">Fotoğraf ekle</div>
+    <div style="padding:16px 20px 0;display:flex;flex-direction:column;gap:10px">
+      <button class="btn-p" onclick="doCamPick('gallery')" style="font-size:15px">📁 Galeriden seç</button>
+      <button class="btn-p" onclick="doCamPick('camera')" style="font-size:15px;background:var(--green)">📷 Kamera ile çek</button>
+      <button class="btn-s" onclick="closeCamPicker()" style="margin-bottom:8px">İptal</button>
+    </div>
+  </div>
+</div>
 <input type="file" id="pfi" accept="image/*" multiple style="display:none" onchange="handlePh()"/>
+<input type="file" id="pfi-cam" accept="image/*" capture="environment" style="display:none" onchange="handlePh()"/>
+<input type="file" id="pfi-inline" accept="image/*" multiple style="display:none" onchange="handlePhInline()"/>
+<input type="file" id="pfi-inline-cam" accept="image/*" capture="environment" style="display:none" onchange="handlePhInline()"/>
 
 <script>
 const RD={
@@ -379,7 +403,7 @@ const erkekMAG={
   "BUXL":{bg:["DENİM","DIŞ GİYİM","DOKUMA ALT","DOKUMA ÜST","ÖRME","TRİKO"],kl:{"DENİM":["KEY DOKUMA JEAN BERMUDA","KEY DOKUMA JEAN GOMLEK K.KOL","KEY DOKUMA JEAN GOMLEK U.KOL","KEY DOKUMA JEAN MONT","KEY DOKUMA JEAN PANTOLON"],"DIŞ GİYİM":["İNCE MONT","İNCE PUFFER MONT","MONT/KABAN KALIN","NAYLON PUFFER MONT/KABAN","PARKA","PU MONT İNCE","PU MONT KALIN","YAGMURLUK","YELEK"],"DOKUMA ALT":["KEY DOKUMA PANTOLON KARGO","KEY DOKUMA PANTOLON ORTA","KEY DOKUMA ŞORT/BERMUDA"],"DOKUMA ÜST":["DOKUMA SHACKET","KEY DOKUMA GOMLEK K.KOL","KEY DOKUMA GOMLEK U.KOL"],"ÖRME":["BASIC ORME T-SHIRT K.KOL","KEY BASKILI ORME T-SHIRT K.KOL","KEY ÇİZGİLİ ORME T-SHIRT K.KOL","KEY ÖRME ATLET","KEY ORME HIRKA","KEY ORME PANTOLON","KEY ORME POLO YAKA T-SHIRT K.KOL","KEY ORME SORT / BERMUDA","KEY ORME SWEAT"],"TRİKO":["KEY ÇİZGİLİ TRIKO KAZAK","KEY TRIKO HIRKA","KEY TRIKO KAZAK","KEY TRIKO KAZAK K.KOL","KEY TRIKO KAZAK Z4"]}}
 };
 
-let notes=[],reyon='',photNoteId=null,editingNoteId=null;
+let notes=[],reyon='',photNoteId=null,editingNoteId=null,lastMAG='',inlinePhotos=[];
 
 /* week */
 function gwn(d){const dd=new Date(Date.UTC(d.getFullYear(),d.getMonth(),d.getDate()));dd.setUTCDate(dd.getUTCDate()+4-(dd.getUTCDay()||7));return Math.ceil((((dd-new Date(Date.UTC(dd.getUTCFullYear(),0,1)))/86400000)+1)/7)}
@@ -435,64 +459,63 @@ function toggleSD(id){
 function openSD(id){
   const st=sdState[id];if(!st)return;
   const trigger=document.querySelector(`#${id} .sd-trigger`);
-  const rect=trigger.getBoundingClientRect();
 
-  // create panel
-  sdPanel=document.createElement('div');
-  sdPanel.className='sd-panel';
-  sdPanel.dataset.sdid=id;
+  // scroll trigger into view first, then position panel
+  trigger.scrollIntoView({behavior:'smooth',block:'start'});
 
-  // position
-  const spaceBelow=window.innerHeight-rect.bottom;
-  const panelH=Math.min(280, spaceBelow-8);
-  sdPanel.style.top=(rect.bottom)+'px';
-  sdPanel.style.left=rect.left+'px';
-  sdPanel.style.width=rect.width+'px';
-  sdPanel.style.maxHeight=panelH+'px';
+  // wait for scroll + keyboard
+  setTimeout(()=>{
+    const rect=trigger.getBoundingClientRect();
+    const kbHeight=window.innerHeight*0.42; // estimated keyboard height
+    const availH=window.innerHeight-rect.bottom-kbHeight-8;
+    const panelH=Math.max(160,Math.min(220,availH));
 
-  // search input
-  const inp=document.createElement('input');
-  inp.type='text';inp.className='sd-search';inp.placeholder='Ara...';
-  inp.setAttribute('autocomplete','off');
-  sdPanel.appendChild(inp);
+    sdPanel=document.createElement('div');
+    sdPanel.className='sd-panel';
+    sdPanel.dataset.sdid=id;
+    sdPanel.style.top=(rect.bottom)+'px';
+    sdPanel.style.left=rect.left+'px';
+    sdPanel.style.width=rect.width+'px';
+    sdPanel.style.maxHeight=panelH+'px';
 
-  // list
-  const list=document.createElement('div');
-  list.className='sd-list';
-  sdPanel.appendChild(list);
+    const inp=document.createElement('input');
+    inp.type='text';inp.className='sd-search';inp.placeholder='Ara...';
+    inp.setAttribute('autocomplete','off');
+    sdPanel.appendChild(inp);
 
-  function render(q){
-    const q2=(q||'').toLowerCase().replace(/i/g,'i').replace(/ı/g,'ı');
-    const filtered=st.items.filter(it=>{
-      const lbl=(it.label||it.value||it).toLowerCase();
-      return lbl.includes(q2)||lbl.replace(/i̇/g,'i').replace(/ı/g,'i').includes(q2.replace(/i̇/g,'i').replace(/ı/g,'i'));
-    });
-    list.innerHTML='';
-    if(!filtered.length){list.innerHTML='<div class="sd-empty">Sonuç bulunamadı</div>';return}
-    filtered.forEach(it=>{
-      const val=it.value!==undefined?it.value:(it||'');
-      const lbl=it.label||it.value||it;
-      const div=document.createElement('div');
-      div.className='sd-item'+(st.value===val?' selected':'');
-      div.textContent=lbl;
-      div.addEventListener('click',()=>{
-        sdSet(id,val,lbl);
-        closeSD();
-        if(st.onSelect)st.onSelect(val,lbl);
+    const list=document.createElement('div');
+    list.className='sd-list';
+    sdPanel.appendChild(list);
+
+    function render(q){
+      const q2=(q||'').toLowerCase();
+      const filtered=st.items.filter(it=>{
+        const lbl=(it.label||it.value||it).toLowerCase();
+        return lbl.includes(q2)||lbl.replace(/i̇/g,'i').replace(/ı/g,'i').includes(q2.replace(/i̇/g,'i').replace(/ı/g,'i'));
       });
-      div.addEventListener('touchstart',()=>div.classList.add('hover'),{passive:true});
-      div.addEventListener('touchend',()=>div.classList.remove('hover'),{passive:true});
-      list.appendChild(div);
-    });
-  }
+      list.innerHTML='';
+      if(!filtered.length){list.innerHTML='<div class="sd-empty">Sonuç bulunamadı</div>';return}
+      filtered.forEach(it=>{
+        const val=it.value!==undefined?it.value:(it||'');
+        const lbl=it.label||it.value||it;
+        const div=document.createElement('div');
+        div.className='sd-item'+(st.value===val?' selected':'');
+        div.textContent=lbl;
+        div.addEventListener('click',()=>{sdSet(id,val,lbl);closeSD();if(st.onSelect)st.onSelect(val,lbl);});
+        div.addEventListener('touchstart',()=>div.classList.add('hover'),{passive:true});
+        div.addEventListener('touchend',()=>div.classList.remove('hover'),{passive:true});
+        list.appendChild(div);
+      });
+    }
 
-  render('');
-  inp.addEventListener('input',()=>render(inp.value));
-  document.body.appendChild(sdPanel);
-  activeSD=id;
-  trigger.classList.add('open-style');
-  document.getElementById('sd-backdrop').style.display='block';
-  setTimeout(()=>inp.focus(),100);
+    render('');
+    inp.addEventListener('input',()=>render(inp.value));
+    document.body.appendChild(sdPanel);
+    activeSD=id;
+    trigger.classList.add('open-style');
+    document.getElementById('sd-backdrop').style.display='block';
+    setTimeout(()=>inp.focus(),80);
+  },120);
 }
 
 function closeSD(){
@@ -583,14 +606,16 @@ function saveNote(){
   if(!bg||!tx){err.style.display='block';return}
   if(reyon==='Erkek'&&!mag){err.style.display='block';return}
   err.style.display='none';
+  if(mag)lastMAG=mag;
 
   if(editingNoteId!==null){
     const n=notes.find(n=>n.id===editingNoteId);
-    if(n){n.mag=reyon==='Erkek'?mag:'';n.bg=bg;n.kl=kl;n.tx=tx;}
+    if(n){n.mag=reyon==='Erkek'?mag:'';n.bg=bg;n.kl=kl;n.tx=tx;n.photos=[...n.photos,...inlinePhotos];}
     editingNoteId=null;
   } else {
-    notes.push({id:Date.now(),reyon,mag:reyon==='Erkek'?mag:'',bg,kl,tx,photos:[]});
+    notes.push({id:Date.now(),reyon,mag:reyon==='Erkek'?mag:'',bg,kl,tx,photos:[...inlinePhotos]});
   }
+  inlinePhotos=[];
   closeSheet();renderNotes();
 }
 function removeNote(id){notes=notes.filter(n=>n.id!==id);renderNotes()}
@@ -647,24 +672,82 @@ function renderNotes(){
 /* sheet */
 function openSheet(){
   editingNoteId=null;
+  inlinePhotos=[];
   fillBGs();
+  // restore last MAG
+  if(reyon==='Erkek'&&lastMAG){
+    sdSet('sd-mag',lastMAG,lastMAG);
+    fillBGsFromMAG(lastMAG);
+  }
   document.getElementById('nTX').value='';
   document.getElementById('nerr').style.display='none';
   document.getElementById('sheetTitle').textContent='Not ekle';
   document.getElementById('sheetSaveBtn').textContent='Ekle';
+  document.getElementById('inlinePhStrip').innerHTML='';
+  document.getElementById('inlinePhCount').textContent='';
   document.getElementById('ov').classList.add('open');
 }
 function closeSheet(){closeSD();document.getElementById('ov').classList.remove('open')}
 function closeOv(e){if(e.target===document.getElementById('ov'))closeSheet()}
 
-/* photos */
-function trigPh(id){photNoteId=id;document.getElementById('pfi').value='';document.getElementById('pfi').click()}
+/* photos — note strip */
+function trigPh(id){
+  photNoteId=id;
+  document.getElementById('camPicker').classList.add('open');
+}
+function doCamPick(mode){
+  closeCamPicker();
+  if(mode==='camera'){
+    document.getElementById('pfi-cam').value='';
+    document.getElementById('pfi-cam').click();
+  } else {
+    document.getElementById('pfi').value='';
+    document.getElementById('pfi').click();
+  }
+}
+function closeCamPicker(e){
+  if(!e||e.target===document.getElementById('camPicker'))
+    document.getElementById('camPicker').classList.remove('open');
+}
 function handlePh(){
-  const files=Array.from(document.getElementById('pfi').files);if(!files.length||photNoteId===null)return;
+  const src=document.activeElement?.id==='pfi-cam'?document.getElementById('pfi-cam'):document.getElementById('pfi');
+  const files=Array.from((document.getElementById('pfi-cam').files.length?document.getElementById('pfi-cam'):document.getElementById('pfi')).files);
+  if(!files.length||photNoteId===null)return;
   const note=notes.find(n=>n.id===photNoteId);if(!note)return;
   let done=0;files.forEach(f=>{const r=new FileReader();r.onload=e=>{note.photos.push({data:e.target.result,name:f.name});if(++done===files.length)renderNotes()};r.readAsDataURL(f)});
-
 }
+
+/* photos — inline (inside note text area) */
+function trigPhInline(mode){
+  if(mode==='camera'){document.getElementById('pfi-inline-cam').value='';document.getElementById('pfi-inline-cam').click();}
+  else{document.getElementById('pfi-inline').value='';document.getElementById('pfi-inline').click();}
+}
+function handlePhInline(){
+  const camFiles=document.getElementById('pfi-inline-cam').files;
+  const galFiles=document.getElementById('pfi-inline').files;
+  const files=Array.from(camFiles.length?camFiles:galFiles);
+  if(!files.length)return;
+  let done=0;
+  files.forEach(f=>{
+    const r=new FileReader();
+    r.onload=e=>{
+      inlinePhotos.push({data:e.target.result,name:f.name});
+      if(++done===files.length)renderInlineStrip();
+    };
+    r.readAsDataURL(f);
+  });
+}
+function renderInlineStrip(){
+  const strip=document.getElementById('inlinePhStrip');
+  const count=document.getElementById('inlinePhCount');
+  count.textContent=inlinePhotos.length?inlinePhotos.length+' fotoğraf':'';
+  strip.innerHTML=inlinePhotos.map((p,i)=>`
+    <div style="position:relative">
+      <img src="${p.data}" style="width:56px;height:56px;border-radius:8px;object-fit:cover;border:0.5px solid var(--border)"/>
+      <span onclick="removeInlinePh(${i})" style="position:absolute;top:-5px;right:-5px;background:var(--red);color:#fff;border-radius:50%;width:18px;height:18px;font-size:11px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-weight:700">×</span>
+    </div>`).join('');
+}
+function removeInlinePh(i){inlinePhotos.splice(i,1);renderInlineStrip();}
 function openLB(src){document.getElementById('lbi').src=src;document.getElementById('lb').classList.add('open')}
 function closeLB(e){if(e.target===document.getElementById('lb')||e.target===document.getElementById('lbi'))document.getElementById('lb').classList.remove('open')}
 
