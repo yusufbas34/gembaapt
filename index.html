@@ -553,10 +553,10 @@ function openSD(id){
   render('');
   inp.addEventListener('input',()=>render(inp.value));
 
-  // scroll panel into view smoothly
+  // scroll trigger to top of sheet so list is fully visible below
   setTimeout(()=>{
     trigger.scrollIntoView({behavior:'smooth',block:'start'});
-    inp.focus();
+    setTimeout(()=>inp.focus(),150);
   },50);
 }
 
@@ -833,33 +833,11 @@ function openHtmlMail(){
   const allPh=window._mp||[];
   const body=window._mb||'';
   const subj=window._ms||'';
-
-  const imgHtml=allPh.map(p=>`
-    <div style="margin:10px 0">
-      <div style="font-size:11px;color:#888;margin-bottom:4px">${p.ctx}</div>
-      <img src="${p.data}" style="max-width:400px;max-height:400px;border-radius:6px;display:block"/>
-    </div>`).join('');
-
-  const htmlContent=`<div style="font-family:sans-serif;font-size:14px;line-height:1.8;color:#1a1a18">
-<pre style="white-space:pre-wrap;font-family:sans-serif;font-size:14px;line-height:1.8;color:#1a1a18;margin:0">${body}</pre>
-${allPh.length?'<br/><hr style="border:none;border-top:1px solid #eee;margin:16px 0"/><div style="font-weight:600;margin-bottom:8px">Fotoğraflar:</div>'+imgHtml:''}
-</div>`;
-
-  // Copy as HTML to clipboard so Outlook preserves images when pasting
-  const blob=new Blob([htmlContent],{type:'text/html'});
-  const plainBlob=new Blob([body],{type:'text/plain'});
-  const item=new ClipboardItem({'text/html':blob,'text/plain':plainBlob});
-  navigator.clipboard.write([item]).then(()=>{
-    // Show toast
-    const t=document.createElement('div');
-    t.innerHTML='✓ Kopyalandı! Outlook\'ta yeni mail aç,<br>yapıştır (Ctrl+V / uzun bas)';
-    t.style.cssText='position:fixed;bottom:100px;left:50%;transform:translateX(-50%);background:#1a1a18;color:#fff;padding:14px 20px;border-radius:14px;font-size:13px;z-index:9999;text-align:center;line-height:1.5;pointer-events:none;min-width:240px';
-    document.body.appendChild(t);setTimeout(()=>t.remove(),3500);
-  }).catch(()=>{
-    // Fallback: open in new tab
-    const blob2=new Blob([`<!DOCTYPE html><html><head><meta charset="UTF-8"></head><body>${htmlContent}</body></html>`],{type:'text/html'});
-    window.open(URL.createObjectURL(blob2),'_blank');
-  });
+  // build plain text body with photo placeholders
+  const photoNote=allPh.length?'\n\n--- FOTOĞRAFLAR ('+allPh.length+' adet) ---\n'+
+    allPh.map((p,i)=>'['+(i+1)+'. '+p.ctx+']').join('\n'):'';
+  window.location.href='mailto:Yusuf.bas@lcwaikiki.com?subject='+
+    encodeURIComponent(subj)+'&body='+encodeURIComponent(body+photoNote);
 }
 
 function openMail(){
@@ -882,7 +860,9 @@ showAB(1);loadUser();
 let currentHistVisit=null;
 
 function saveVisit(){
-  if(!notes.length)return;
+  if(!notes.length){alert('Kaydedilecek not yok.');return}
+  // ensure preview is built
+  buildPV();
   const store=getStore(),user=getUser(),wn=gwn(new Date());
   const visit={
     id:Date.now(),
@@ -890,16 +870,14 @@ function saveVisit(){
     week:wn,
     date:new Date().toLocaleDateString('tr-TR'),
     user:user?.name||'',
-    notes:JSON.parse(JSON.stringify(notes)), // deep copy, photos included
+    notes:JSON.parse(JSON.stringify(notes)),
     subject:window._ms||'',
     body:window._mb||''
   };
   const all=JSON.parse(localStorage.getItem('gemba_history')||'[]');
   all.unshift(visit);
-  // keep last 50
   if(all.length>50)all.splice(50);
   localStorage.setItem('gemba_history',JSON.stringify(all));
-
   const t=document.createElement('div');
   t.textContent='✓ Ziyaret kaydedildi!';
   t.style.cssText='position:fixed;bottom:90px;left:50%;transform:translateX(-50%);background:var(--green);color:#fff;padding:10px 22px;border-radius:100px;font-size:14px;font-family:DM Sans,sans-serif;z-index:999;pointer-events:none';
