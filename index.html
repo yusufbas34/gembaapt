@@ -7,7 +7,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes"/>
 <meta name="apple-mobile-web-app-status-bar-style" content="default"/>
 <meta name="theme-color" content="#ffffff"/>
-<title>Gemba Ziyaret</title>
+<title><link href="https://gembaapt.up.railway.app/">Gemba Ziyaret </link> </title>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600&display=swap" rel="stylesheet"/>
 <style>
 :root{
@@ -369,7 +369,10 @@ textarea{resize:none;line-height:1.5}
         <div class="sd" id="sd-bg"><button type="button" class="sd-trigger placeholder" onclick="toggleSD('sd-bg')"><span class="sd-val">Seçin...</span><svg width="12" height="7" viewBox="0 0 12 7" fill="none"><path d="M1 1l5 4.5L11 1" stroke="#aeaea9" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></button><div class="sd-panel" id="sdp-sd-bg"></div></div>
       </div>
       <div class="sf">
-        <label>Ürün klasmanı <span class="opt">isteğe bağlı</span></label>
+        <label style="display:flex;justify-content:space-between;align-items:center">
+          <span>Ürün klasmanı <span class="opt">isteğe bağlı</span></span>
+          <button type="button" id="klClearBtn" onclick="clearKlasman()" style="display:none;background:none;border:none;font-size:12px;color:var(--text3);cursor:pointer;padding:2px 6px">× Temizle</button>
+        </label>
         <div class="sd" id="sd-kl"><button type="button" class="sd-trigger placeholder" onclick="toggleSD('sd-kl')"><span class="sd-val">—</span><svg width="12" height="7" viewBox="0 0 12 7" fill="none"><path d="M1 1l5 4.5L11 1" stroke="#aeaea9" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></button><div class="sd-panel" id="sdp-sd-kl"></div></div>
       </div>
       <div class="sf">
@@ -485,6 +488,13 @@ function sdSet(id, value, label){
   const trigger=document.querySelector(`#${id} .sd-trigger`);
   trigger.querySelector('.sd-val').textContent=label||'—';
   trigger.classList.toggle('placeholder',!label&&!value);
+  if(id==='sd-kl'){const btn=document.getElementById('klClearBtn');if(btn)btn.style.display=value?'inline':'none';}
+}
+
+function clearKlasman(){
+  sdReset('sd-kl','—');
+  const btn=document.getElementById('klClearBtn');
+  if(btn)btn.style.display='none';
 }
 
 function sdGet(id){return sdState[id]?.value||''}
@@ -803,9 +813,40 @@ function dkey(){return'gd_'+getStore()+'_'+reyon}
 function saveDraft(){localStorage.setItem(dkey(),JSON.stringify(notes));const el=document.getElementById('dok');el.style.display='inline';setTimeout(()=>el.style.display='none',2000)}
 function loadDraft(){const d=localStorage.getItem(dkey());if(d){try{const p=JSON.parse(d);if(p.length&&confirm('Kaydedilmiş taslak var. Yüklensin mi?')){notes=p.map(n=>({...n,photos:n.photos||[]}))}else notes=[]}catch{notes=[]}}else notes=[]}
 
+/* MAG → mail adresi eşlemesi */
+const magMailMap={
+  'BUK':'ERKEKAKSESUAR@Lcwaikiki.com',
+  'BUGA':'BUCASUALBPADTEAM@Lcwaikiki.com',
+  'BUAS':'ERKEKAKSESUAR@Lcwaikiki.com',
+  'BUA':'',
+  'BUXL':'BUCASUALBPADTEAM@Lcwaikiki.com',
+  'BUR':'',
+  'BUJW':'DENIMMARKADIREKTORLUGU@Lcwaikiki.com',
+  'BUJD':'DENIMMARKADIREKTORLUGU@Lcwaikiki.com',
+  'BUCF':'BUEBPADTEAM@Lcwaikiki.com',
+  'BUS':'ERKEKICGIYIMKATEGORIDIREKTORLUGU@Lcwaikiki.com',
+  'BUC':'BUEBPADTEAM@Lcwaikiki.com',
+  'BUSP':'ERKEKICGIYIMKATEGORIDIREKTORLUGU@Lcwaikiki.com',
+  'BUAT':'',
+  'BUB':'BUSOUTHBLUEBPADTEAM@Lcwaikiki.com',
+  'BUL':'BUVISIONBPADTEAM@Lcwaikiki.com',
+  'BUMH':'BUEBPADTEAM@Lcwaikiki.com',
+};
+const GEMBA_CC='lcwgembagpt@lcwaikiki.com';
+
+function getMailRecipients(){
+  // collect unique MAGs from notes
+  const mags=[...new Set(notes.filter(n=>n.mag).map(n=>n.mag))];
+  const toSet=new Set();
+  mags.forEach(m=>{ if(magMailMap[m])toSet.add(magMailMap[m]); });
+  const to=[...toSet].filter(Boolean).join(';');
+  return {to, cc:GEMBA_CC};
+}
+
 /* preview */
 function buildPV(){
   const store=getStore(),user=getUser(),wn=gwn(new Date());
+  const userName=user?.name||'';
   const subj=wn+'. Hafta '+store+' '+reyon+' Reyonu Mağaza Ziyaret Notları';
   let grp={};notes.forEach(n=>{const k=(n.mag?n.mag+'|':'')+n.bg+'|'+(n.kl||'');if(!grp[k])grp[k]={mag:n.mag,bg:n.bg,kl:n.kl,items:[]};grp[k].items.push(n)});
   let body='Merhaba,\n\n'+wn+'.hafta '+store+' '+reyon+' reyonu mağaza ziyaret notları aşağıdaki gibidir.\n';
@@ -814,7 +855,7 @@ function buildPV(){
     if(g.kl)body+='Klasman: '+g.kl+'\n';
     g.items.forEach(n=>body+='\n* '+n.tx);body+='\n';
   });
-  body+='\nİyi çalışmalar,\n'+user.name+'\nLC Waikiki';
+  body+='\nİyi çalışmalar,\n'+userName+'\nLC Waikiki';
   document.getElementById('pvs').textContent=subj;
   document.getElementById('pvb').textContent=body;
   const allPh=notes.flatMap(n=>n.photos.map(p=>({...p,ctx:n.reyon+' / '+n.bg})));
@@ -826,23 +867,33 @@ function buildPV(){
     pp.innerHTML='';
     document.getElementById('btnHtmlMail').style.display='none';
   }
-  window._ms=subj;window._mb=body;window._mp=allPh;
+  // show recipients
+  const {to,cc}=getMailRecipients();
+  window._ms=subj;window._mb=body;window._mp=allPh;window._to=to;window._cc=cc;
+}
+
+function openMail(){
+  const pn=window._mp?.length?'\n\n['+window._mp.length+' fotoğraf ek olarak eklenecek]':'';
+  const to=window._to||'';
+  const cc=window._cc||GEMBA_CC;
+  window.location.href='mailto:'+encodeURIComponent(to)+
+    '?cc='+encodeURIComponent(cc)+
+    '&subject='+encodeURIComponent(window._ms||'')+
+    '&body='+encodeURIComponent((window._mb||'')+pn);
 }
 
 function openHtmlMail(){
   const allPh=window._mp||[];
   const body=window._mb||'';
   const subj=window._ms||'';
-  // build plain text body with photo placeholders
+  const to=window._to||'';
+  const cc=window._cc||GEMBA_CC;
   const photoNote=allPh.length?'\n\n--- FOTOĞRAFLAR ('+allPh.length+' adet) ---\n'+
     allPh.map((p,i)=>'['+(i+1)+'. '+p.ctx+']').join('\n'):'';
-  window.location.href='mailto:Yusuf.bas@lcwaikiki.com?subject='+
-    encodeURIComponent(subj)+'&body='+encodeURIComponent(body+photoNote);
-}
-
-function openMail(){
-  const pn=window._mp?.length?'\n\n['+window._mp.length+' fotoğraf ek olarak eklenecek]':'';
-  window.location.href='mailto:Yusuf.bas@lcwaikiki.com?subject='+encodeURIComponent(window._ms||'')+'&body='+encodeURIComponent((window._mb||'')+pn);
+  window.location.href='mailto:'+encodeURIComponent(to)+
+    '?cc='+encodeURIComponent(cc)+
+    '&subject='+encodeURIComponent(subj)+
+    '&body='+encodeURIComponent(body+photoNote);
 }
 function copyAll(){
   navigator.clipboard.writeText('Konu: '+(window._ms||'')+'\n\n'+(window._mb||'')).then(()=>{
@@ -965,8 +1016,15 @@ function closeHistDetail(){
 function reSendVisit(){
   if(!currentHistVisit)return;
   const v=currentHistVisit;
+  const mags=[...new Set((v.notes||[]).filter(n=>n.mag).map(n=>n.mag))];
+  const toSet=new Set();
+  mags.forEach(m=>{if(magMailMap[m])toSet.add(magMailMap[m]);});
+  const to=[...toSet].filter(Boolean).join(';');
   const pn=(v.notes||[]).some(n=>(n.photos||[]).length)?'\n\n[Fotoğraflar eklenmiştir]':'';
-  window.location.href='mailto:Yusuf.bas@lcwaikiki.com?subject='+encodeURIComponent(v.subject||'')+'&body='+encodeURIComponent((v.body||'')+pn);
+  window.location.href='mailto:'+encodeURIComponent(to)+
+    '?cc='+encodeURIComponent(GEMBA_CC)+
+    '&subject='+encodeURIComponent(v.subject||'')+
+    '&body='+encodeURIComponent((v.body||'')+pn);
 }
 
 function copyVisit(){
