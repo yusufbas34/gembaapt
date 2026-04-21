@@ -215,7 +215,7 @@ textarea{resize:none;line-height:1.5}
   font-family:'DM Sans',sans-serif;font-size:16px;color:var(--text);
   background:var(--bg2);outline:none;
 }
-.sd-list{max-height:220px;overflow-y:auto;-webkit-overflow-scrolling:touch}
+.sd-list{max-height:300px;overflow-y:auto;-webkit-overflow-scrolling:touch}
 .sd-item{
   padding:14px 16px;font-size:15px;color:var(--text);
   cursor:pointer;border-bottom:0.5px solid var(--border);
@@ -471,9 +471,11 @@ function openSD(id){
   // wait for scroll + keyboard
   setTimeout(()=>{
     const rect=trigger.getBoundingClientRect();
-    const kbHeight=window.innerHeight*0.42; // estimated keyboard height
-    const availH=window.innerHeight-rect.bottom-kbHeight-8;
-    const panelH=Math.max(160,Math.min(220,availH));
+
+    // use visualViewport if available (gives real height after keyboard opens)
+    const vvH=window.visualViewport?window.visualViewport.height:window.innerHeight;
+    const availH=vvH-rect.bottom-12;
+    const panelH=Math.max(200,Math.min(360,availH));
 
     sdPanel=document.createElement('div');
     sdPanel.className='sd-panel';
@@ -519,6 +521,22 @@ function openSD(id){
     activeSD=id;
     trigger.classList.add('open-style');
     document.getElementById('sd-backdrop').style.display='block';
+
+    // reposition when keyboard opens/closes
+    function reposition(){
+      if(!sdPanel)return;
+      const r2=trigger.getBoundingClientRect();
+      const vvH2=window.visualViewport?window.visualViewport.height:window.innerHeight;
+      const avail2=vvH2-r2.bottom-12;
+      const ph2=Math.max(200,Math.min(360,avail2));
+      sdPanel.style.top=r2.bottom+'px';
+      sdPanel.style.maxHeight=ph2+'px';
+    }
+    if(window.visualViewport){
+      window.visualViewport.addEventListener('resize',reposition);
+      window.visualViewport.addEventListener('scroll',reposition);
+    }
+
     setTimeout(()=>inp.focus(),80);
   },120);
 }
