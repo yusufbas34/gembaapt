@@ -315,7 +315,12 @@ textarea{resize:none;line-height:1.5}
 <div class="abar" id="abar">
   <div id="ab1" style="display:contents"><button class="btn-p" onclick="goP2()">Notlara geç →</button></div>
   <div id="ab2" style="display:none;flex:1;gap:10px"><button class="btn-ico" onclick="goP1()">←</button><button class="btn-p" onclick="goP3()">Önizleme →</button></div>
-  <div id="ab3" style="display:none;flex:1;gap:10px"><button class="btn-ico" onclick="goP2()">←</button><button class="btn-p" onclick="openMail()">✉ Mail Aç</button><button class="btn-s" onclick="copyAll()">Kopyala</button></div>
+  <div id="ab3" style="display:none;flex:1;gap:10px;flex-wrap:wrap">
+    <button class="btn-ico" onclick="goP2()">←</button>
+    <button class="btn-p" onclick="openMail()" style="flex:1">✉ Mail Aç</button>
+    <button class="btn-s" onclick="openHtmlMail()" id="btnHtmlMail" style="display:none">📎 Fotoğraflı</button>
+    <button class="btn-s" onclick="copyAll()">Kopyala</button>
+  </div>
 </div>
 
 <!-- Bottom sheet -->
@@ -775,13 +780,44 @@ function buildPV(){
   document.getElementById('pvb').textContent=body;
   const allPh=notes.flatMap(n=>n.photos.map(p=>({...p,ctx:n.reyon+' / '+n.bg})));
   const pp=document.getElementById('pvp');
-  if(allPh.length){pp.innerHTML='<div class="pvplbl">Ekli fotoğraflar ('+allPh.length+')</div><div class="pvgrid">'+allPh.map(p=>`<div class="pvpi"><img src="${p.data}" onclick="openLB('${p.data}')"/><div class="pvpilbl">${p.ctx}</div></div>`).join('')+'</div>'}else pp.innerHTML='';
+  if(allPh.length){
+    pp.innerHTML='<div class="pvplbl">Ekli fotoğraflar ('+allPh.length+')</div><div class="pvgrid">'+allPh.map(p=>`<div class="pvpi"><img src="${p.data}" onclick="openLB('${p.data}')"/><div class="pvpilbl">${p.ctx}</div></div>`).join('')+'</div>';
+    document.getElementById('btnHtmlMail').style.display='block';
+  } else {
+    pp.innerHTML='';
+    document.getElementById('btnHtmlMail').style.display='none';
+  }
   window._ms=subj;window._mb=body;window._mp=allPh;
+}
+
+function openHtmlMail(){
+  const allPh=window._mp||[];
+  const body=window._mb||'';
+  const subj=window._ms||'';
+
+  // Build HTML mail content with embedded images
+  const imgHtml=allPh.map(p=>`
+    <div style="margin:8px 0">
+      <div style="font-size:11px;color:#888;margin-bottom:4px">${p.ctx}</div>
+      <img src="${p.data}" style="max-width:320px;max-height:320px;border-radius:8px;display:block"/>
+    </div>`).join('');
+
+  const html=`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>${subj}</title></head><body style="font-family:sans-serif;padding:20px;max-width:600px">
+<p style="font-size:13px;color:#888;margin-bottom:16px">Aşağıdaki içeriği kopyalayıp Outlook'a yapıştırın veya bu sayfayı Outlook ile paylaşın.</p>
+<hr/>
+<p><strong>Konu:</strong> ${subj}</p>
+<pre style="white-space:pre-wrap;font-family:sans-serif;font-size:14px;line-height:1.7">${body}</pre>
+${allPh.length?'<hr/><p><strong>Fotoğraflar:</strong></p>'+imgHtml:''}
+</body></html>`;
+
+  const blob=new Blob([html],{type:'text/html'});
+  const url=URL.createObjectURL(blob);
+  window.open(url,'_blank');
 }
 
 function openMail(){
   const pn=window._mp?.length?'\n\n['+window._mp.length+' fotoğraf ek olarak eklenecek]':'';
-  window.location.href='mailto:?subject='+encodeURIComponent(window._ms||'')+'&body='+encodeURIComponent((window._mb||'')+pn);
+  window.location.href='mailto:Yusuf.bas@lcwaikiki.com?subject='+encodeURIComponent(window._ms||'')+'&body='+encodeURIComponent((window._mb||'')+pn);
 }
 function copyAll(){
   navigator.clipboard.writeText('Konu: '+(window._ms||'')+'\n\n'+(window._mb||'')).then(()=>{
