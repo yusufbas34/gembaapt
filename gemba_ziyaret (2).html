@@ -1,0 +1,737 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+<meta name="mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="default"/>
+<meta name="theme-color" content="#ffffff"/>
+<title>Gemba Ziyaret</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600&display=swap" rel="stylesheet"/>
+<style>
+:root{
+  --bg:#fff;--bg2:#f6f5f2;--bg3:#eeedea;
+  --text:#1a1a18;--text2:#6b6b67;--text3:#aeaea9;
+  --border:rgba(0,0,0,0.09);--border2:rgba(0,0,0,0.16);
+  --accent:#1a1a18;--green:#1a9e6e;--red:#e03e3e;
+  --r:12px;--rl:16px;
+  --sb:env(safe-area-inset-bottom,0px);
+  --st:env(safe-area-inset-top,0px);
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;background:var(--bg);font-family:'DM Sans',sans-serif;color:var(--text)}
+body{display:flex;flex-direction:column;overflow:hidden}
+
+/* topbar */
+.topbar{
+  flex-shrink:0;display:flex;align-items:center;justify-content:space-between;
+  padding:14px 20px 12px;padding-top:calc(14px + var(--st));
+  border-bottom:0.5px solid var(--border);background:var(--bg);z-index:100;
+}
+.logo{font-size:16px;font-weight:600;letter-spacing:-.4px}
+.logo span{color:var(--text2);font-weight:400}
+.wk{font-size:12px;color:var(--text3)}
+
+/* scroll */
+.scroll{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch}
+
+/* step bar */
+.step-wrap{padding:18px 20px 0}
+.sbar{display:flex;align-items:center;gap:6px;margin-bottom:20px}
+.stp{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;flex-shrink:0;transition:all .2s}
+.stp.a{background:var(--accent);color:#fff}
+.stp.d{background:var(--green);color:#fff}
+.stp.p{background:var(--bg2);color:var(--text3);border:0.5px solid var(--border)}
+.sl{flex:1;height:0.5px;background:var(--border)}
+
+/* page header */
+.ph{padding:0 20px 18px}
+.pt{font-size:22px;font-weight:600;letter-spacing:-.5px;line-height:1.2}
+.ps{font-size:14px;color:var(--text2);margin-top:4px}
+
+/* sec label */
+.sl2{font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.08em;padding:0 20px;margin-bottom:10px}
+
+/* user banner */
+.ubanner{margin:0 20px 18px;background:var(--bg2);border-radius:var(--rl);padding:14px 16px;display:flex;align-items:center;justify-content:space-between}
+.uname{font-size:15px;font-weight:500}
+.usub{font-size:12px;color:var(--text2);margin-top:2px}
+
+/* fields */
+.fg{padding:0 20px;margin-bottom:14px}
+.fl{display:block;font-size:13px;color:var(--text2);margin-bottom:6px}
+
+input[type=text],select,textarea{
+  width:100%;padding:14px 16px;
+  border:0.5px solid var(--border2);border-radius:var(--r);
+  font-family:'DM Sans',sans-serif;font-size:16px;color:var(--text);
+  background:var(--bg);outline:none;-webkit-appearance:none;appearance:none;
+  transition:border-color .15s;
+}
+input[type=text]:focus,select:focus,textarea:focus{border-color:var(--accent)}
+select{
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='7' viewBox='0 0 12 7'%3E%3Cpath d='M1 1l5 4.5L11 1' stroke='%23aeaea9' stroke-width='1.5' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;background-position:right 14px center;padding-right:38px;
+}
+textarea{resize:none;line-height:1.5}
+.big-input{font-size:18px;font-weight:500;padding:16px}
+
+/* divider */
+.div{border:none;border-top:0.5px solid var(--border);margin:16px 0}
+
+/* reyon chips */
+.rscroll{padding:0 20px;margin-bottom:6px;display:flex;gap:8px;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+.rscroll::-webkit-scrollbar{display:none}
+.chip{
+  flex-shrink:0;padding:10px 18px;border-radius:100px;min-height:44px;
+  border:0.5px solid var(--border2);font-size:14px;font-weight:500;
+  color:var(--text2);background:var(--bg);cursor:pointer;
+  transition:all .15s;display:flex;align-items:center;gap:6px;white-space:nowrap;
+}
+.chip.sel{background:var(--accent);color:#fff;border-color:var(--accent)}
+
+/* action bar */
+.abar{
+  flex-shrink:0;padding:12px 20px;padding-bottom:calc(12px + var(--sb));
+  border-top:0.5px solid var(--border);background:var(--bg);
+  display:flex;gap:10px;
+}
+.btn-p{flex:1;background:var(--accent);color:#fff;border:none;border-radius:var(--r);padding:0 22px;font-size:16px;font-weight:500;font-family:'DM Sans',sans-serif;cursor:pointer;min-height:52px;transition:opacity .15s}
+.btn-p:active{opacity:.8}
+.btn-s{background:none;border:0.5px solid var(--border2);border-radius:var(--r);padding:0 18px;font-size:15px;color:var(--text);font-family:'DM Sans',sans-serif;cursor:pointer;min-height:52px;white-space:nowrap}
+.btn-s:active{background:var(--bg2)}
+.btn-ico{background:none;border:0.5px solid var(--border2);border-radius:var(--r);padding:0;font-size:18px;color:var(--text2);font-family:'DM Sans',sans-serif;cursor:pointer;min-height:52px;min-width:52px;display:flex;align-items:center;justify-content:center}
+.btn-ico:active{background:var(--bg2)}
+.btn-xs{background:none;border:0.5px solid var(--border2);border-radius:8px;padding:7px 13px;font-size:12px;color:var(--text2);font-family:'DM Sans',sans-serif;cursor:pointer;white-space:nowrap}
+
+/* ctx bar */
+.ctx{margin:0 20px 16px;background:var(--bg2);border-radius:var(--rl);padding:14px 16px;display:flex;align-items:center;justify-content:space-between;gap:12px}
+.ctx-main{font-size:16px;font-weight:500}
+.ctx-sub{font-size:12px;color:var(--text2);margin-top:2px}
+
+/* note cards */
+.nlist{padding:0 20px}
+.ncard{background:var(--bg);border:0.5px solid var(--border);border-radius:var(--rl);padding:14px 16px;margin-bottom:10px}
+.ncard-hdr{display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:8px}
+.tags{display:flex;gap:5px;flex-wrap:wrap;flex:1}
+.tag{font-size:11px;font-weight:600;padding:4px 10px;border-radius:100px;white-space:nowrap}
+.tk{background:#fce8f3;color:#8a2456}
+.te{background:#e6f1fb;color:#0C447C}
+.tc{background:#e1f5ee;color:#085041}
+.th{background:#faeeda;color:#633806}
+.tb{background:#faece7;color:#712B13}
+.td{background:var(--bg2);color:var(--text2);border:0.5px solid var(--border)}
+.rm{background:none;border:none;cursor:pointer;color:var(--text3);font-size:20px;min-width:36px;min-height:36px;display:flex;align-items:center;justify-content:center;border-radius:8px;flex-shrink:0}
+.rm:active{background:var(--bg2)}
+.ntxt{font-size:15px;color:var(--text);line-height:1.5}
+
+/* photos */
+.pstrip{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+.prel{position:relative}
+.pthumb{width:70px;height:70px;border-radius:10px;object-fit:cover;border:0.5px solid var(--border);display:block}
+.pdel{position:absolute;top:-6px;right:-6px;background:var(--red);color:#fff;border-radius:50%;width:20px;height:20px;font-size:11px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-weight:700}
+.padd{width:70px;height:70px;border-radius:10px;border:0.5px dashed var(--border2);display:flex;align-items:center;justify-content:center;background:var(--bg2);color:var(--text3);font-size:28px;cursor:pointer;flex-shrink:0}
+.padd:active{background:var(--bg3)}
+
+/* add note row */
+.add-row{margin:0 20px 12px;border:0.5px dashed var(--border2);border-radius:var(--rl);padding:14px 16px;display:flex;align-items:center;gap:12px;cursor:pointer;background:var(--bg2)}
+.add-row:active{background:var(--bg3)}
+.add-icon{font-size:22px;color:var(--text3)}
+.add-txt{font-size:14px;color:var(--text2)}
+
+/* draft */
+.draft-row{padding:0 20px 16px;display:flex;align-items:center;gap:10px}
+.btn-sm{background:none;border:0.5px solid var(--border2);border-radius:8px;padding:8px 14px;font-size:13px;color:var(--text2);font-family:'DM Sans',sans-serif;cursor:pointer;min-height:36px}
+.ok{font-size:13px;color:var(--green)}
+
+/* empty */
+.empty{text-align:center;padding:30px 20px;color:var(--text3)}
+.empty-ico{font-size:36px;margin-bottom:10px}
+.empty-t{font-size:14px;line-height:1.5}
+
+/* bottom sheet */
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:200;display:none;align-items:flex-end}
+.overlay.open{display:flex}
+.sheet{width:100%;background:var(--bg);border-radius:20px 20px 0 0;max-height:90vh;overflow-y:auto;-webkit-overflow-scrolling:touch;padding-bottom:calc(20px + var(--sb));animation:su .25s ease}
+@keyframes su{from{transform:translateY(100%)}to{transform:translateY(0)}}
+.shandle{width:36px;height:4px;background:var(--bg3);border-radius:2px;margin:12px auto 14px}
+.stitle{font-size:17px;font-weight:600;padding:0 20px 14px;border-bottom:0.5px solid var(--border)}
+.sbody{padding:16px 20px 0}
+.sf{margin-bottom:14px}
+.sf label{display:flex;justify-content:space-between;align-items:center;font-size:13px;color:var(--text2);margin-bottom:6px}
+.sf label span.opt{font-size:11px;color:var(--text3)}
+.sact{display:flex;gap:10px;padding:16px 20px 0}
+.err{font-size:12px;color:var(--red);margin-top:5px;display:none}
+
+/* preview */
+.pvsec{padding:0 20px 20px}
+.pvcard{background:var(--bg2);border-radius:var(--rl);padding:16px;margin-bottom:12px}
+.pvlbl{font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px}
+.pvsubj{font-size:15px;font-weight:500;line-height:1.3}
+.pvdiv{border:none;border-top:0.5px solid var(--border);margin:12px 0}
+.pvbody{font-size:13px;line-height:1.85;white-space:pre-wrap;color:var(--text)}
+.pvphotos{margin-top:14px}
+.pvplbl{font-size:12px;color:var(--text2);margin-bottom:8px}
+.pvgrid{display:flex;flex-wrap:wrap;gap:8px}
+.pvpi{display:flex;flex-direction:column;align-items:center;gap:3px}
+.pvpi img{width:72px;height:72px;border-radius:10px;object-fit:cover;border:0.5px solid var(--border)}
+.pvpilbl{font-size:10px;color:var(--text3);max-width:72px;text-align:center;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+
+/* lightbox */
+.lb{position:fixed;inset:0;background:rgba(0,0,0,.88);display:none;align-items:center;justify-content:center;z-index:999}
+.lb.open{display:flex}
+.lb img{max-width:96vw;max-height:88vh;border-radius:12px;object-fit:contain}
+
+/* ── Searchable dropdown ── */
+.sd{position:relative;width:100%}
+.sd-trigger{
+  width:100%;padding:14px 40px 14px 16px;
+  border:0.5px solid var(--border2);border-radius:var(--r);
+  font-family:'DM Sans',sans-serif;font-size:16px;color:var(--text);
+  background:var(--bg);cursor:pointer;text-align:left;
+  display:flex;align-items:center;justify-content:space-between;
+  min-height:52px;transition:border-color .15s;
+}
+.sd-trigger.placeholder{color:var(--text3)}
+.sd-trigger:focus{outline:none;border-color:var(--accent)}
+.sd-trigger svg{flex-shrink:0;margin-left:8px;transition:transform .2s}
+.sd.open .sd-trigger svg{transform:rotate(180deg)}
+.sd-trigger.open-style{border-color:var(--accent);border-radius:var(--r) var(--r) 0 0}
+
+/* dropdown panel — rendered in fixed overlay for sheet context */
+.sd-panel{
+  position:fixed;left:0;right:0;
+  background:var(--bg);
+  border:0.5px solid var(--accent);
+  border-top:none;
+  border-radius:0 0 var(--r) var(--r);
+  z-index:9999;
+  overflow:hidden;
+  box-shadow:0 8px 24px rgba(0,0,0,.12);
+}
+.sd-search{
+  width:100%;padding:12px 16px;border:none;border-bottom:0.5px solid var(--border);
+  font-family:'DM Sans',sans-serif;font-size:16px;color:var(--text);
+  background:var(--bg2);outline:none;
+}
+.sd-list{max-height:220px;overflow-y:auto;-webkit-overflow-scrolling:touch}
+.sd-item{
+  padding:14px 16px;font-size:15px;color:var(--text);
+  cursor:pointer;border-bottom:0.5px solid var(--border);
+  transition:background .1s;
+}
+.sd-item:last-child{border-bottom:none}
+.sd-item:active,.sd-item.hover{background:var(--bg2)}
+.sd-item.selected{color:var(--accent);font-weight:500}
+.sd-empty{padding:16px;font-size:14px;color:var(--text3);text-align:center}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="logo">Gemba<span>GPT</span></div>
+  <div class="wk" id="topWeek"></div>
+</div>
+
+<div class="scroll" id="scr">
+
+  <!-- PAGE 1 -->
+  <div id="p1">
+    <div class="step-wrap">
+      <div class="sbar"><div class="stp a" id="s1">1</div><div class="sl"></div><div class="stp p" id="s2">2</div><div class="sl"></div><div class="stp p" id="s3">3</div></div>
+    </div>
+    <div class="ph"><div class="pt">Mağaza seç</div><div class="ps">Ziyaret bilgilerini girin.</div></div>
+
+    <div id="ubanner" style="display:none" class="ubanner">
+      <div><div class="uname" id="bname"></div><div class="usub">Kayıtlı çalışan</div></div>
+      <button class="btn-xs" onclick="clearUser()">Değiştir</button>
+    </div>
+    <div id="uform">
+      <div class="fg"><label class="fl">Ad Soyad</label><input type="text" id="uname" class="big-input" placeholder="Adınız..." autocomplete="name"/></div>
+    </div>
+
+    <div class="div"></div>
+
+    <div class="fg"><label class="fl">Mağaza</label>
+      <div class="sd" id="sd-store">
+        <button type="button" class="sd-trigger placeholder" onclick="toggleSD('sd-store')">
+          <span class="sd-val">Mağaza seçin...</span>
+          <svg width="12" height="7" viewBox="0 0 12 7" fill="none"><path d="M1 1l5 4.5L11 1" stroke="#aeaea9" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+      </div>
+    </div>
+    <div class="fg" id="mwrap" style="display:none"><label class="fl">Mağaza adı</label><input type="text" id="stMan" placeholder="Mağaza adını yazın..."/></div>
+
+    <div class="sl2">Reyon</div>
+    <div class="rscroll">
+      <div class="chip" data-r="Kadın" onclick="selR(this)">👗 Kadın</div>
+      <div class="chip" data-r="Erkek" onclick="selR(this)">👔 Erkek</div>
+      <div class="chip" data-r="Çocuk" onclick="selR(this)">🧒 Çocuk</div>
+      <div class="chip" data-r="Home" onclick="selR(this)">🏠 Home</div>
+      <div class="chip" data-r="Bebek" onclick="selR(this)">🍼 Bebek</div>
+    </div>
+    <div class="err" id="rerr" style="padding:4px 20px">Lütfen bir reyon seçin.</div>
+    <div style="height:90px"></div>
+  </div>
+
+  <!-- PAGE 2 -->
+  <div id="p2" style="display:none">
+    <div class="step-wrap">
+      <div class="sbar"><div class="stp d">✓</div><div class="sl"></div><div class="stp a">2</div><div class="sl"></div><div class="stp p">3</div></div>
+    </div>
+    <div class="ph"><div class="pt">Notlar</div></div>
+    <div class="ctx">
+      <div><div class="ctx-main" id="p2st"></div><div class="ctx-sub" id="p2mt"></div></div>
+      <button class="btn-xs" onclick="goP1()">← Değiştir</button>
+    </div>
+    <div class="nlist" id="nlist"></div>
+    <div class="add-row" onclick="openSheet()"><div class="add-icon">＋</div><div class="add-txt">Not ekle</div></div>
+    <div class="draft-row"><button class="btn-sm" onclick="saveDraft()">Taslak kaydet</button><span class="ok" id="dok" style="display:none">Kaydedildi!</span></div>
+    <div style="height:90px"></div>
+  </div>
+
+  <!-- PAGE 3 -->
+  <div id="p3" style="display:none">
+    <div class="step-wrap">
+      <div class="sbar"><div class="stp d">✓</div><div class="sl"></div><div class="stp d">✓</div><div class="sl"></div><div class="stp a">3</div></div>
+    </div>
+    <div class="ph"><div class="pt">Önizleme</div><div class="ps">Mail içeriğini kontrol edin.</div></div>
+    <div class="pvsec">
+      <div class="pvcard">
+        <div class="pvlbl">Konu</div>
+        <div class="pvsubj" id="pvs"></div>
+        <div class="pvdiv"></div>
+        <div class="pvbody" id="pvb"></div>
+        <div class="pvphotos" id="pvp"></div>
+      </div>
+    </div>
+    <div style="height:90px"></div>
+  </div>
+
+</div><!-- /scroll -->
+
+<!-- Action bar -->
+<div class="abar" id="abar">
+  <div id="ab1" style="display:contents"><button class="btn-p" onclick="goP2()">Notlara geç →</button></div>
+  <div id="ab2" style="display:none;flex:1;gap:10px"><button class="btn-ico" onclick="goP1()">←</button><button class="btn-p" onclick="goP3()">Önizleme →</button></div>
+  <div id="ab3" style="display:none;flex:1;gap:10px"><button class="btn-ico" onclick="goP2()">←</button><button class="btn-p" onclick="openMail()">✉ Mail Aç</button><button class="btn-s" onclick="copyAll()">Kopyala</button></div>
+</div>
+
+<!-- Bottom sheet -->
+<div class="overlay" id="ov" onclick="closeOv(event)">
+  <div class="sheet" id="sheet">
+    <div class="shandle"></div>
+    <div class="stitle" id="sheetTitle">Not ekle</div>
+    <div class="sbody">
+      <div class="sf" id="magField" style="display:none">
+        <label>MAG (Merch Alt Grup) <span style="color:var(--red)">*</span></label>
+        <div class="sd" id="sd-mag"><button type="button" class="sd-trigger placeholder" onclick="toggleSD('sd-mag')"><span class="sd-val">Seçin...</span><svg width="12" height="7" viewBox="0 0 12 7" fill="none"><path d="M1 1l5 4.5L11 1" stroke="#aeaea9" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></button></div>
+      </div>
+      <div class="sf">
+        <label>Buyer grup <span style="color:var(--red)">*</span></label>
+        <div class="sd" id="sd-bg"><button type="button" class="sd-trigger placeholder" onclick="toggleSD('sd-bg')"><span class="sd-val">Seçin...</span><svg width="12" height="7" viewBox="0 0 12 7" fill="none"><path d="M1 1l5 4.5L11 1" stroke="#aeaea9" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></button></div>
+      </div>
+      <div class="sf">
+        <label>Ürün klasmanı <span class="opt">isteğe bağlı</span></label>
+        <div class="sd" id="sd-kl"><button type="button" class="sd-trigger placeholder" onclick="toggleSD('sd-kl')"><span class="sd-val">—</span><svg width="12" height="7" viewBox="0 0 12 7" fill="none"><path d="M1 1l5 4.5L11 1" stroke="#aeaea9" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></button></div>
+      </div>
+      <div class="sf"><label>Not içeriği <span style="color:var(--red)">*</span></label><textarea id="nTX" placeholder="Gözlem veya talebi yazın..." rows="4"></textarea></div>
+      <div class="err" id="nerr">Buyer grup ve not zorunludur.</div>
+    </div>
+    <div class="sact"><button class="btn-p" onclick="saveNote()" id="sheetSaveBtn">Ekle</button><button class="btn-s" onclick="closeSheet()">İptal</button></div>
+  </div>
+</div>
+
+<!-- Lightbox -->
+<div class="lb" id="lb" onclick="closeLB(event)"><img id="lbi"/></div>
+<!-- SD backdrop -->
+<div id="sd-backdrop" style="position:fixed;inset:0;z-index:9998;display:none" onclick="closeSD()"></div>
+
+<input type="file" id="pfi" accept="image/*" multiple style="display:none" onchange="handlePh()"/>
+
+<script>
+const RD={
+  "Kadın":{bg:["Örme Üst","Dokuma Üst","Dokuma Alt","Dış Giyim","İç Giyim","Aksesuar","Ayakkabı"],kl:{"Örme Üst":["Tişört Kkol","Tişört Ukol","Polo Yaka","Sweatshirt","Kapüşonlu Sweat"],"Dokuma Üst":["Gömlek U.Kol","Gömlek K.Kol","Bluz","Keten Gömlek","Casual Gömlek"],"Dokuma Alt":["Jean Pantolon","Chino","Etek","Şort","Slim Jean","Kargo"],"Dış Giyim":["Blazer","Trençkot","Mont","Parka","Yelek","Kaban"],"İç Giyim":["Atlet","Boksör","Pijama Takım","Spor Sütyeni"],"Aksesuar":["Kemer","Şapka","Bere","Çanta","Cüzdan","Atkı"],"Ayakkabı":["Sneaker","Loafer","Bot","Sandalet","Terlik"]}},
+  "Erkek":{useMag:true},
+  "Çocuk":{bg:["Çocuk Örme","Çocuk Dokuma","Çocuk Dış Giyim","Çocuk Aksesuar","Çocuk Ayakkabı"],kl:{"Çocuk Örme":["Tişört Kkol","Tişört Ukol","Sweatshirt","Polar"],"Çocuk Dokuma":["Gömlek","Pantolon","Etek","Jean"],"Çocuk Dış Giyim":["Mont","Yelek","Trençkot"],"Çocuk Aksesuar":["Şapka","Atkı","Bere","Çanta"],"Çocuk Ayakkabı":["Sneaker","Bot","Sandalet","Terlik"]}},
+  "Home":{bg:["Yatak Odası","Banyo","Mutfak","Dekorasyon","Ev Tekstili"],kl:{"Yatak Odası":["Nevresim Takımı","Yastık Kılıfı","Çarşaf","Yorgan"],"Banyo":["Havlu","Bornoz","Paspas","Duş Perdesi"],"Mutfak":["Masa Örtüsü","Mutfak Havlusu","Fırın Eldiveni"],"Dekorasyon":["Yastık Kılıfı","Örtü","Mum","Dekoratif"],"Ev Tekstili":["Perde","Örtü","Yolluk"]}},
+  "Bebek":{bg:["Bebek Örme","Bebek Dokuma","Bebek Takım","Bebek Aksesuar"],kl:{"Bebek Örme":["Body Kkol","Body Ukol","Tulum","Sweat"],"Bebek Dokuma":["Gömlek","Pantolon","Etek"],"Bebek Takım":["İkili Takım","Üçlü Takım","Hediye Seti"],"Bebek Aksesuar":["Bere","Eldiven","Çorap","Önlük"]}}
+};
+const RT={"Kadın":"tk","Erkek":"te","Çocuk":"tc","Home":"th","Bebek":"tb"};
+
+const erkekMAG={
+  "BUA":{bg:["AYAKKABI"],kl:{"AYAKKABI":["AYAKKABI GÜNLÜK BILEKLI","AYAKKABI KLASİK GÜNLÜK","AYAKKABI KLASİK KONFOR","AYAKKABI TREKKING","BOT","BOT TREKKING","GÜNLÜK AYAKKABI","HASIR TABANLI AYAKKABI","SPOR AYAKKABI"]}},
+  "BUAS":{bg:["AYAKKABI"],kl:{"AYAKKABI":["AYAKKABI İÇ TABANLIK","AYAKKABI KLASİK GÜNLÜK","AYAKKABI KLASİK KONFOR","BOT","GÜNLÜK AYAKKABI","HASIR TABANLI AYAKKABI","SPOR AYAKKABI"]}},
+  "BUAT":{bg:["AYAKKABI"],kl:{"AYAKKABI":["DENIZ AYAKKABISI","EV BOTU","EV TERLİĞİ","HAFİF TERLİK","PLAJ TERLİĞİ","SANDALET","TERLİK"]}},
+  "BUB":{bg:["BLAZER CEKET","DENİM","DIŞ GİYİM","DOKUMA ALT","DOKUMA SET","DOKUMA ÜST","ÖRME","TRİKO"],kl:{"BLAZER CEKET":["BLAZER CEKET"],"DENİM":["KEY DOKUMA JEAN PANTOLON"],"DIŞ GİYİM":["İNCE MONT","MONT/KABAN KALIN","NAYLON PUFFER MONT/KABAN","PARKA","PU MONT İNCE","PU MONT KALIN","YAGMURLUK","YELEK"],"DOKUMA ALT":["KEY DOKUMA PANTOLON ORTA","KEY DOKUMA ŞORT/BERMUDA"],"DOKUMA SET":["BLAZER CEKET SET","DOKUMA SHACKET SET","İNCE MONT SET","KEY DOKUMA GOMLEK K.KOL SET","KEY DOKUMA GOMLEK U.KOL SET","KEY DOKUMA PANTOLON ORTA SET","KEY DOKUMA ŞORT/BERMUDA SET"],"DOKUMA ÜST":["DOKUMA SHACKET","KEY BASKILI DOKUMA GOMLEK K.KOL","KEY ÇİZGİLİ DOKUMA GOMLEK U.KOL","KEY DOKUMA GOMLEK K.KOL","KEY DOKUMA GOMLEK U.KOL"],"ÖRME":["KEY BASKILI ORME T-SHIRT K.KOL","KEY ORME HIRKA","KEY ORME PANTOLON","KEY ORME SORT / BERMUDA","KEY ORME SWEAT","KEY ORME T-SHIRT K.KOL"],"TRİKO":["KEY TRIKO HIRKA","KEY TRIKO KAZAK","KEY TRIKO KAZAK K.KOL","KEY TRIKO SUVETER","KEY TRIKO YELEK"]}},
+  "BUC":{bg:["CHINO DUVARI","DIŞ GİYİM","DOKUMA ÜST","ÖRME","ÖRME BASIC","TRİKO"],kl:{"CHINO DUVARI":["BASİC DOKUMA CHİNO PANTOLON İNCE","BASIC DOKUMA CHINO PANTOLON ORTA","CL BASIC DOKUMA PANTOLON KALIN","CLASSIC DOKUMA ROLLER","CLASSIC DOKUMA ŞORT"],"DIŞ GİYİM":["İNCE MONT","İNCE PUFFER MONT","MONT/KABAN KALIN","PARKA","PU MONT İNCE","PU MONT KALIN","YELEK"],"DOKUMA ÜST":["KEY DOKUMA GOMLEK K.KOL","KEY DOKUMA GOMLEK U.KOL","KEY EKOSELİ DOKUMA GOMLEK K.KOL","KEY EKOSELİ DOKUMA GOMLEK U.KOL"],"ÖRME":["BASIC ORME BİSİKLET YAKA T-SHIRT K.KOL","BASIC ORME POLO YAKA T-SHIRT K.KOL","BASIC ORME V YAKA T-SHIRT K.KOL","KEY BASKILI ORME T-SHIRT K.KOL","KEY ORME T-SHIRT K.KOL"],"ÖRME BASIC":["BASIC KEY BASKILI ORME SWEAT","CL BASIC ORME HIRKA","CL BASIC ORME PANTOLON","CL BASIC ORME ROLLER","CL BASIC ORME SORT / BERMUDA","CL BASIC ORME SWEAT","CL BASIC ORME T-SHIRT U.KOL","ÖRME ATLET"],"TRİKO":["KEY ÇİZGİLİ TRIKO KAZAK","KEY TRIKO HIRKA","KEY TRIKO HIRKA MONT","KEY TRIKO KAZAK","KEY TRIKO YELEK"]}},
+  "BUCF":{bg:["BLAZER CEKET","DOKUMA ALT","DOKUMA ÜST","KRAVAT/PAPYON"],kl:{"BLAZER CEKET":["BLAZER CEKET"],"DOKUMA ALT":["KEY DOKUMA PANTOLON"],"DOKUMA ÜST":["BASIC DOKUMA GOMLEK U.KOL","KEY DOKUMA GOMLEK K.KOL","KEY DOKUMA GOMLEK U.KOL"],"KRAVAT/PAPYON":["KEY AKSESUAR KRAVAT/PAPYON SMART"]}},
+  "BUGA":{bg:["AKTİF SPOR","DIŞ GİYİM","DOKUMA ALT"],kl:{"AKTİF SPOR":["BASIC ORME T-SHIRT K.KOL AKTİF SPOR","KEY ORME ATLET AKTİF SPOR","KEY ORME HIRKA AKTİF SPOR","KEY ORME PANTOLON AKTİF SPOR","KEY ORME SORT/TAYTLI SORT AKTİF SPOR","KEY ORME SWEAT AKTİF SPOR","KEY ORME T-SHIRT U.KOL AKTİF SPOR"],"DIŞ GİYİM":["MONT/KABAN KALIN"],"DOKUMA ALT":["KEY DOKUMA PANTOLON"]}},
+  "BUJD":{bg:["DENİM"],kl:{"DENİM":["BASIC DOKUMA JEAN BERMUDA","BASIC DOKUMA JEAN PANTOLON"]}},
+  "BUJW":{bg:["DENİM","DENIM DUVARI"],kl:{"DENİM":["KEY DOKUMA JEAN GOMLEK K.KOL","KEY DOKUMA JEAN GOMLEK U.KOL","KEY DOKUMA JEAN MONT"],"DENIM DUVARI":["BASIC DENIM DUVAR DOKUMA JEAN PANTOLON","BASIC DENIM DUVAR DOKUMA JEAN SORT /BERMUDA"]}},
+  "BUK":{bg:["DERİ AKSESUAR","DOKUMA AKSESUAR","STANDART DIŞI","TRİKO ÖRME AKSESUAR"],kl:{"DERİ AKSESUAR":["KEY AKSESUAR CANTA BUYUK","KEY AKSESUAR CANTA KUCUK","KEY AKSESUAR CUZDAN","KEY AKSESUAR KEMER"],"DOKUMA AKSESUAR":["KEY AKSESUAR ATKI","KEY AKSESUAR DOKUMA ŞAPKA","KEY AKSESUAR ELDIVEN"],"STANDART DIŞI":["KEY AKSESUAR TAKI"],"TRİKO ÖRME AKSESUAR":["KEY AKSESUAR HAVLU","KEY ORME AKSESUAR BERE","KEY TRIKO AKSESUAR BERE","KEY TRIKO AKSESUAR ELDIVEN","KEY TRIKO AKSESUAR KAŞKOL"]}},
+  "BUL":{bg:["BLAZER CEKET","DIŞ GİYİM","DOKUMA ALT","DOKUMA ÜST","ÖRME","TRİKO"],kl:{"BLAZER CEKET":["BLAZER CEKET"],"DIŞ GİYİM":["İNCE MONT","MONT/KABAN KALIN","NAYLON PUFFER MONT/KABAN","PARKA","PU MONT İNCE","PU MONT KALIN","YAGMURLUK","YELEK"],"DOKUMA ALT":["KEY DOKUMA PANTOLON ORTA","KEY DOKUMA ŞORT/BERMUDA"],"DOKUMA ÜST":["DOKUMA SHACKET","KEY BASKILI DOKUMA GOMLEK K.KOL","KEY DOKUMA GOMLEK K.KOL","KEY DOKUMA GOMLEK U.KOL"],"ÖRME":["KEY BASKILI ORME T-SHIRT K.KOL","KEY ÇİZGİLİ ORME T-SHIRT K.KOL","KEY ÖRME ATLET","KEY ORME HIRKA","KEY ORME PANTOLON","KEY ORME SORT / BERMUDA","KEY ORME SWEAT","KEY ORME T-SHIRT K.KOL"],"TRİKO":["KEY TRIKO HIRKA","KEY TRIKO HIRKA MONT","KEY TRIKO KAZAK","KEY TRIKO KAZAK K.KOL","KEY TRIKO SUVETER"]}},
+  "BUMH":{bg:["DOKUMA ÜST","ÖRME","YÜZME GİYİM"],kl:{"DOKUMA ÜST":["KEY DOKUMA GOMLEK K.KOL"],"ÖRME":["BASIC ORME POLO YAKA T-SHIRT K.KOL","KEY ÖRME ATLET","KEY ORME T-SHIRT K.KOL"],"YÜZME GİYİM":["BASIC DOKUMA YUZME ŞORT","DOKUMA YUZME UZUN ŞORT","KEY DOKUMA YUZME ŞORT"]}},
+  "BUR":{bg:["ÇORAP"],kl:{"ÇORAP":["KEY AKSESUAR ÇORAP BABET","KEY AKSESUAR CORAP EV","KEY AKSESUAR CORAP PATIK","KEY AKSESUAR CORAP SNEAKER","KEY AKSESUAR CORAP SOKET"]}},
+  "BUS":{bg:["BOXER","İÇ GİYİM"],kl:{"BOXER":["İÇGYM BASIC BOXER","İÇGYM KEY BOXER","İÇGYM SLİP"],"İÇ GİYİM":["İÇGYM KEY ÖRME FANİLA K.KOL","İÇGYM ORME ATLET","İÇGYM ORME FANILA U.KOL"]}},
+  "BUSP":{bg:["PİJAMA"],kl:{"PİJAMA":["İÇGYM ÖRME PİJAMA TAKIM K.KOL-K.PAÇA","İÇGYM ÖRME PİJAMA TAKIM K.KOL-U.PAÇA","İÇGYM ÖRME PİJAMA TAKIM U.KOL-U.PAÇA","İÇGYM ÖRME PİJAMA TEK ALT KISA","İÇGYM ÖRME PİJAMA TEK ALT UZUN","İÇGYM ÖRME PİJAMA TEK ÜST","İÇGYM TERMAL ÜST","PİJAMA TERMAL ALT"]}},
+  "BUXL":{bg:["DENİM","DIŞ GİYİM","DOKUMA ALT","DOKUMA ÜST","ÖRME","TRİKO"],kl:{"DENİM":["KEY DOKUMA JEAN BERMUDA","KEY DOKUMA JEAN GOMLEK K.KOL","KEY DOKUMA JEAN GOMLEK U.KOL","KEY DOKUMA JEAN MONT","KEY DOKUMA JEAN PANTOLON"],"DIŞ GİYİM":["İNCE MONT","İNCE PUFFER MONT","MONT/KABAN KALIN","NAYLON PUFFER MONT/KABAN","PARKA","PU MONT İNCE","PU MONT KALIN","YAGMURLUK","YELEK"],"DOKUMA ALT":["KEY DOKUMA PANTOLON KARGO","KEY DOKUMA PANTOLON ORTA","KEY DOKUMA ŞORT/BERMUDA"],"DOKUMA ÜST":["DOKUMA SHACKET","KEY DOKUMA GOMLEK K.KOL","KEY DOKUMA GOMLEK U.KOL"],"ÖRME":["BASIC ORME T-SHIRT K.KOL","KEY BASKILI ORME T-SHIRT K.KOL","KEY ÇİZGİLİ ORME T-SHIRT K.KOL","KEY ÖRME ATLET","KEY ORME HIRKA","KEY ORME PANTOLON","KEY ORME POLO YAKA T-SHIRT K.KOL","KEY ORME SORT / BERMUDA","KEY ORME SWEAT"],"TRİKO":["KEY ÇİZGİLİ TRIKO KAZAK","KEY TRIKO HIRKA","KEY TRIKO KAZAK","KEY TRIKO KAZAK K.KOL","KEY TRIKO KAZAK Z4"]}}
+};
+
+let notes=[],reyon='',photNoteId=null,editingNoteId=null;
+
+/* week */
+function gwn(d){const dd=new Date(Date.UTC(d.getFullYear(),d.getMonth(),d.getDate()));dd.setUTCDate(dd.getUTCDate()+4-(dd.getUTCDay()||7));return Math.ceil((((dd-new Date(Date.UTC(dd.getUTCFullYear(),0,1)))/86400000)+1)/7)}
+function wl(){const n=new Date(),w=gwn(n),m=["Oca","Şub","Mar","Nis","May","Haz","Tem","Ağu","Eyl","Eki","Kas","Ara"];return w+'. Hafta · '+n.getDate()+' '+m[n.getMonth()]+' '+n.getFullYear()}
+document.getElementById('topWeek').textContent=wl();
+
+/* user */
+function loadUser(){const u=JSON.parse(localStorage.getItem('gu')||'null');if(u?.name){document.getElementById('ubanner').style.display='flex';document.getElementById('bname').textContent=u.name;document.getElementById('uform').style.display='none';return u}document.getElementById('ubanner').style.display='none';document.getElementById('uform').style.display='block';return null}
+function clearUser(){localStorage.removeItem('gu');loadUser()}
+function getUser(){const s=JSON.parse(localStorage.getItem('gu')||'null');if(s?.name)return s;const name=document.getElementById('uname').value.trim();if(!name)return null;const u={name};localStorage.setItem('gu',JSON.stringify(u));return u}
+
+/* store */
+function getStore(){const v=sdGet('sd-store');return v==='__m__'?document.getElementById('stMan').value.trim():v}
+
+/* ── Searchable Dropdown Engine ── */
+const sdState={}; // id -> {items, value, onSelect}
+
+function sdInit(id, items, placeholder, onSelect){
+  sdState[id]={items, value:'', label:'', onSelect:onSelect||null};
+  const trigger=document.querySelector(`#${id} .sd-trigger`);
+  if(!trigger)return;
+  trigger.querySelector('.sd-val').textContent=placeholder||'Seçin...';
+  trigger.classList.add('placeholder');
+}
+
+function sdSet(id, value, label){
+  if(!sdState[id])return;
+  sdState[id].value=value;
+  sdState[id].label=label;
+  const trigger=document.querySelector(`#${id} .sd-trigger`);
+  trigger.querySelector('.sd-val').textContent=label||'—';
+  trigger.classList.toggle('placeholder',!label&&!value);
+}
+
+function sdGet(id){return sdState[id]?.value||''}
+function sdGetLabel(id){return sdState[id]?.label||''}
+
+function sdReset(id, placeholder){
+  if(!sdState[id])return;
+  sdState[id].value='';sdState[id].label='';
+  const trigger=document.querySelector(`#${id} .sd-trigger`);
+  if(trigger){trigger.querySelector('.sd-val').textContent=placeholder||'Seçin...';trigger.classList.add('placeholder');}
+}
+let activeSD=null;
+let sdPanel=null;
+
+function toggleSD(id){
+  if(activeSD===id){closeSD();return}
+  closeSD();
+  openSD(id);
+}
+
+function openSD(id){
+  const st=sdState[id];if(!st)return;
+  const trigger=document.querySelector(`#${id} .sd-trigger`);
+  const rect=trigger.getBoundingClientRect();
+
+  // create panel
+  sdPanel=document.createElement('div');
+  sdPanel.className='sd-panel';
+  sdPanel.dataset.sdid=id;
+
+  // position
+  const spaceBelow=window.innerHeight-rect.bottom;
+  const panelH=Math.min(280, spaceBelow-8);
+  sdPanel.style.top=(rect.bottom)+'px';
+  sdPanel.style.left=rect.left+'px';
+  sdPanel.style.width=rect.width+'px';
+  sdPanel.style.maxHeight=panelH+'px';
+
+  // search input
+  const inp=document.createElement('input');
+  inp.type='text';inp.className='sd-search';inp.placeholder='Ara...';
+  inp.setAttribute('autocomplete','off');
+  sdPanel.appendChild(inp);
+
+  // list
+  const list=document.createElement('div');
+  list.className='sd-list';
+  sdPanel.appendChild(list);
+
+  function render(q){
+    const q2=(q||'').toLowerCase().replace(/i/g,'i').replace(/ı/g,'ı');
+    const filtered=st.items.filter(it=>{
+      const lbl=(it.label||it.value||it).toLowerCase();
+      return lbl.includes(q2)||lbl.replace(/i̇/g,'i').replace(/ı/g,'i').includes(q2.replace(/i̇/g,'i').replace(/ı/g,'i'));
+    });
+    list.innerHTML='';
+    if(!filtered.length){list.innerHTML='<div class="sd-empty">Sonuç bulunamadı</div>';return}
+    filtered.forEach(it=>{
+      const val=it.value!==undefined?it.value:(it||'');
+      const lbl=it.label||it.value||it;
+      const div=document.createElement('div');
+      div.className='sd-item'+(st.value===val?' selected':'');
+      div.textContent=lbl;
+      div.addEventListener('click',()=>{
+        sdSet(id,val,lbl);
+        closeSD();
+        if(st.onSelect)st.onSelect(val,lbl);
+      });
+      div.addEventListener('touchstart',()=>div.classList.add('hover'),{passive:true});
+      div.addEventListener('touchend',()=>div.classList.remove('hover'),{passive:true});
+      list.appendChild(div);
+    });
+  }
+
+  render('');
+  inp.addEventListener('input',()=>render(inp.value));
+  document.body.appendChild(sdPanel);
+  activeSD=id;
+  trigger.classList.add('open-style');
+  document.getElementById('sd-backdrop').style.display='block';
+  setTimeout(()=>inp.focus(),100);
+}
+
+function closeSD(){
+  if(sdPanel){sdPanel.remove();sdPanel=null;}
+  if(activeSD){
+    const trigger=document.querySelector(`#${activeSD} .sd-trigger`);
+    if(trigger)trigger.classList.remove('open-style');
+    activeSD=null;
+  }
+  document.getElementById('sd-backdrop').style.display='none';
+}
+
+/* reyon */
+function selR(el){document.querySelectorAll('.chip').forEach(c=>c.classList.remove('sel'));el.classList.add('sel');reyon=el.dataset.r;document.getElementById('rerr').style.display='none'}
+
+/* action bars */
+function showAB(n){
+  ['ab1','ab2','ab3'].forEach(id=>{const el=document.getElementById(id);el.style.display='none'});
+  if(n===1)document.getElementById('ab1').style.display='contents';
+  else if(n===2){const el=document.getElementById('ab2');el.style.display='flex';el.style.flex='1'}
+  else{const el=document.getElementById('ab3');el.style.display='flex';el.style.flex='1'}
+}
+
+/* nav */
+function goP2(){
+  if(!getStore()){alert('Lütfen mağaza seçin.');return}
+  if(!reyon){document.getElementById('rerr').style.display='block';return}
+  const u=getUser();if(!u){alert('Lütfen adınızı girin.');return}
+  loadUser();
+  fillBGs();
+  document.getElementById('p2st').textContent=getStore();
+  document.getElementById('p2mt').textContent=reyon+' Reyonu · '+wl();
+  loadDraft();
+  document.getElementById('p1').style.display='none';
+  document.getElementById('p2').style.display='block';
+  showAB(2);scr();renderNotes();
+}
+function goP1(){closeSD();document.getElementById('p2').style.display='none';document.getElementById('p3').style.display='none';document.getElementById('p1').style.display='block';showAB(1);scr()}
+function goP3(){if(!notes.length){alert('En az bir not ekleyin.');return}buildPV();document.getElementById('p2').style.display='none';document.getElementById('p3').style.display='block';showAB(3);scr()}
+function scr(){document.getElementById('scr').scrollTo({top:0,behavior:'smooth'})}
+
+/* buyer grup / klasman */
+function fillBGs(){
+  const isErkek=reyon==='Erkek';
+  document.getElementById('magField').style.display=isErkek?'block':'none';
+
+  if(isErkek){
+    sdInit('sd-mag', Object.keys(erkekMAG).map(k=>({value:k,label:k})), 'Seçin...', (val)=>{
+      fillBGsFromMAG(val);
+    });
+  }
+  sdInit('sd-bg', [], 'Seçin...', (val)=>{ fillKL(); });
+  sdInit('sd-kl', [], '—', null);
+
+  if(!isErkek){
+    const bgs=(RD[reyon]?.bg||[]).map(b=>({value:b,label:b}));
+    sdState['sd-bg'].items=bgs;
+    sdState['sd-bg'].onSelect=(val)=>fillKL();
+  }
+
+  sdReset('sd-mag','Seçin...');sdReset('sd-bg','Seçin...');sdReset('sd-kl','—');
+}
+
+function fillBGsFromMAG(mag){
+  sdReset('sd-bg','Seçin...');sdReset('sd-kl','—');
+  if(mag && erkekMAG[mag]){
+    const bgs=erkekMAG[mag].bg.map(b=>({value:b,label:b}));
+    sdState['sd-bg'].items=bgs;
+    sdState['sd-bg'].onSelect=()=>fillKL();
+  } else {
+    sdState['sd-bg'].items=[];
+  }
+}
+
+function fillKL(){
+  const bg=sdGet('sd-bg');
+  sdReset('sd-kl','—');
+  let options=[];
+  if(reyon==='Erkek'){const mag=sdGet('sd-mag');options=(erkekMAG[mag]?.kl[bg])||[];}
+  else{options=(RD[reyon]?.kl[bg])||[];}
+  sdState['sd-kl'].items=options.map(k=>({value:k,label:k}));
+}
+
+/* notes */
+function saveNote(){
+  const mag=sdGet('sd-mag'),bg=sdGet('sd-bg'),kl=sdGet('sd-kl'),tx=document.getElementById('nTX').value.trim();
+  const err=document.getElementById('nerr');
+  if(!bg||!tx){err.style.display='block';return}
+  if(reyon==='Erkek'&&!mag){err.style.display='block';return}
+  err.style.display='none';
+
+  if(editingNoteId!==null){
+    const n=notes.find(n=>n.id===editingNoteId);
+    if(n){n.mag=reyon==='Erkek'?mag:'';n.bg=bg;n.kl=kl;n.tx=tx;}
+    editingNoteId=null;
+  } else {
+    notes.push({id:Date.now(),reyon,mag:reyon==='Erkek'?mag:'',bg,kl,tx,photos:[]});
+  }
+  closeSheet();renderNotes();
+}
+function removeNote(id){notes=notes.filter(n=>n.id!==id);renderNotes()}
+function removePh(nid,i){const n=notes.find(n=>n.id===nid);if(n)n.photos.splice(i,1);renderNotes()}
+function editNote(id){
+  const n=notes.find(n=>n.id===id);
+  if(!n)return;
+  editingNoteId=id;
+  fillBGs();
+  // pre-fill MAG
+  if(reyon==='Erkek'&&n.mag){
+    sdSet('sd-mag',n.mag,n.mag);
+    fillBGsFromMAG(n.mag);
+  }
+  // pre-fill BG
+  if(n.bg){
+    sdSet('sd-bg',n.bg,n.bg);
+    fillKL();
+  }
+  // pre-fill KL
+  if(n.kl) sdSet('sd-kl',n.kl,n.kl);
+  document.getElementById('nTX').value=n.tx;
+  document.getElementById('nerr').style.display='none';
+  document.getElementById('sheetTitle').textContent='Notu düzenle';
+  document.getElementById('sheetSaveBtn').textContent='Kaydet';
+  document.getElementById('ov').classList.add('open');
+}
+
+function renderNotes(){
+  const el=document.getElementById('nlist');
+  if(!notes.length){el.innerHTML='<div class="empty"><div class="empty-ico">📋</div><div class="empty-t">Henüz not eklenmedi.<br>Aşağıdan "Not ekle"ye basın.</div></div>';return}
+  el.innerHTML=notes.map(n=>{
+    const rt=RT[n.reyon]||'td';
+    const ph=n.photos.map((p,i)=>`<div class="prel"><img class="pthumb" src="${p.data}" onclick="openLB('${p.data}')"/><span class="pdel" onclick="removePh(${n.id},${i})">×</span></div>`).join('');
+    return `<div class="ncard">
+      <div class="ncard-hdr">
+        <div class="tags">
+          <span class="tag ${rt}">${n.reyon}</span>
+          ${n.mag?`<span class="tag td" style="font-size:10px;font-family:monospace">${n.mag}</span>`:''}
+          <span class="tag td">${n.bg}</span>
+          ${n.kl?`<span class="tag td">${n.kl}</span>`:''}
+        </div>
+        <div style="display:flex;gap:6px;flex-shrink:0">
+          <button class="rm" onclick="editNote(${n.id})" title="Düzenle" style="font-size:15px">✏️</button>
+          <button class="rm" onclick="removeNote(${n.id})">×</button>
+        </div>
+      </div>
+      <div class="ntxt">* ${n.tx}</div>
+      <div class="pstrip">${ph}<div class="padd" onclick="trigPh(${n.id})">+</div></div>
+    </div>`;
+  }).join('');
+}
+
+/* sheet */
+function openSheet(){
+  editingNoteId=null;
+  fillBGs();
+  document.getElementById('nTX').value='';
+  document.getElementById('nerr').style.display='none';
+  document.getElementById('sheetTitle').textContent='Not ekle';
+  document.getElementById('sheetSaveBtn').textContent='Ekle';
+  document.getElementById('ov').classList.add('open');
+}
+function closeSheet(){closeSD();document.getElementById('ov').classList.remove('open')}
+function closeOv(e){if(e.target===document.getElementById('ov'))closeSheet()}
+
+/* photos */
+function trigPh(id){photNoteId=id;document.getElementById('pfi').value='';document.getElementById('pfi').click()}
+function handlePh(){
+  const files=Array.from(document.getElementById('pfi').files);if(!files.length||photNoteId===null)return;
+  const note=notes.find(n=>n.id===photNoteId);if(!note)return;
+  let done=0;files.forEach(f=>{const r=new FileReader();r.onload=e=>{note.photos.push({data:e.target.result,name:f.name});if(++done===files.length)renderNotes()};r.readAsDataURL(f)});
+
+}
+function openLB(src){document.getElementById('lbi').src=src;document.getElementById('lb').classList.add('open')}
+function closeLB(e){if(e.target===document.getElementById('lb')||e.target===document.getElementById('lbi'))document.getElementById('lb').classList.remove('open')}
+
+/* draft */
+function dkey(){return'gd_'+getStore()+'_'+reyon}
+function saveDraft(){localStorage.setItem(dkey(),JSON.stringify(notes));const el=document.getElementById('dok');el.style.display='inline';setTimeout(()=>el.style.display='none',2000)}
+function loadDraft(){const d=localStorage.getItem(dkey());if(d){try{const p=JSON.parse(d);if(p.length&&confirm('Kaydedilmiş taslak var. Yüklensin mi?')){notes=p.map(n=>({...n,photos:n.photos||[]}))}else notes=[]}catch{notes=[]}}else notes=[]}
+
+/* preview */
+function buildPV(){
+  const store=getStore(),user=getUser(),wn=gwn(new Date());
+  const subj=wn+'. Hafta '+store+' '+reyon+' Reyonu Mağaza Ziyaret Notları';
+  let grp={};notes.forEach(n=>{const k=(n.mag?n.mag+'|':'')+n.bg+'|'+(n.kl||'');if(!grp[k])grp[k]={mag:n.mag,bg:n.bg,kl:n.kl,items:[]};grp[k].items.push(n)});
+  let body='Merhaba,\n\n'+wn+'.hafta '+store+' '+reyon+' reyonu mağaza ziyaret notları aşağıdaki gibidir.\n';
+  Object.values(grp).forEach(g=>{
+    body+='\n'+(g.mag?'MAG: '+g.mag+'\n':'')+'Buyer Grup: '+g.bg+'\n';
+    if(g.kl)body+='Klasman: '+g.kl+'\n';
+    g.items.forEach(n=>body+='\n* '+n.tx);body+='\n';
+  });
+  body+='\nİyi çalışmalar,\n'+user.name+'\nLC Waikiki';
+  document.getElementById('pvs').textContent=subj;
+  document.getElementById('pvb').textContent=body;
+  const allPh=notes.flatMap(n=>n.photos.map(p=>({...p,ctx:n.reyon+' / '+n.bg})));
+  const pp=document.getElementById('pvp');
+  if(allPh.length){pp.innerHTML='<div class="pvplbl">Ekli fotoğraflar ('+allPh.length+')</div><div class="pvgrid">'+allPh.map(p=>`<div class="pvpi"><img src="${p.data}" onclick="openLB('${p.data}')"/><div class="pvpilbl">${p.ctx}</div></div>`).join('')+'</div>'}else pp.innerHTML='';
+  window._ms=subj;window._mb=body;window._mp=allPh;
+}
+
+function openMail(){
+  const pn=window._mp?.length?'\n\n['+window._mp.length+' fotoğraf ek olarak eklenecek]':'';
+  window.location.href='mailto:LcwGembaGpt?subject='+encodeURIComponent(window._ms||'')+'&body='+encodeURIComponent((window._mb||'')+pn);
+}
+function copyAll(){
+  navigator.clipboard.writeText('Konu: '+(window._ms||'')+'\n\n'+(window._mb||'')).then(()=>{
+    const t=document.createElement('div');
+    t.textContent='Kopyalandı!';
+    t.style.cssText='position:fixed;bottom:90px;left:50%;transform:translateX(-50%);background:#1a1a18;color:#fff;padding:10px 22px;border-radius:100px;font-size:14px;font-family:DM Sans,sans-serif;z-index:999;pointer-events:none';
+    document.body.appendChild(t);setTimeout(()=>t.remove(),2200);
+  });
+}
+
+showAB(1);loadUser();
+
+/* init store searchable dropdown */
+const storeItems=[
+  {value:'Mall of İstanbul',label:'Mall of İstanbul'},
+  {value:'Cevahir AVM',label:'Cevahir AVM'},
+  {value:'Kanyon',label:'Kanyon'},
+  {value:'İstinyePark',label:'İstinyePark'},
+  {value:'Zorlu Center',label:'Zorlu Center'},
+  {value:'Capacity AVM',label:'Capacity AVM'},
+  {value:'Marmara Forum',label:'Marmara Forum'},
+  {value:'Optimum Outlet Ataşehir',label:'Optimum Outlet Ataşehir'},
+  {value:'Emaar Square Mall',label:'Emaar Square Mall'},
+  {value:'Viaport Asia',label:'Viaport Asia'},
+  {value:'ANKAmall',label:'ANKAmall'},
+  {value:'Armada AVM',label:'Armada AVM'},
+  {value:'Ankuva AVM',label:'Ankuva AVM'},
+  {value:'Özdilek Ankara',label:'Özdilek Ankara'},
+  {value:'Korupark Bursa',label:'Korupark Bursa'},
+  {value:'Forum Bornova',label:'Forum Bornova'},
+  {value:'Agora AVM İzmir',label:'Agora AVM İzmir'},
+  {value:'__m__',label:'Diğer (Manuel Gir)'},
+];
+sdInit('sd-store', storeItems, 'Mağaza seçin...', (val)=>{
+  document.getElementById('mwrap').style.display=val==='__m__'?'block':'none';
+});
+</script>
+</body>
+</html>
