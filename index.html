@@ -472,6 +472,7 @@ const erkekMAG={
   "BUSP":{bg:["PİJAMA"],kl:{"PİJAMA":["İÇGYM ÖRME PİJAMA TAKIM K.KOL-K.PAÇA","İÇGYM ÖRME PİJAMA TAKIM K.KOL-U.PAÇA","İÇGYM ÖRME PİJAMA TAKIM U.KOL-U.PAÇA","İÇGYM ÖRME PİJAMA TEK ALT KISA","İÇGYM ÖRME PİJAMA TEK ALT UZUN","İÇGYM ÖRME PİJAMA TEK ÜST","İÇGYM TERMAL ÜST","PİJAMA TERMAL ALT"]}},
 };
 
+
 let notes=[],reyon='',photNoteId=null,editingNoteId=null,lastMAG='',inlinePhotos=[];
 
 /* week */
@@ -782,24 +783,45 @@ function dataURLtoBlob(d){
   while(n--)u[n]=b.charCodeAt(n);return new Blob([u],{type:m});
 }
 
-function autoSaveToGallery(dataURL, filename){
+async function autoSaveToGallery(dataURL, filename){
   try{
     const blob=dataURLtoBlob(dataURL);
-    const url=URL.createObjectURL(blob);
-    const a=document.createElement('a');
-    a.href=url;
-    a.download=filename||('gemba_'+Date.now()+'.jpg');
-    document.body.appendChild(a);
-    a.click();
-    setTimeout(()=>{URL.revokeObjectURL(url);a.remove();},500);
-    // Toast
-    const t=document.createElement('div');
-    t.textContent='📥 Fotoğraf kaydedildi';
-    t.style.cssText='position:fixed;bottom:100px;left:50%;transform:translateX(-50%);background:#1a9e6e;color:#fff;padding:10px 20px;border-radius:100px;font-size:14px;font-family:DM Sans,sans-serif;z-index:9999;pointer-events:none;white-space:nowrap';
-    document.body.appendChild(t);setTimeout(()=>t.remove(),2500);
+    const isIOS=/iphone|ipad|ipod/i.test(navigator.userAgent);
+
+    if(isIOS){
+      // iOS: Web Share API ile kaydet
+      const file=new File([blob],filename||('gemba_'+Date.now()+'.jpg'),{type:'image/jpeg'});
+      if(navigator.share && navigator.canShare && navigator.canShare({files:[file]})){
+        await navigator.share({files:[file], title:'Gemba Fotoğrafı'});
+      } else {
+        // iOS Safari fallback: resmi yeni sekmede aç, kullanıcı uzun basıp kaydeder
+        const url=URL.createObjectURL(blob);
+        window.open(url,'_blank');
+        setTimeout(()=>URL.revokeObjectURL(url),3000);
+        showToast('📥 Resme uzun basıp "Kaydet" seçin');
+        return;
+      }
+    } else {
+      // Android: direkt download
+      const url=URL.createObjectURL(blob);
+      const a=document.createElement('a');
+      a.href=url;
+      a.download=filename||('gemba_'+Date.now()+'.jpg');
+      document.body.appendChild(a);
+      a.click();
+      setTimeout(()=>{URL.revokeObjectURL(url);a.remove();},500);
+    }
+    showToast('📥 Fotoğraf kaydedildi');
   }catch(e){
-    console.log('Galeri kayıt hatası:', e.message);
+    console.log('Galeri kayıt:', e.message);
   }
+}
+
+function showToast(msg){
+  const t=document.createElement('div');
+  t.textContent=msg;
+  t.style.cssText='position:fixed;bottom:100px;left:50%;transform:translateX(-50%);background:#1a9e6e;color:#fff;padding:10px 20px;border-radius:100px;font-size:14px;font-family:DM Sans,sans-serif;z-index:9999;pointer-events:none;white-space:nowrap';
+  document.body.appendChild(t);setTimeout(()=>t.remove(),2500);
 }
 /* photos — note strip */
 function trigPh(id){
