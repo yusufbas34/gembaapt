@@ -777,6 +777,33 @@ function openSheet(){
 function closeSheet(){closeSD();document.getElementById('ov').classList.remove('open')}
 function closeOv(e){if(e.target===document.getElementById('ov'))closeSheet()}
 
+
+/* ── Fotoğrafı galeriye kaydet ── */
+function dataURLtoBlob(d){
+  const a=d.split(',');const m=a[0].match(/:(.*?);/)[1];
+  const b=atob(a[1]);let n=b.length;const u=new Uint8Array(n);
+  while(n--)u[n]=b.charCodeAt(n);return new Blob([u],{type:m});
+}
+
+function autoSaveToGallery(dataURL, filename){
+  try{
+    const blob=dataURLtoBlob(dataURL);
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement('a');
+    a.href=url;
+    a.download=filename||('gemba_'+Date.now()+'.jpg');
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(()=>{URL.revokeObjectURL(url);a.remove();},500);
+    // Toast
+    const t=document.createElement('div');
+    t.textContent='📥 Fotoğraf kaydedildi';
+    t.style.cssText='position:fixed;bottom:100px;left:50%;transform:translateX(-50%);background:#1a9e6e;color:#fff;padding:10px 20px;border-radius:100px;font-size:14px;font-family:DM Sans,sans-serif;z-index:9999;pointer-events:none;white-space:nowrap';
+    document.body.appendChild(t);setTimeout(()=>t.remove(),2500);
+  }catch(e){
+    console.log('Galeri kayıt hatası:', e.message);
+  }
+}
 /* photos — note strip */
 function trigPh(id){
   photNoteId=id;
@@ -804,7 +831,17 @@ function handlePh(sourceId){
   if(!files.length||photNoteId===null)return;
   const note=notes.find(n=>n.id===photNoteId);if(!note)return;
   let done=0;
-  files.forEach(f=>{const r=new FileReader();r.onload=e=>{note.photos.push({data:e.target.result,name:f.name});if(++done===files.length)renderNotes()};r.readAsDataURL(f)});
+  files.forEach(f=>{
+    const r=new FileReader();
+    r.onload=e=>{
+      const data=e.target.result;
+      note.photos.push({data,name:f.name});
+      // Kameradan çekildiyse otomatik galeriye kaydet
+      if(sourceId==='pfi-cam') autoSaveToGallery(data, f.name||'gemba_foto.jpg');
+      if(++done===files.length)renderNotes();
+    };
+    r.readAsDataURL(f);
+  });
 }
 
 /* photos — inline (inside note text area) */
@@ -815,13 +852,17 @@ function trigPhInline(mode){
 function handlePhInline(){
   const camFiles=document.getElementById('pfi-inline-cam').files;
   const galFiles=document.getElementById('pfi-inline').files;
-  const files=Array.from(camFiles.length?camFiles:galFiles);
+  const isCam=camFiles.length>0;
+  const files=Array.from(isCam?camFiles:galFiles);
   if(!files.length)return;
   let done=0;
   files.forEach(f=>{
     const r=new FileReader();
     r.onload=e=>{
-      inlinePhotos.push({data:e.target.result,name:f.name});
+      const data=e.target.result;
+      inlinePhotos.push({data,name:f.name});
+      // Kameradan çekildiyse otomatik galeriye kaydet
+      if(isCam) autoSaveToGallery(data, f.name||'gemba_foto.jpg');
       if(++done===files.length)renderInlineStrip();
     };
     r.readAsDataURL(f);
@@ -839,23 +880,11 @@ function renderInlineStrip(){
 }
 function removeInlinePh(i){inlinePhotos.splice(i,1);renderInlineStrip();}
 function openLB(src){document.getElementById('lbi').src=src;document.getElementById('lb').classList.add('open')}
-async function saveLBPhoto(e){
+function saveLBPhoto(e){
   e.stopPropagation();
   const src=document.getElementById('lbi').src;
   if(!src)return;
-  function dataURLtoBlob(d){const a=d.split(',');const m=a[0].match(/:(.*?);/)[1];const b=atob(a[1]);let n=b.length;const u=new Uint8Array(n);while(n--)u[n]=b.charCodeAt(n);return new Blob([u],{type:m});}
-  try{
-    const blob=dataURLtoBlob(src);
-    const file=new File([blob],'gemba_foto.jpg',{type:'image/jpeg'});
-    if(navigator.share&&navigator.canShare&&navigator.canShare({files:[file]})){
-      await navigator.share({files:[file],title:'Gemba Fotoğrafı'});
-    } else {
-      const url=URL.createObjectURL(blob);
-      const a=document.createElement('a');a.href=url;a.download='gemba_foto.jpg';
-      document.body.appendChild(a);a.click();
-      setTimeout(()=>{URL.revokeObjectURL(url);a.remove();},500);
-    }
-  }catch(err){console.log(err);}
+  autoSaveToGallery(src,'gemba_foto.jpg');
 }
 function closeLB(e){if(e.target===document.getElementById('lb')||e.target===document.getElementById('lbi'))document.getElementById('lb').classList.remove('open')}
 
