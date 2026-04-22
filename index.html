@@ -7,10 +7,14 @@
 <meta name="apple-mobile-web-app-capable" content="yes"/>
 <meta name="apple-mobile-web-app-status-bar-style" content="default"/>
 <meta name="theme-color" content="#ffffff"/>
-<link rel="apple-touch-icon" href="/gemba.png"/>
+<link rel="apple-touch-icon" sizes="192x192" href="/gemba.png"/>
+<link rel="apple-touch-icon" sizes="512x512" href="/gemba.png"/>
+<link rel="manifest" href="/manifest.json"/>
 <link rel="icon" type="image/png" href="/gemba.png"/>
 <title>Gemba Ziyaret</title>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600&display=swap" rel="stylesheet"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <style>
 :root{
   --bg:#fff;--bg2:#f6f5f2;--bg3:#eeedea;
@@ -29,9 +33,9 @@ body{display:flex;flex-direction:column;overflow:hidden}
 .topbar{
   flex-shrink:0;display:flex;align-items:center;justify-content:space-between;
   padding:14px 20px 12px;padding-top:calc(14px + var(--st));
-  border-bottom:0.5px solid var(--border);background:var(--bg);z-index:100;
+  border-bottom:0.5px solid var(--border);background:var(--bg);z-index:500;
 }
-.logo{font-size:16px;font-weight:600;letter-spacing:-.4px}
+.logo{font-size:16px;font-weight:600;letter-spacing:-.4px;min-height:44px;display:flex;align-items:center;padding:0 4px}
 .logo span{color:var(--text2);font-weight:400}
 .wk{font-size:12px;color:var(--text3)}
 
@@ -255,12 +259,12 @@ textarea{resize:none;line-height:1.5}
 <body>
 
 <div class="topbar">
-  <div class="logo">Gemba<span>GPT</span></div>
+  <div class="logo" onclick="goHome()" style="cursor:pointer">Gemba<span>GPT</span></div>
   <div class="wk" id="topWeek"></div>
 </div>
 
 <!-- Install prompt -->
-<div id="installBanner" style="display:none;background:#1a1a18;color:#fff;padding:10px 16px;display:none;align-items:center;justify-content:space-between;gap:10px;flex-shrink:0">
+<div id="installBanner" style="display:none;background:#1a1a18;color:#fff;padding:10px 16px;align-items:center;justify-content:space-between;gap:10px;flex-shrink:0">
   <div style="font-size:13px;line-height:1.4">📲 <strong>Ana ekrana ekle</strong><br><span style="opacity:.75;font-size:12px">Uygulama gibi kullan</span></div>
   <button id="installBtn" onclick="doInstall()" style="background:#fff;color:#1a1a18;border:none;border-radius:8px;padding:8px 14px;font-size:13px;font-weight:500;cursor:pointer;white-space:nowrap;font-family:DM Sans,sans-serif">Ekle</button>
   <button onclick="document.getElementById('installBanner').style.display='none'" style="background:none;border:none;color:rgba(255,255,255,.6);font-size:20px;cursor:pointer;padding:0;line-height:1">×</button>
@@ -352,6 +356,8 @@ textarea{resize:none;line-height:1.5}
     <div style="height:90px"></div>
   </div>
 
+  <!-- Hidden PDF render area -->
+  <div id="pdfRender" style="position:fixed;left:-9999px;top:0;width:390px;background:#fff;padding:24px;font-family:Arial,sans-serif;z-index:-1"></div>
 </div><!-- /scroll -->
 
 <!-- Action bar -->
@@ -360,8 +366,7 @@ textarea{resize:none;line-height:1.5}
   <div id="ab2" style="display:none;flex:1;gap:10px"><button class="btn-ico" onclick="goP1()">←</button><button class="btn-p" onclick="goP3()">Önizleme →</button></div>
   <div id="ab3" style="display:none;flex:1;gap:10px;flex-wrap:wrap">
     <button class="btn-ico" onclick="goP2fromP3()">←</button>
-    <button class="btn-p" onclick="openMail()" style="flex:1">✉ Mail Aç</button>
-    <button class="btn-s" onclick="copyAll()">Mail içerik kopyala</button>
+    <button class="btn-p" onclick="smartSendMail()" style="flex:1" id="mailBtn">✉ Mail Gönder</button>
     <button class="btn-s" onclick="saveVisit()" style="background:var(--green);color:#fff;border-color:var(--green)">💾 Kaydet</button>
   </div>
 </div>
@@ -417,7 +422,10 @@ textarea{resize:none;line-height:1.5}
 </div>
 
 <!-- Lightbox -->
-<div class="lb" id="lb" onclick="closeLB(event)"><img id="lbi"/></div>
+<div class="lb" id="lb" onclick="closeLB(event)">
+  <img id="lbi"/>
+  <button onclick="saveLBPhoto(event)" style="position:fixed;bottom:40px;left:50%;transform:translateX(-50%);background:#fff;color:#1a1a18;border:none;border-radius:100px;padding:12px 24px;font-size:15px;font-weight:500;font-family:DM Sans,sans-serif;cursor:pointer;z-index:1000">📥 Kaydet</button>
+</div>
 <!-- SD backdrop -->
 <div id="sd-backdrop" style="position:fixed;inset:0;z-index:9998;display:none" onclick="closeSD()"></div>
 
@@ -598,6 +606,18 @@ function closeSD(){
 function selR(el){document.querySelectorAll('.chip').forEach(c=>c.classList.remove('sel'));el.classList.add('sel');reyon=el.dataset.r;document.getElementById('rerr').style.display='none'}
 
 /* action bars */
+function goHome(){
+  if(notes.length&&!confirm('Ana sayfaya dönmek istediğinize emin misiniz? Kaydedilmemiş değişiklikler kaybolabilir.'))return;
+  notes=[];reyon='';inlinePhotos=[];editingNoteId=null;lastMAG='';
+  document.querySelectorAll('.chip').forEach(c=>c.classList.remove('sel'));
+  closeSD();
+  document.getElementById('p2').style.display='none';
+  document.getElementById('p3').style.display='none';
+  document.getElementById('p1').style.display='block';
+  showAB(1);
+  document.getElementById('scr').scrollTo({top:0,behavior:'smooth'});
+  renderHistory();
+}
 function showAB(n){
   ['ab1','ab2','ab3'].forEach(id=>{const el=document.getElementById(id);el.style.display='none'});
   if(n===1)document.getElementById('ab1').style.display='contents';
@@ -819,6 +839,24 @@ function renderInlineStrip(){
 }
 function removeInlinePh(i){inlinePhotos.splice(i,1);renderInlineStrip();}
 function openLB(src){document.getElementById('lbi').src=src;document.getElementById('lb').classList.add('open')}
+async function saveLBPhoto(e){
+  e.stopPropagation();
+  const src=document.getElementById('lbi').src;
+  if(!src)return;
+  function dataURLtoBlob(d){const a=d.split(',');const m=a[0].match(/:(.*?);/)[1];const b=atob(a[1]);let n=b.length;const u=new Uint8Array(n);while(n--)u[n]=b.charCodeAt(n);return new Blob([u],{type:m});}
+  try{
+    const blob=dataURLtoBlob(src);
+    const file=new File([blob],'gemba_foto.jpg',{type:'image/jpeg'});
+    if(navigator.share&&navigator.canShare&&navigator.canShare({files:[file]})){
+      await navigator.share({files:[file],title:'Gemba Fotoğrafı'});
+    } else {
+      const url=URL.createObjectURL(blob);
+      const a=document.createElement('a');a.href=url;a.download='gemba_foto.jpg';
+      document.body.appendChild(a);a.click();
+      setTimeout(()=>{URL.revokeObjectURL(url);a.remove();},500);
+    }
+  }catch(err){console.log(err);}
+}
 function closeLB(e){if(e.target===document.getElementById('lb')||e.target===document.getElementById('lbi'))document.getElementById('lb').classList.remove('open')}
 
 /* draft */
@@ -897,23 +935,294 @@ function buildPV(){
   window._ms=subj;window._mb=body;window._mp=allPh;window._to=to;window._cc=cc;
 }
 
-function saveAllPhotos(){
+async function saveAllPhotos(){
   const photos=window._mp||[];
   if(!photos.length)return;
-  photos.forEach((p,i)=>{
-    setTimeout(()=>{
-      const a=document.createElement('a');
-      a.href=p.data;
-      a.download='gemba_foto_'+(i+1)+'.jpg';
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-    },i*300);
+  
+  function showToast(msg){
+    const t=document.createElement('div');
+    t.textContent=msg;
+    t.style.cssText='position:fixed;bottom:90px;left:50%;transform:translateX(-50%);background:#1a1a18;color:#fff;padding:10px 22px;border-radius:100px;font-size:14px;font-family:DM Sans,sans-serif;z-index:9999;pointer-events:none;white-space:nowrap';
+    document.body.appendChild(t);setTimeout(()=>t.remove(),3000);
+  }
+
+  // Convert base64 dataURL to Blob
+  function dataURLtoBlob(dataURL){
+    const arr=dataURL.split(',');
+    const mime=arr[0].match(/:(.*?);/)[1];
+    const bstr=atob(arr[1]);
+    let n=bstr.length;
+    const u8arr=new Uint8Array(n);
+    while(n--)u8arr[n]=bstr.charCodeAt(n);
+    return new Blob([u8arr],{type:mime});
+  }
+
+  // Try Web Share API first (best on Android/iOS)
+  if(navigator.share && navigator.canShare){
+    try{
+      const files=photos.map((p,i)=>{
+        const blob=dataURLtoBlob(p.data);
+        return new File([blob],'gemba_foto_'+(i+1)+'.jpg',{type:'image/jpeg'});
+      });
+      if(navigator.canShare({files})){
+        await navigator.share({files,title:'Gemba Fotoğrafları'});
+        return;
+      }
+    }catch(e){console.log('Share failed',e);}
+  }
+
+  // Fallback: download one by one
+  for(let i=0;i<photos.length;i++){
+    await new Promise(res=>{
+      setTimeout(()=>{
+        const blob=dataURLtoBlob(photos[i].data);
+        const url=URL.createObjectURL(blob);
+        const a=document.createElement('a');
+        a.href=url;
+        a.download='gemba_foto_'+(i+1)+'.jpg';
+        document.body.appendChild(a);
+        a.click();
+        setTimeout(()=>{URL.revokeObjectURL(url);document.body.removeChild(a);},500);
+        res();
+      },i*400);
+    });
+  }
+  showToast(photos.length+' fotoğraf kaydediliyor...');
+}
+
+
+/* ── Smart Mail: önce local listener dene, yoksa mailto fallback ── */
+const LISTENER_URL = 'http://127.0.0.1:5678';
+
+async function checkListener(){
+  try{
+    const r = await fetch(LISTENER_URL+'/health',{method:'GET',signal:AbortSignal.timeout(1500)});
+    return r.ok;
+  }catch(e){return false;}
+}
+
+async function smartSendMail(){
+  const btn=document.getElementById('mailBtn');
+  btn.textContent='⏳ Kontrol...';
+  btn.disabled=true;
+
+  try{
+    const hasListener = await checkListener();
+
+    if(hasListener){
+      await sendViaListener();
+    } else {
+      // Show install hint once
+      if(!localStorage.getItem('listenerHintShown')){
+        const use = confirm(
+          '💡 GembaGPT Mail Listener kurulu değil.\n\n'+
+          'Listener kurulursa:\n'+
+          '• Mail LC Waikiki hesabınızdan gider\n'+
+          '• Fotoğraflar maile gömülür\n'+
+          '• Tek tıkla gönderim\n\n'+
+          'Şimdi mailto ile aç. Listener kurmak için gemba_listener.py'yi indirin.'
+        );
+        localStorage.setItem('listenerHintShown','1');
+        if(!use){btn.textContent='✉ Mail Gönder';btn.disabled=false;return;}
+      }
+      openMailFallback();
+    }
+  } finally {
+    btn.textContent='✉ Mail Gönder';
+    btn.disabled=false;
+  }
+}
+
+async function sendViaListener(){
+  const store=getStore(),user=getUser()||{name:''},wn=gwn(new Date());
+  const {to,cc}=getMailRecipients();
+
+  // Build groups data
+  let grp={};
+  notes.forEach(n=>{
+    const k=(n.mag?n.mag+'|':'')+n.bg+'|'+(n.kl||'');
+    if(!grp[k])grp[k]={mag:n.mag,bg:n.bg,kl:n.kl,items:[],photos:[]};
+    grp[k].items.push(n.tx);
+    // Collect photos from this note
+    (n.photos||[]).forEach(p=>grp[k].photos.push(p.data));
   });
-  const t=document.createElement('div');
-  t.textContent=photos.length+' fotoğraf indiriliyor...';
-  t.style.cssText='position:fixed;bottom:90px;left:50%;transform:translateX(-50%);background:#1a1a18;color:#fff;padding:10px 22px;border-radius:100px;font-size:14px;font-family:DM Sans,sans-serif;z-index:999;pointer-events:none';
-  document.body.appendChild(t);setTimeout(()=>t.remove(),2500);
+
+  // Plain text for GembaGPT
+  let plain=`${wn}.hafta ${store} ${reyon} reyonu mağaza ziyaret geri bildirimleri:\n\n`;
+  Object.values(grp).forEach(g=>{
+    if(g.mag)plain+=`MAG: ${g.mag}\n`;
+    plain+=`Buyer Grup: ${g.bg}\n`;
+    if(g.kl)plain+=`Klasman: ${g.kl}\n`;
+    g.items.forEach(i=>plain+=`• ${i}\n`);
+    plain+=`\n`;
+  });
+  plain+=`İyi çalışmalar,\n${user.name}\nLC Waikiki`;
+
+  const payload={
+    subject: window._ms||`${wn}. Hafta ${store} ${reyon} Reyonu Mağaza Ziyaret Geri Bildirimleri`,
+    to: to?to.split(';').map(s=>s.trim()).filter(Boolean):[],
+    cc: [cc||'lcwgembagpt@lcwaikiki.com'],
+    store, reyon, week:wn, username:user.name,
+    groups: Object.values(grp),
+    plain
+  };
+
+  const btn=document.getElementById('mailBtn');
+  btn.textContent='📨 Gönderiliyor...';
+
+  const resp = await fetch(LISTENER_URL+'/send-mail',{
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify(payload)
+  });
+
+  const result = await resp.json();
+  if(result.success){
+    const t=document.createElement('div');
+    t.textContent='✓ Mail gönderildi!';
+    t.style.cssText='position:fixed;bottom:90px;left:50%;transform:translateX(-50%);background:var(--green);color:#fff;padding:12px 24px;border-radius:100px;font-size:15px;font-family:DM Sans,sans-serif;z-index:9999;pointer-events:none';
+    document.body.appendChild(t);setTimeout(()=>t.remove(),3000);
+  } else {
+    alert('Hata: '+result.error);
+  }
+}
+
+function openMailFallback(){
+  const pn=window._mp?.length?'\n\n['+window._mp.length+' fotoğraf mevcut — listener ile gönderin]':'';
+  const to=window._to||'';
+  const cc=window._cc||'lcwgembagpt@lcwaikiki.com';
+  window.location.href='mailto:'+encodeURIComponent(to)+
+    '?cc='+encodeURIComponent(cc)+
+    '&subject='+encodeURIComponent(window._ms||'')+
+    '&body='+encodeURIComponent((window._mb||'')+pn);
+}
+
+async function openMailWithPDF(){
+  const btn=document.getElementById('mailBtn');
+  btn.textContent='⏳ Hazırlanıyor...';
+  btn.disabled=true;
+
+  try{
+    // Build PDF render HTML
+    const store=getStore(),user=getUser()||{name:''},wn=gwn(new Date());
+    let grp={};notes.forEach(n=>{
+      const k=(n.mag?n.mag+'|':'')+n.bg+'|'+(n.kl||'');
+      if(!grp[k])grp[k]={mag:n.mag,bg:n.bg,kl:n.kl,items:[]};
+      grp[k].items.push(n);
+    });
+
+    let html=`<div style="font-family:Arial,sans-serif;color:#1a1a18;padding:0">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;padding-bottom:12px;border-bottom:2px solid #1a1a18">
+        <div>
+          <div style="font-size:20px;font-weight:700">GembaGPT</div>
+          <div style="font-size:13px;color:#666">Mağaza Ziyaret Geri Bildirimi</div>
+        </div>
+      </div>
+      <div style="font-size:13px;color:#444;margin-bottom:16px">${wn}. Hafta &nbsp;·&nbsp; <strong>${store}</strong> &nbsp;·&nbsp; ${reyon} Reyonu &nbsp;·&nbsp; ${new Date().toLocaleDateString('tr-TR')}</div>`;
+
+    Object.values(grp).forEach(g=>{
+      html+=`<div style="margin-bottom:16px;padding:12px;border:1px solid #eee;border-radius:8px;background:#fafafa">`;
+      if(g.mag) html+=`<div style="font-size:17px;font-weight:700;color:#1a1a18;margin-bottom:4px">📦 ${g.mag}</div>`;
+      html+=`<div style="font-size:14px;font-weight:600;color:#333;margin-bottom:2px">👔 ${g.bg}</div>`;
+      if(g.kl) html+=`<div style="font-size:12px;color:#888;margin-bottom:8px">${g.kl}</div>`;
+      g.items.forEach(n=>{
+        html+=`<div style="font-size:13px;color:#222;padding:4px 0 4px 8px;border-left:3px solid #1a1a18;margin:4px 0">• ${n.tx}</div>`;
+      });
+      html+=`</div>`;
+    });
+
+    html+=`<div style="margin-top:16px;padding-top:12px;border-top:1px solid #eee;font-size:13px;color:#444">
+      İyi çalışmalar,<br><strong>${user.name}</strong><br>LC Waikiki
+    </div></div>`;
+
+    // Render to canvas
+    const renderDiv=document.getElementById('pdfRender');
+    renderDiv.innerHTML=html;
+    renderDiv.style.left='0';
+    renderDiv.style.zIndex='9999';
+    renderDiv.style.top='0';
+
+    await new Promise(r=>setTimeout(r,200));
+
+    const canvas=await html2canvas(renderDiv,{
+      scale:2,
+      useCORS:true,
+      backgroundColor:'#ffffff',
+      width:390,
+      windowWidth:390
+    });
+
+    renderDiv.style.left='-9999px';
+    renderDiv.style.zIndex='-1';
+
+    // Convert to PDF
+    const {jsPDF}=window.jspdf;
+    const pdf=new jsPDF({orientation:'portrait',unit:'px',format:'a4'});
+    const pdfW=pdf.internal.pageSize.getWidth();
+    const pdfH=(canvas.height*pdfW)/canvas.width;
+    pdf.addImage(canvas.toDataURL('image/jpeg',0.95),'JPEG',0,0,pdfW,pdfH);
+
+    // Plain text for GembaGPT (small font note at bottom)
+    let plainText=`${wn}.hafta ${store} ${reyon} reyonu mağaza ziyaret geri bildirimleri:
+
+`;
+    Object.values(grp).forEach(g=>{
+      if(g.mag)plainText+=`MAG: ${g.mag}
+`;
+      plainText+=`Buyer Grup: ${g.bg}
+`;
+      if(g.kl)plainText+=`Klasman: ${g.kl}
+`;
+      g.items.forEach(n=>plainText+=`• ${n.tx}
+`);
+      plainText+=`
+`;
+    });
+    plainText+=`İyi çalışmalar,
+${user.name}
+LC Waikiki`;
+
+    // Save PDF
+    const pdfBlob=pdf.output('blob');
+    const pdfUrl=URL.createObjectURL(pdfBlob);
+    const a=document.createElement('a');
+    a.href=pdfUrl;
+    a.download=`gemba_${store}_${wn}hafta.pdf`;
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(()=>{URL.revokeObjectURL(pdfUrl);a.remove();},1000);
+
+    // Store plain text for mailto
+    window._mb=plainText;
+    window._ms=window._ms||`${wn}. Hafta ${store} ${reyon} Reyonu Mağaza Ziyaret Notları`;
+
+    // Wait a bit then open mail
+    await new Promise(r=>setTimeout(r,800));
+
+    // Open mail
+    const hasPhotos=window._mp&&window._mp.length>0;
+    if(hasPhotos){
+      confirm('📎 '+window._mp.length+' fotoğraf var. PDF eke eklendi — fotoğrafları da ayrıca ekleyin.');
+    }
+    const bodyText=plainText+`
+
+---
+📎 Detaylı özet PDF olarak ekte bulunmaktadır.
+Not: Bu mail GembaGPT sistemi üzerinden oluşturulmuştur.`;
+    const to=window._to||'';
+    const cc=window._cc||'lcwgembagpt@lcwaikiki.com';
+    window.location.href='mailto:'+encodeURIComponent(to)+
+      '?cc='+encodeURIComponent(cc)+
+      '&subject='+encodeURIComponent(window._ms||'')+
+      '&body='+encodeURIComponent(bodyText);
+
+  }catch(err){
+    console.error(err);
+    alert('Hata: '+err.message);
+  }finally{
+    btn.textContent='✉ Mail Hazırla';
+    btn.disabled=false;
+  }
 }
 
 function openMail(){
@@ -961,23 +1270,30 @@ let currentHistVisit=null;
 
 function saveVisit(){
   if(!notes.length){alert('Kaydedilecek geri bildirim yok.');return}
-  // ensure preview is built
   buildPV();
   const store=getStore(),user=getUser(),wn=gwn(new Date());
+  // Strip photos to avoid localStorage quota — photos stay in memory only
+  const notesNoPhotos=notes.map(n=>({...n,photos:[]}));
   const visit={
     id:Date.now(),
     store,reyon,
     week:wn,
     date:new Date().toLocaleDateString('tr-TR'),
     user:user?.name||'',
-    notes:JSON.parse(JSON.stringify(notes)),
+    notes:notesNoPhotos,
     subject:window._ms||'',
     body:window._mb||''
   };
   const all=JSON.parse(localStorage.getItem('gemba_history')||'[]');
   all.unshift(visit);
-  if(all.length>50)all.splice(50);
-  localStorage.setItem('gemba_history',JSON.stringify(all));
+  if(all.length>30)all.splice(30);
+  try{
+    localStorage.setItem('gemba_history',JSON.stringify(all));
+  }catch(e){
+    // quota exceeded - try with fewer items
+    all.splice(10);
+    try{localStorage.setItem('gemba_history',JSON.stringify(all));}catch(e2){}
+  }
   const t=document.createElement('div');
   t.textContent='✓ Ziyaret kaydedildi!';
   t.style.cssText='position:fixed;bottom:90px;left:50%;transform:translateX(-50%);background:var(--green);color:#fff;padding:10px 22px;border-radius:100px;font-size:14px;font-family:DM Sans,sans-serif;z-index:999;pointer-events:none';
