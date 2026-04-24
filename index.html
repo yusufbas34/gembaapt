@@ -789,16 +789,22 @@ async function autoSaveToGallery(dataURL, filename){
     const isIOS=/iphone|ipad|ipod/i.test(navigator.userAgent);
 
     if(isIOS){
-      // iOS: Web Share API ile kaydet
+      // iOS: Web Share API - tek tıkla "Fotoğraflara Kaydet"
       const file=new File([blob],filename||('gemba_'+Date.now()+'.jpg'),{type:'image/jpeg'});
-      if(navigator.share && navigator.canShare && navigator.canShare({files:[file]})){
-        await navigator.share({files:[file], title:'Gemba Fotoğrafı'});
-      } else {
-        // iOS Safari fallback: resmi yeni sekmede aç, kullanıcı uzun basıp kaydeder
-        const url=URL.createObjectURL(blob);
-        window.open(url,'_blank');
-        setTimeout(()=>URL.revokeObjectURL(url),3000);
-        showToast('📥 Resme uzun basıp "Kaydet" seçin');
+      try{
+        if(navigator.share && navigator.canShare && navigator.canShare({files:[file]})){
+          await navigator.share({files:[file], title:'Gemba Fotoğrafı'});
+          showToast('📥 Fotoğraf kaydedildi');
+          return;
+        }
+      }catch(shareErr){
+        if(shareErr.name!=='AbortError'){
+          // Share başarısız - yeni sekmede aç
+          const url=URL.createObjectURL(blob);
+          window.open(url,'_blank');
+          setTimeout(()=>URL.revokeObjectURL(url),3000);
+          showToast('Resme uzun basıp "Fotoğrafa Kaydet" seçin');
+        }
         return;
       }
     } else {
@@ -948,13 +954,26 @@ function buildPV(){
   const userName=user?.name||'';
   const subj=wn+'. Hafta '+store+' '+reyon+' Reyonu Mağaza Ziyaret Notları';
   let grp={};notes.forEach(n=>{const k=(n.mag?n.mag+'|':'')+n.bg+'|'+(n.kl||'');if(!grp[k])grp[k]={mag:n.mag,bg:n.bg,kl:n.kl,items:[]};grp[k].items.push(n)});
-  let body='Merhaba,\n\n'+wn+'.hafta '+store+' '+reyon+' reyonu mağaza ziyaret geri bildirimleri aşağıdaki gibidir.\n';
+  let body='Merhaba,\n\n'+wn+'.hafta '+store+' '+reyon+' reyonu mağaza ziyaret geri bildirimleri:\n';
   Object.values(grp).forEach(g=>{
-    body+='\n'+(g.mag?'MAG: '+g.mag+'\n':'')+'Buyer Grup: '+g.bg+'\n';
-    if(g.kl)body+='Klasman: '+g.kl+'\n';
-    g.items.forEach(n=>body+='\n• '+n.tx);body+='\n';
+    if(g.mag)body+='\n▌ MAG: '+g.mag+'\n';
+    body+='  Buyer Grup: '+g.bg+'\n';
+    if(g.kl)body+='  Klasman: '+g.kl+'\n';
+    g.items.forEach(n=>body+='\n  • '+n.tx);
+    body+='\n';
   });
   body+='\nİyi çalışmalar,\n'+userName+'\nLC Waikiki';
+  let gembaText='\n\n'+'='.repeat(40)+'\nGEMBAGPTANALİZ:\n';
+  gembaText+='HAFTA:'+wn+'|MAGAZA:'+store+'|REYON:'+reyon+'\n';
+  Object.values(grp).forEach(g=>{
+    if(g.mag)gembaText+='MAG:'+g.mag+';';
+    gembaText+='BG:'+g.bg+';';
+    if(g.kl)gembaText+='KL:'+g.kl+';';
+    g.items.forEach(n=>gembaText+='NOT:'+n.tx+';');
+    gembaText+='\n';
+  });
+  gembaText+='='.repeat(40);
+  body+=gembaText;
   document.getElementById('pvs').textContent=subj;
   // HTML preview for screen
   let htmlParts='<p style="margin:0 0 14px 0;font-size:14px">Merhaba,</p>';
@@ -1136,13 +1155,47 @@ async function sendViaListener(){
 }
 
 function openMailFallback(){
-  const pn=window._mp?.length?'\n\n['+window._mp.length+' fotoğraf mevcut — listener ile gönderin]':'';
+  // Build rich plain text with GembaGPT section at bottom in "white" (invisible) text trick
+  const store=getStore(),user=getUser()||{name:''},wn=gwn(new Date());
+  let grp={};notes.forEach(n=>{
+    const k=(n.mag?n.mag+'|':'')+n.bg+'|'+(n.kl||'');
+    if(!grp[k])grp[k]={mag:n.mag,bg:n.bg,kl:n.kl,items:[]};
+    grp[k].items.push(n.tx);
+  });
+
+  // Visible body (formatted plain text)
+  let body='Merhaba,\n\n';
+  body+=wn+'.hafta '+store+' '+reyon+' reyonu mağaza ziyaret geri bildirimleri:\n';
+  body+='─'.repeat(40)+'\n';
+  Object.values(grp).forEach(g=>{
+    if(g.mag)body+='\n▌ MAG: '+g.mag+'\n';
+    body+='  Buyer Grup: '+g.bg+'\n';
+    if(g.kl)body+='  Klasman: '+g.kl+'\n';
+    g.items.forEach(i=>body+='\n  • '+i);
+    body+='\n'+'─'.repeat(40)+'\n';
+  });
+  body+='\nİyi çalışmalar,\n'+user.name+'\nLC Waikiki';
+
+  // GembaGPT analiz metni (ayrı bölüm)
+  let gembaText='\n\n'+'='.repeat(40)+'\n';
+  gembaText+='GEMBAGPTANALİZ:\n';
+  gembaText+='HAFTA:'+wn+'|MAGAZA:'+store+'|REYON:'+reyon+'\n';
+  Object.values(grp).forEach(g=>{
+    if(g.mag)gembaText+='MAG:'+g.mag+';';
+    gembaText+='BG:'+g.bg+';';
+    if(g.kl)gembaText+='KL:'+g.kl+';';
+    g.items.forEach(i=>gembaText+='NOT:'+i+';');
+    gembaText+='\n';
+  });
+  gembaText+='='.repeat(40);
+
+  const fullBody=body+gembaText;
   const to=window._to||'';
   const cc=window._cc||'lcwgembagpt@lcwaikiki.com';
   window.location.href='mailto:'+encodeURIComponent(to)+
     '?cc='+encodeURIComponent(cc)+
     '&subject='+encodeURIComponent(window._ms||'')+
-    '&body='+encodeURIComponent((window._mb||'')+pn);
+    '&body='+encodeURIComponent(fullBody);
 }
 
 async function openMailWithPDF(){
