@@ -1044,7 +1044,7 @@ function buildPV(){
   window._mp=getAllPhotos();
   document.getElementById('pvs').textContent=subj;
   document.getElementById('pvb').innerHTML=htmlParts;
-
+}
 
 /* ── Safe mailto encoder - emoji ve unicode bold karakterleri korur ── */
 function safeMailEncode(str){
@@ -1054,10 +1054,7 @@ function safeMailEncode(str){
     .replace(/=/g,'%3D')
     .replace(/#/g,'%23')
     .replace(/[+]/g,'%2B')
-    .replace(/
-|
-|
-/g,'%0A');
+    .replace(/[\r\n]/g,'%0A');
 }
 
 async function smartSendMail(){
