@@ -8,7 +8,7 @@ const PORT = process.env.PORT || 3000;
 app.use(express.json());
 
 // ── Telegram bildirimi ──────────────────────────────────────────────────────
-const TG_TOKEN = process.env.TELEGRAM_TOKEN;
+const TG_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
 const TG_CHAT  = process.env.TELEGRAM_CHAT_ID;
 
 function sendTelegram(msg){
