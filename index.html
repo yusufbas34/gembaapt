@@ -472,7 +472,6 @@ const erkekMAG={
   "BUSP":{bg:["PİJAMA"],kl:{"PİJAMA":["İÇGYM ÖRME PİJAMA TAKIM K.KOL-K.PAÇA","İÇGYM ÖRME PİJAMA TAKIM K.KOL-U.PAÇA","İÇGYM ÖRME PİJAMA TAKIM U.KOL-U.PAÇA","İÇGYM ÖRME PİJAMA TEK ALT KISA","İÇGYM ÖRME PİJAMA TEK ALT UZUN","İÇGYM ÖRME PİJAMA TEK ÜST","İÇGYM TERMAL ÜST","PİJAMA TERMAL ALT"]}},
 };
 
-
 let notes=[],reyon='',photNoteId=null,editingNoteId=null,lastMAG='',inlinePhotos=[];
 
 /* week */
@@ -748,7 +747,7 @@ function renderNotes(){
           <button class="rm" onclick="removeNote(${n.id})">×</button>
         </div>
       </div>
-      <div class="ntxt">* ${n.tx}</div>
+      <div class="ntxt">${n.tx.split('\n').filter(l=>l.trim()).map(l=>'• '+l.trim()).join('\n')}</div>
       <div class="pstrip">${ph}<div class="padd" onclick="trigPh(${n.id})">+</div></div>
     </div>`;
   }).join('');
@@ -829,6 +828,19 @@ function showToast(msg){
   t.style.cssText='position:fixed;bottom:100px;left:50%;transform:translateX(-50%);background:#1a9e6e;color:#fff;padding:10px 20px;border-radius:100px;font-size:14px;font-family:DM Sans,sans-serif;z-index:9999;pointer-events:none;white-space:nowrap';
   document.body.appendChild(t);setTimeout(()=>t.remove(),2500);
 }
+
+/* ── Unicode bold converter ── */
+function toBold(str){
+  return [...str].map(c=>{
+    const code=c.codePointAt(0);
+    if(code>=65&&code<=90) return String.fromCodePoint(0x1D400+code-65);  // A-Z
+    if(code>=97&&code<=122) return String.fromCodePoint(0x1D41A+code-97); // a-z
+    if(code>=48&&code<=57) return String.fromCodePoint(0x1D7CE+code-48);  // 0-9
+    return c;
+  }).join('');
+}
+function toUpper(str){return str.toUpperCase();}
+
 /* photos — note strip */
 function trigPh(id){
   photNoteId=id;
@@ -954,38 +966,69 @@ function buildPV(){
   const userName=user?.name||'';
   const subj=wn+'. Hafta '+store+' '+reyon+' Reyonu Mağaza Ziyaret Notları';
   let grp={};notes.forEach(n=>{const k=(n.mag?n.mag+'|':'')+n.bg+'|'+(n.kl||'');if(!grp[k])grp[k]={mag:n.mag,bg:n.bg,kl:n.kl,items:[]};grp[k].items.push(n)});
-  let body='Merhaba,\n\n'+wn+'.hafta '+store+' '+reyon+' reyonu mağaza ziyaret geri bildirimleri:\n';
+  // MAG → BuyerGrup → Klasman → Notlar hiyerarşisi
+  let magMap={};
   Object.values(grp).forEach(g=>{
-    if(g.mag)body+='\n▌ MAG: '+g.mag+'\n';
-    body+='  Buyer Grup: '+g.bg+'\n';
-    if(g.kl)body+='  Klasman: '+g.kl+'\n';
-    g.items.forEach(n=>body+='\n  • '+n.tx);
-    body+='\n';
+    const magKey=g.mag||'__noMag__';
+    if(!magMap[magKey])magMap[magKey]={mag:g.mag,bgs:[]};
+    magMap[magKey].bgs.push(g);
   });
-  body+='\nİyi çalışmalar,\n'+userName+'\nLC Waikiki';
+
+  let body='Merhaba,\n\n'+toBold(wn+'. Hafta · '+store+' · '+reyon+' Reyonu')+'\n';
+  body+='━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n';
+
+  Object.values(magMap).forEach(m=>{
+    if(m.mag) body+='📦 '+toBold('MAG: '+m.mag)+'\n';
+    m.bgs.forEach(g=>{
+      body+='  👔 '+toBold(g.bg)+'\n';
+      if(g.kl) body+='      🏷 '+g.kl+'\n';
+      g.items.forEach(n=>{n.tx.split('\n').filter(l=>l.trim()).forEach(l=>body+='      • '+l.trim()+'\n');});
+      body+='\n';
+    });
+    if(m.mag) body+='━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n';
+  });
+
+  body+='İyi çalışmalar,\n'+toBold(userName)+'\nLC Waikiki';
   let gembaText='\n\n'+'='.repeat(40)+'\nGEMBAGPTANALİZ:\n';
   gembaText+='HAFTA:'+wn+'|MAGAZA:'+store+'|REYON:'+reyon+'\n';
   Object.values(grp).forEach(g=>{
     if(g.mag)gembaText+='MAG:'+g.mag+';';
     gembaText+='BG:'+g.bg+';';
     if(g.kl)gembaText+='KL:'+g.kl+';';
-    g.items.forEach(n=>gembaText+='NOT:'+n.tx+';');
+    g.items.forEach(n=>{n.tx.split('\n').filter(l=>l.trim()).forEach(l=>gembaText+='NOT:'+l.trim()+';');});
     gembaText+='\n';
   });
   gembaText+='='.repeat(40);
   body+=gembaText;
   document.getElementById('pvs').textContent=subj;
-  // HTML preview for screen
-  let htmlParts='<p style="margin:0 0 14px 0;font-size:14px">Merhaba,</p>';
-  htmlParts+='<p style="margin:0 0 14px 0;font-size:14px">'+wn+'.hafta <strong>'+store+'</strong> '+reyon+' reyonu mağaza ziyaret geri bildirimleri aşağıdaki gibidir.</p>';
+  // HTML preview - MAG → BuyerGrup → Klasman → Notlar hiyerarşisi
+  let magMap2={};
   Object.values(grp).forEach(g=>{
-    if(g.mag)htmlParts+='<p style="margin:14px 0 3px 0;font-size:18px;font-weight:700;color:#1a1a18">MAG: '+g.mag+'</p>';
-    htmlParts+='<p style="margin:6px 0 2px 0;font-size:15px;font-weight:600;color:#1a1a18">Buyer Grup: '+g.bg+'</p>';
-    if(g.kl)htmlParts+='<p style="margin:0 0 6px 0;font-size:13px;color:#6b6b67">Klasman: '+g.kl+'</p>';
-    g.items.forEach(n=>{htmlParts+='<p style="margin:3px 0 3px 16px;font-size:14px;color:#1a1a18">• '+n.tx+'</p>';});
-    htmlParts+='<hr style="border:none;border-top:1px solid #eee;margin:10px 0"/>';
+    const mk=g.mag||'__noMag__';
+    if(!magMap2[mk])magMap2[mk]={mag:g.mag,bgs:[]};
+    magMap2[mk].bgs.push(g);
   });
-  htmlParts+='<p style="margin:12px 0 0 0;font-size:14px">İyi çalışmalar,<br><strong>'+userName+'</strong><br>LC Waikiki</p>';
+
+  let htmlParts='<div style="font-family:Georgia,serif">';
+  htmlParts+='<p style="margin:0 0 12px 0;font-size:14px">Merhaba,</p>';
+  htmlParts+='<p style="margin:0 0 16px 0;font-size:14px">'+wn+'.hafta <strong>'+store+'</strong> '+reyon+' reyonu mağaza ziyaret geri bildirimleri aşağıdaki gibidir.</p>';
+  Object.values(magMap2).forEach(m=>{
+    if(m.mag){
+      htmlParts+='<div style="margin:16px 0 8px 0;padding:10px 14px;background:#1a1a18;border-radius:8px">';
+      htmlParts+='<span style="font-size:17px;font-weight:700;color:#fff">📦 MAG: '+m.mag+'</span>';
+      htmlParts+='</div>';
+    }
+    m.bgs.forEach(g=>{
+      htmlParts+='<div style="margin:6px 0 4px '+(m.mag?'12':'0')+'px;padding:8px 12px;background:#f6f5f2;border-radius:6px;border-left:3px solid #1a1a18">';
+      htmlParts+='<div style="font-size:15px;font-weight:700;color:#1a1a18">👔 '+g.bg+'</div>';
+      if(g.kl)htmlParts+='<div style="font-size:12px;color:#888;margin:2px 0 6px 0">🏷 '+g.kl+'</div>';
+      g.items.forEach(n=>{n.tx.split('\n').filter(l=>l.trim()).forEach(l=>{htmlParts+='<div style="font-size:13px;color:#333;padding:3px 0 3px 8px">• '+l.trim()+'</div>';});});
+      htmlParts+='</div>';
+    });
+    if(m.mag)htmlParts+='<div style="border-top:1px solid #eee;margin:12px 0"></div>';
+  });
+  htmlParts+='<p style="margin:14px 0 0 0;font-size:14px">İyi çalışmalar,<br><strong>'+userName+'</strong><br><span style="color:#888">LC Waikiki</span></p>';
+  htmlParts+='</div>';
   document.getElementById('pvs').textContent=subj;
   document.getElementById('pvb').innerHTML=htmlParts;
   const allPh=notes.flatMap(n=>n.photos.map(p=>({...p,ctx:n.reyon+' / '+n.bg})));
@@ -1070,31 +1113,88 @@ async function checkListener(){
 
 async function smartSendMail(){
   const btn=document.getElementById('mailBtn');
-  btn.textContent='⏳ Kontrol...';
+  btn.textContent='⏳ Hazırlanıyor...';
   btn.disabled=true;
 
   try{
-    const hasListener = await checkListener();
+    // 1. Capture pvcard as image with html2canvas
+    const pvcard=document.querySelector('.pvcard');
+    const canvas=await html2canvas(pvcard,{
+      scale:2,
+      backgroundColor:'#ffffff',
+      useCORS:true,
+      logging:false
+    });
+    const imgDataURL=canvas.toDataURL('image/png');
 
-    if(hasListener){
-      await sendViaListener();
-    } else {
-      // Show install hint once
-      if(!localStorage.getItem('listenerHintShown')){
-        const use = confirm(
-          '💡 GembaGPT Mail Listener kurulu değil.\n\n'+
-          'Listener kurulursa:\n'+
-          '• Mail LC Waikiki hesabınızdan gider\n'+
-          '• Fotoğraflar maile gömülür\n'+
-          '• Tek tıkla gönderim\n\n'+
-          'Şimdi mailto ile aç. Listener kurmak için gemba_listener.py dosyasını indirin.'
-        );
-        localStorage.setItem('listenerHintShown','1');
-        if(!use){btn.textContent='✉ Mail Gönder';btn.disabled=false;return;}
+    // 2. Build HTML for clipboard (Outlook renders this when pasted)
+    const store=getStore(),user=getUser()||{name:''},wn=gwn(new Date());
+    let grp={};notes.forEach(n=>{
+      const k=(n.mag?n.mag+'|':'')+n.bg+'|'+(n.kl||'');
+      if(!grp[k])grp[k]={mag:n.mag,bg:n.bg,kl:n.kl,items:[]};
+      n.tx.split('\n').filter(l=>l.trim()).forEach(l=>grp[k].items.push(l.trim()));
+    });
+
+    // GembaGPT analiz metni
+    let gembaText='HAFTA:'+wn+'|MAGAZA:'+store+'|REYON:'+reyon+'\n';
+    Object.values(grp).forEach(g=>{
+      if(g.mag)gembaText+='MAG:'+g.mag+';';
+      gembaText+='BG:'+g.bg+';';
+      if(g.kl)gembaText+='KL:'+g.kl+';';
+      g.items.forEach(i=>gembaText+='NOT:'+i+';');
+      gembaText+='\n';
+    });
+
+    const htmlForClipboard=`<html><body>
+<img src="${imgDataURL}" style="max-width:600px;width:100%;display:block;margin-bottom:16px" />
+<div style="color:white;font-size:1px;line-height:1;opacity:0.01;user-select:none">
+GEMBAGPTANALIZ:${gembaText}
+</div>
+</body></html>`;
+
+    // 3. Try clipboard API (works on modern browsers)
+    let clipboardOk=false;
+    try{
+      const blob=new Blob([htmlForClipboard],{type:'text/html'});
+      const item=new ClipboardItem({'text/html':blob});
+      await navigator.clipboard.write([item]);
+      clipboardOk=true;
+    }catch(e){console.log('Clipboard API failed:',e);}
+
+    // 4. Open mailto
+    const to=window._to||'';
+    const cc=window._cc||'lcwgembagpt@lcwaikiki.com';
+    const subj=window._ms||`${wn}. Hafta ${store} ${reyon} Reyonu Mağaza Ziyaret Notları`;
+
+    // Plain text fallback for body
+    let plainBody='Merhaba,\n\n';
+    Object.values(grp).forEach(g=>{
+      if(g.mag)plainBody+='\nMAG: '+g.mag+'\n';
+      plainBody+='Buyer Grup: '+g.bg+'\n';
+      if(g.kl)plainBody+='Klasman: '+g.kl+'\n';
+      g.items.forEach(i=>plainBody+='• '+i+'\n');
+      plainBody+='\n';
+    });
+    plainBody+='İyi çalışmalar,\n'+user.name+'\nLC Waikiki';
+
+    window.location.href='mailto:'+encodeURIComponent(to)+
+      '?cc='+encodeURIComponent(cc)+
+      '&subject='+encodeURIComponent(subj)+
+      '&body='+encodeURIComponent(plainBody);
+
+    // 5. Show instruction toast
+    setTimeout(()=>{
+      if(clipboardOk){
+        showToast('📋 Mail açıldı! Ctrl+A → Ctrl+V ile yapıştırın');
+      } else {
+        showToast('✉ Mail açıldı');
       }
-      openMailFallback();
-    }
-  } finally {
+    },800);
+
+  }catch(err){
+    console.error(err);
+    alert('Hata: '+err.message);
+  }finally{
     btn.textContent='✉ Mail Gönder';
     btn.disabled=false;
   }
@@ -1109,7 +1209,7 @@ async function sendViaListener(){
   notes.forEach(n=>{
     const k=(n.mag?n.mag+'|':'')+n.bg+'|'+(n.kl||'');
     if(!grp[k])grp[k]={mag:n.mag,bg:n.bg,kl:n.kl,items:[],photos:[]};
-    grp[k].items.push(n.tx);
+    n.tx.split('\n').filter(l=>l.trim()).forEach(l=>grp[k].items.push(l.trim()));
     // Collect photos from this note
     (n.photos||[]).forEach(p=>grp[k].photos.push(p.data));
   });
@@ -1160,7 +1260,7 @@ function openMailFallback(){
   let grp={};notes.forEach(n=>{
     const k=(n.mag?n.mag+'|':'')+n.bg+'|'+(n.kl||'');
     if(!grp[k])grp[k]={mag:n.mag,bg:n.bg,kl:n.kl,items:[]};
-    grp[k].items.push(n.tx);
+    n.tx.split('\n').filter(l=>l.trim()).forEach(l=>grp[k].items.push(l.trim()));
   });
 
   // Visible body (formatted plain text)
@@ -1168,8 +1268,8 @@ function openMailFallback(){
   body+=wn+'.hafta '+store+' '+reyon+' reyonu mağaza ziyaret geri bildirimleri:\n';
   body+='─'.repeat(40)+'\n';
   Object.values(grp).forEach(g=>{
-    if(g.mag)body+='\n▌ MAG: '+g.mag+'\n';
-    body+='  Buyer Grup: '+g.bg+'\n';
+    if(g.mag)body+='\n'+toBold('MAG: '+g.mag)+'\n';
+    body+='  '+toBold('Buyer Grup: '+g.bg)+'\n';
     if(g.kl)body+='  Klasman: '+g.kl+'\n';
     g.items.forEach(i=>body+='\n  • '+i);
     body+='\n'+'─'.repeat(40)+'\n';
