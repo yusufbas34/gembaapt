@@ -167,14 +167,26 @@ textarea{resize:none;line-height:1.5}
   <button id="installBtn" onclick="doInstall()" style="background:#fff;color:#1a1a18;border:none;border-radius:8px;padding:8px 14px;font-size:13px;font-weight:500;cursor:pointer;white-space:nowrap;font-family:DM Sans,sans-serif">Ekle</button>
   <button onclick="document.getElementById('installBanner').style.display='none'" style="background:none;border:none;color:rgba(255,255,255,.6);font-size:20px;cursor:pointer;padding:0;line-height:1">×</button>
 </div>
-<div id="iosBanner" style="display:none;background:#f6f5f2;border-bottom:0.5px solid rgba(0,0,0,.1);padding:10px 16px;flex-shrink:0;align-items:center;gap:10px">
-  <div style="font-size:13px;color:#1a1a18;line-height:1.5">📲 Ana ekrana eklemek için tarayıcının <strong>Paylaş</strong> menüsünden <strong>"Ana Ekrana Ekle"</strong> seçin.</div>
-  <button onclick="document.getElementById('iosBanner').style.display='none'" style="background:none;border:none;color:#aeaea9;font-size:20px;cursor:pointer;padding:0;flex-shrink:0">×</button>
-</div>
+
 <div class="scroll" id="scr">
   <div id="p1">
     <div class="step-wrap"><div class="sbar"><div class="stp a" id="s1">1</div><div class="sl"></div><div class="stp p" id="s2">2</div><div class="sl"></div><div class="stp p" id="s3">3</div></div></div>
     <div class="ph"><div class="pt">Mağaza seç</div><div class="ps">Ziyaret bilgilerini girin.</div></div>
+    <div style="margin:0 20px 16px;background:#fff8e6;border:0.5px solid #f5c842;border-radius:12px;padding:12px 14px;display:flex;gap:10px;align-items:flex-start">
+      <div style="font-size:20px;flex-shrink:0">⚠️</div>
+      <div>
+        <div style="font-size:13px;font-weight:600;color:#7a5c00;margin-bottom:3px">Mail göndermeden önce</div>
+        <div style="font-size:12px;color:#7a5c00;line-height:1.5">Outlook uygulamasında <strong>LC Waikiki kurumsal hesabınızın</strong> seçili olduğundan emin olun. Aksi halde mailiniz iletilemez.</div>
+      </div>
+    </div>
+    <!-- LC Waikiki hesap uyarısı -->
+    <div style="margin:0 20px 16px;background:#fff8e6;border:0.5px solid #f5c842;border-radius:12px;padding:12px 14px;display:flex;gap:10px;align-items:flex-start">
+      <div style="font-size:20px;flex-shrink:0">⚠️</div>
+      <div>
+        <div style="font-size:13px;font-weight:600;color:#7a5c00;margin-bottom:3px">Mail göndermeden önce</div>
+        <div style="font-size:12px;color:#7a5c00;line-height:1.5">Outlook uygulamasında <strong>LC Waikiki kurumsal hesabınızın</strong> seçili olduğundan emin olun. Aksi halde mailiniz iletilemez.</div>
+      </div>
+    </div>
     <div id="ubanner" style="display:none" class="ubanner">
       <div><div class="uname" id="bname"></div><div class="usub">Kayıtlı çalışan</div></div>
       <button class="btn-xs" onclick="clearUser()">Değiştir</button>
@@ -313,6 +325,33 @@ textarea{resize:none;line-height:1.5}
 <input type="file" id="pfi-inline-cam" accept="image/*" capture="environment" style="display:none" onchange="handlePhInline()"/>
 
 <script>
+
+/* ── Safari → Edge yönlendirme ── */
+(function(){
+  const ua=navigator.userAgent;
+  const isIOS=/iphone|ipad|ipod/i.test(ua);
+  const isSafari=/safari/i.test(ua) && !/chrome/i.test(ua) && !/edg/i.test(ua) && !/crios/i.test(ua);
+  const isStandalone=window.navigator.standalone===true;
+  if(isIOS && isSafari && !isStandalone){
+    // Safari'de açılmış - Edge'e yönlendir
+    const currentURL=encodeURIComponent(window.location.href);
+    const edgeURL='microsoft-edge-https://'+window.location.host+window.location.pathname;
+    // Edge yüklüyse aç
+    window.location.href=edgeURL;
+    // Edge yüklü değilse 2sn sonra uyarı göster
+    setTimeout(()=>{
+      // Hala buradaysak Edge yok demek
+      document.body.innerHTML='<div style="font-family:DM Sans,sans-serif;display:flex;flex-direction:column;align-items:center;justify-content:center;height:100vh;padding:32px;text-align:center;background:#fff">'
+        +'<div style="font-size:48px;margin-bottom:16px">⚠️</div>'
+        +'<div style="font-size:20px;font-weight:600;color:#1a1a18;margin-bottom:10px">Safari Desteklenmiyor</div>'
+        +'<div style="font-size:14px;color:#6b6b67;line-height:1.6;margin-bottom:28px">GembaGPT'yi kullanmak için lütfen <strong>Microsoft Edge</strong> uygulamasını indirin ve bu sayfayı Edge ile açın.</div>'
+        +'<a href="https://apps.apple.com/tr/app/microsoft-edge-web-browser/id1288723196" style="background:#1a1a18;color:#fff;text-decoration:none;padding:16px 32px;border-radius:12px;font-size:16px;font-weight:500;margin-bottom:16px;display:block">📥 Edge'i İndir</a>'
+        +'<div style="font-size:12px;color:#aaa">Edge'i açtıktan sonra şu adrese git:<br><strong>gembaapt.up.railway.app</strong></div>'
+        +'</div>';
+    },2000);
+  }
+})();
+
 const RD={
   "Kadın":{bg:["Örme Üst","Dokuma Üst","Dokuma Alt","Dış Giyim","İç Giyim","Aksesuar","Ayakkabı"],kl:{"Örme Üst":["Tişört Kkol","Tişört Ukol","Polo Yaka","Sweatshirt","Kapüşonlu Sweat"],"Dokuma Üst":["Gömlek U.Kol","Gömlek K.Kol","Bluz","Keten Gömlek","Casual Gömlek"],"Dokuma Alt":["Jean Pantolon","Chino","Etek","Şort","Slim Jean","Kargo"],"Dış Giyim":["Blazer","Trençkot","Mont","Parka","Yelek","Kaban"],"İç Giyim":["Atlet","Boksör","Pijama Takım","Spor Sütyeni"],"Aksesuar":["Kemer","Şapka","Bere","Çanta","Cüzdan","Atkı"],"Ayakkabı":["Sneaker","Loafer","Bot","Sandalet","Terlik"]}},
   "Erkek":{useMag:true},
@@ -599,12 +638,39 @@ function buildPV(){
 function safeMailEncode(str){return str.replace(/&/g,'%26').replace(/[?]/g,'%3F').replace(/=/g,'%3D').replace(/#/g,'%23').replace(/[+]/g,'%2B').replace(/[\r\n]/g,'%0A');}
 
 async function smartSendMail(){
+  // Hesap uyarısı göster
+  const confirmed=await showOutlookWarning();
+  if(!confirmed)return;
+  
   const btn=document.getElementById('mailBtn');
   btn.textContent='⏳ Hazırlanıyor...';btn.disabled=true;
   try{
     notify('mail',{store:getStore(),reyon,week:gwn(new Date())});
     openMailFallback();
   }finally{btn.textContent='✉ Mail Gönder';btn.disabled=false;}
+}
+
+function showOutlookWarning(){
+  return new Promise((resolve)=>{
+    // Overlay oluştur
+    const overlay=document.createElement('div');
+    overlay.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:9999;display:flex;align-items:flex-end';
+    overlay.innerHTML=`
+      <div style="width:100%;background:#fff;border-radius:20px 20px 0 0;padding:24px 20px 40px;font-family:DM Sans,sans-serif">
+        <div style="width:36px;height:4px;background:#eee;border-radius:2px;margin:0 auto 20px"></div>
+        <div style="font-size:32px;text-align:center;margin-bottom:12px">⚠️</div>
+        <div style="font-size:17px;font-weight:600;color:#1a1a18;text-align:center;margin-bottom:8px">Outlook Hesabını Kontrol Et</div>
+        <div style="font-size:14px;color:#6b6b67;text-align:center;line-height:1.6;margin-bottom:24px">
+          Mail gönderilirken <strong>LC Waikiki kurumsal hesabının</strong> seçili olduğundan emin ol.<br><br>
+          Outlook → Profil fotoğrafına bas → LC Waikiki hesabını seç
+        </div>
+        <button id="warnOk" style="width:100%;background:#1a1a18;color:#fff;border:none;border-radius:12px;padding:16px;font-size:16px;font-weight:500;font-family:DM Sans,sans-serif;cursor:pointer;margin-bottom:10px">✅ Anladım, mail gönder</button>
+        <button id="warnCancel" style="width:100%;background:none;border:0.5px solid #ddd;border-radius:12px;padding:14px;font-size:15px;color:#6b6b67;font-family:DM Sans,sans-serif;cursor:pointer">İptal</button>
+      </div>`;
+    document.body.appendChild(overlay);
+    document.getElementById('warnOk').onclick=()=>{overlay.remove();resolve(true);};
+    document.getElementById('warnCancel').onclick=()=>{overlay.remove();resolve(false);};
+  });
 }
 
 function openMailFallback(){
@@ -618,8 +684,23 @@ function openMailFallback(){
     body+='━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n';
   });
   body+='İyi çalışmalar dilerim,\n'+toBold(user.name)+'\nLC Waikiki';
-  const to=window._to||'';const cc=window._cc||GEMBA_CC;
-  window.location.href='mailto:'+encodeURIComponent(to)+'?cc='+encodeURIComponent(cc)+'&subject='+encodeURIComponent(window._ms||'')+'&body='+safeMailEncode(body);
+  // Her zaman güncel hesapla, window._to boş olabilir
+  const {to:calcTo}=getMailRecipients();
+  const to=calcTo||window._to||'';
+  const cc=GEMBA_CC;
+  const wn2=gwn(new Date());
+  const subj=window._ms||(wn2+'. Hafta '+store+' '+reyon+' Reyonu Mağaza Ziyaret Notları');
+  // iOS: ms-outlook scheme ile direkt Outlook aç
+  const isIOS=/iphone|ipad|ipod/i.test(navigator.userAgent);
+  if(isIOS){
+    window.location.href='ms-outlook://compose?to='+encodeURIComponent(to)+'&cc='+encodeURIComponent(cc)+'&subject='+encodeURIComponent(subj)+'&body='+encodeURIComponent(body);
+    // Outlook yüklü değilse 1.5sn sonra mailto fallback
+    setTimeout(()=>{
+      window.location.href='mailto:'+encodeURIComponent(to)+'?cc='+encodeURIComponent(cc)+'&subject='+encodeURIComponent(subj)+'&body='+safeMailEncode(body);
+    },1500);
+  } else {
+    window.location.href='mailto:'+encodeURIComponent(to)+'?cc='+encodeURIComponent(cc)+'&subject='+encodeURIComponent(subj)+'&body='+safeMailEncode(body);
+  }
 }
 
 function copyAll(){navigator.clipboard.writeText('Konu: '+(window._ms||'')+'\n\n'+(window._mb||'')).then(()=>{const t=document.createElement('div');t.textContent='Kopyalandı!';t.style.cssText='position:fixed;bottom:90px;left:50%;transform:translateX(-50%);background:#1a1a18;color:#fff;padding:10px 22px;border-radius:100px;font-size:14px;font-family:DM Sans,sans-serif;z-index:999;pointer-events:none';document.body.appendChild(t);setTimeout(()=>t.remove(),2200);});}
@@ -673,7 +754,7 @@ let deferredPrompt=null;
 window.addEventListener('beforeinstallprompt',(e)=>{e.preventDefault();deferredPrompt=e;const b=document.getElementById('installBanner');if(b){b.style.display='flex';}});
 window.addEventListener('appinstalled',()=>{const b=document.getElementById('installBanner');if(b)b.style.display='none';deferredPrompt=null;});
 function doInstall(){if(deferredPrompt){deferredPrompt.prompt();deferredPrompt.userChoice.then(()=>{deferredPrompt=null;document.getElementById('installBanner').style.display='none';});}}
-(function(){const isIOS=/iphone|ipad|ipod/i.test(navigator.userAgent);const isSafari=/safari/i.test(navigator.userAgent)&&!/chrome/i.test(navigator.userAgent);const isStandalone=window.navigator.standalone===true;if(isIOS&&isSafari&&!isStandalone){const b=document.getElementById('iosBanner');if(b)b.style.display='flex';}})();
+
 </script>
 </body>
 </html>
