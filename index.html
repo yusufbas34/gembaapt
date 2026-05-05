@@ -407,23 +407,77 @@ function openSD(id){
   const trigger=document.querySelector('#'+id+' .sd-trigger');
   const panel=document.getElementById('sdp-'+id);
   if(!trigger||!panel)return;
-  const inp=document.createElement('input');inp.type='text';inp.className='sd-search';inp.placeholder='Ara...';inp.setAttribute('autocomplete','off');
-  const list=document.createElement('div');list.className='sd-list';
+
+  const inp=document.createElement('input');
+  inp.type='text';inp.className='sd-search';inp.placeholder='Ara...';
+  inp.setAttribute('autocomplete','off');
+
+  const list=document.createElement('div');
+  list.className='sd-list';
+
+  function doSelect(val, lbl){
+    sdState[id].value=val;
+    sdState[id].label=lbl;
+    const t=document.querySelector('#'+id+' .sd-trigger');
+    if(t){t.querySelector('.sd-val').textContent=lbl||'—';t.classList.toggle('placeholder',!lbl&&!val);}
+    if(id==='sd-kl'){const btn=document.getElementById('klClearBtn');if(btn)btn.style.display=val?'inline':'none';}
+    panel.classList.remove('open');
+    panel.innerHTML='';
+    if(trigger)trigger.classList.remove('open-style');
+    activeSD=null;sdPanel=null;
+    const bd=document.getElementById('sd-backdrop');if(bd)bd.style.display='none';
+    if(st.onSelect)st.onSelect(val,lbl);
+  }
+
   function render(q){
     const q2=(q||'').toLowerCase();
-    const filtered=st.items.filter(it=>{const lbl=(it.label||it.value||it).toLowerCase();return lbl.includes(q2)||lbl.replace(/i̇/g,'i').replace(/ı/g,'i').includes(q2.replace(/i̇/g,'i').replace(/ı/g,'i'));});
+    const filtered=st.items.filter(it=>{
+      const lbl=(it.label||it.value||it).toLowerCase();
+      return lbl.includes(q2)||lbl.replace(/i̇/g,'i').replace(/ı/g,'i').includes(q2.replace(/i̇/g,'i').replace(/ı/g,'i'));
+    });
     list.innerHTML='';
-    if(!filtered.length){list.innerHTML='<div class="sd-empty">Sonuç bulunamadı</div>';return}
-    filtered.forEach(it=>{const val=it.value!==undefined?it.value:(it||'');const lbl=it.label||it.value||it;const div=document.createElement('div');div.className='sd-item'+(st.value===val?' selected':'');div.textContent=lbl;div.addEventListener('mousedown',(e)=>{e.preventDefault();sdSet(id,val,lbl);closeSD();if(st.onSelect)st.onSelect(val,lbl);});
-      div.addEventListener('touchend',(e)=>{e.preventDefault();e.stopPropagation();sdSet(id,val,lbl);closeSD();if(st.onSelect)st.onSelect(val,lbl);},{passive:false});
-      div.addEventListener('touchstart',()=>div.classList.add('hover'),{passive:true});
-      list.appendChild(div);});
+    if(!filtered.length){list.innerHTML='<div class="sd-empty">Sonuç bulunamadı</div>';return;}
+    filtered.forEach(it=>{
+      const val=it.value!==undefined?it.value:(it||'');
+      const lbl=it.label||it.value||it;
+      const div=document.createElement('div');
+      div.className='sd-item'+(st.value===val?' selected':'');
+      div.textContent=lbl;
+      div.style.cssText='padding:14px 16px;font-size:15px;color:var(--text);cursor:pointer;border-bottom:0.5px solid var(--border);background:var(--bg);-webkit-tap-highlight-color:rgba(0,0,0,0.1);';
+      
+      // Tek unified handler - hem mouse hem touch
+      var tapped=false;
+      div.addEventListener('touchstart',function(e){
+        tapped=false;
+        div.style.background='var(--bg2)';
+      },{passive:true});
+      div.addEventListener('touchend',function(e){
+        e.preventDefault();
+        tapped=true;
+        div.style.background='';
+        doSelect(val,lbl);
+      },{passive:false});
+      div.addEventListener('click',function(e){
+        if(!tapped) doSelect(val,lbl);
+        tapped=false;
+      });
+      list.appendChild(div);
+    });
   }
-  panel.innerHTML='';panel.appendChild(inp);panel.appendChild(list);panel.classList.add('open');trigger.classList.add('open-style');activeSD=id;sdPanel=panel;
-  render('');inp.addEventListener('input',()=>render(inp.value));
+
+  panel.innerHTML='';
+  panel.appendChild(inp);
+  panel.appendChild(list);
+  panel.classList.add('open');
+  trigger.classList.add('open-style');
+  activeSD=id;sdPanel=panel;
+
+  render('');
+  inp.addEventListener('input',()=>render(inp.value));
   setTimeout(()=>inp.focus(),100);
   const bd=document.getElementById('sd-backdrop');if(bd)bd.style.display='block';
 }
+
 function closeSD(){if(sdPanel){sdPanel.classList.remove('open');sdPanel.innerHTML='';sdPanel=null;}if(activeSD){const trigger=document.querySelector('#'+activeSD+' .sd-trigger');if(trigger)trigger.classList.remove('open-style');activeSD=null;}const bd=document.getElementById('sd-backdrop');if(bd)bd.style.display='none';}
 
 function selR(el){document.querySelectorAll('.chip').forEach(c=>c.classList.remove('sel'));el.classList.add('sel');reyon=el.dataset.r;document.getElementById('rerr').style.display='none'}
