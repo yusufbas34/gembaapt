@@ -414,7 +414,10 @@ function openSD(id){
     const filtered=st.items.filter(it=>{const lbl=(it.label||it.value||it).toLowerCase();return lbl.includes(q2)||lbl.replace(/i̇/g,'i').replace(/ı/g,'i').includes(q2.replace(/i̇/g,'i').replace(/ı/g,'i'));});
     list.innerHTML='';
     if(!filtered.length){list.innerHTML='<div class="sd-empty">Sonuç bulunamadı</div>';return}
-    filtered.forEach(it=>{const val=it.value!==undefined?it.value:(it||'');const lbl=it.label||it.value||it;const div=document.createElement('div');div.className='sd-item'+(st.value===val?' selected':'');div.textContent=lbl;div.addEventListener('click',()=>{sdSet(id,val,lbl);closeSD();if(st.onSelect)st.onSelect(val,lbl);});div.addEventListener('touchstart',()=>div.classList.add('hover'),{passive:true});div.addEventListener('touchend',()=>div.classList.remove('hover'),{passive:true});list.appendChild(div);});
+    filtered.forEach(it=>{const val=it.value!==undefined?it.value:(it||'');const lbl=it.label||it.value||it;const div=document.createElement('div');div.className='sd-item'+(st.value===val?' selected':'');div.textContent=lbl;div.addEventListener('mousedown',(e)=>{e.preventDefault();sdSet(id,val,lbl);closeSD();if(st.onSelect)st.onSelect(val,lbl);});
+      div.addEventListener('touchend',(e)=>{e.preventDefault();e.stopPropagation();sdSet(id,val,lbl);closeSD();if(st.onSelect)st.onSelect(val,lbl);},{passive:false});
+      div.addEventListener('touchstart',()=>div.classList.add('hover'),{passive:true});
+      list.appendChild(div);});
   }
   panel.innerHTML='';panel.appendChild(inp);panel.appendChild(list);panel.classList.add('open');trigger.classList.add('open-style');activeSD=id;sdPanel=panel;
   render('');inp.addEventListener('input',()=>render(inp.value));
@@ -447,9 +450,9 @@ function goHome(){
 function showAB(n){['ab1','ab2','ab3'].forEach(id=>{const el=document.getElementById(id);el.style.display='none'});if(n===1)document.getElementById('ab1').style.display='contents';else if(n===2){const el=document.getElementById('ab2');el.style.display='flex';el.style.flex='1'}else{const el=document.getElementById('ab3');el.style.display='flex';el.style.flex='1'}}
 
 function goP2(){
-  if(!getStore()){alert('Lütfen mağaza seçin.');return}
+  if(!getStore()){alert('GembaGPT: Lütfen mağaza seçin.');return}
   if(!reyon){document.getElementById('rerr').style.display='block';return}
-  const u=getUser();if(!u){alert('Lütfen adınızı girin.');return}
+  const u=getUser();if(!u){alert('GembaGPT: Lütfen adınızı girin.');return}
   loadUser();fillBGs();
   document.getElementById('p2st').textContent=getStore();
   document.getElementById('p2mt').textContent=reyon+' Reyonu · '+wl();
@@ -460,7 +463,7 @@ function goP2(){
 }
 function goP1(){closeSD();document.getElementById('p2').style.display='none';document.getElementById('p3').style.display='none';document.getElementById('p1').style.display='block';showAB(1);scr()}
 function goP2fromP3(){document.getElementById('p3').style.display='none';document.getElementById('p2').style.display='block';showAB(2);scr();renderNotes();}
-function goP3(){if(!notes.length){alert('En az bir geri bildirim ekleyin.');return}buildPV();document.getElementById('p2').style.display='none';document.getElementById('p3').style.display='block';showAB(3);scr()}
+function goP3(){if(!notes.length){alert('GembaGPT: En az bir geri bildirim ekleyin.');return}buildPV();document.getElementById('p2').style.display='none';document.getElementById('p3').style.display='block';showAB(3);scr()}
 function scr(){document.getElementById('scr').scrollTo({top:0,behavior:'smooth'})}
 
 function fillBGs(){
@@ -846,6 +849,12 @@ async function doLogin(){
       document.getElementById('bname').textContent=d.name;
       document.getElementById('ubanner').style.display='flex';
       document.getElementById('uform').style.display='none';
+      // Store dropdown'ı yeniden başlat
+      if(typeof sdInit==='function' && storeItems){
+        sdInit('sd-store',storeItems,'Mağaza seçiniz...',(val)=>{
+          document.getElementById('mwrap').style.display=val==='__m__'?'block':'none';
+        });
+      }
       renderHistory();
     } else {
       err.textContent=d.error||'Hata.';err.style.display='block';
