@@ -894,15 +894,42 @@ async function doRegister(){
   try{
     var saved=JSON.parse(localStorage.getItem('gemba_auth')||'null');
     if(saved&&saved.name&&saved.pin){
-      document.getElementById('loginName').value=saved.name;
-      document.getElementById('loginPin').value=saved.pin;
-      doLogin();
+      // Sessiz otomatik giriş
+      autoLogin(saved.name, saved.pin);
       return;
     }
     var oldUser=JSON.parse(localStorage.getItem('gu')||'null');
     if(oldUser&&oldUser.name) document.getElementById('loginName').value=oldUser.name;
   }catch(e){}
 })();
+
+async function autoLogin(name, pin){
+  try{
+    var r=await fetch(RAILWAY_URL+'/auth/login',{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({name,pin})
+    });
+    var d=await r.json();
+    if(d.ok){
+      AUTH={name:d.name,pin,visits:d.visits||[]};
+      localStorage.setItem('gu',JSON.stringify({name:d.name}));
+      localStorage.setItem('gemba_auth',JSON.stringify({name:d.name,pin}));
+      document.getElementById('loginOverlay').style.display='none';
+      document.getElementById('bname').textContent=d.name;
+      document.getElementById('ubanner').style.display='flex';
+      document.getElementById('uform').style.display='none';
+      renderHistory();
+    } else {
+      // Otomatik giriş başarısız - kayıtlı auth'u temizle, login ekranı göster
+      localStorage.removeItem('gemba_auth');
+      document.getElementById('loginName').value=name;
+      // Hata gösterme, kullanıcı manuel giriş yapacak
+    }
+  }catch(e){
+    // Ağ hatası - login ekranı göster, hata verme
+    document.getElementById('loginName').value=name;
+  }
+}
 
 </script>
 
