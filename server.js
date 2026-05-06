@@ -25,7 +25,7 @@ function sendTelegram(msg){
 }
 
 // ── Data store (JSON file) ───────────────────────────────────────────────────
-const DATA_FILE = path.join(__dirname, 'data.json');
+const DATA_FILE = process.env.DATA_PATH || path.join('/app/data', 'data.json');
 
 function loadData(){
   try{ return JSON.parse(fs.readFileSync(DATA_FILE,'utf8')); }
@@ -149,5 +149,12 @@ app.listen(PORT,()=>{
   console.log('Telegram:', TG_TOKEN?'configured':'not configured');
   console.log('Files:', fs.readdirSync(__dirname).filter(f=>!f.includes('node_modules')).join(', '));
   // Init data file
+  // Klasoru olustur
+  const dataDir=path.dirname(DATA_FILE);
+  if(!fs.existsSync(dataDir)){
+    fs.mkdirSync(dataDir,{recursive:true});
+    console.log('Data dir created:', dataDir);
+  }
   if(!fs.existsSync(DATA_FILE)) saveData({users:{}});
+  console.log('Data file:', DATA_FILE);
 });

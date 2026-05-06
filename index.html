@@ -260,18 +260,24 @@ textarea{resize:none;line-height:1.5}
     <div class="sbody">
       <div class="sf" id="magField" style="display:none">
         <label>MAG (Merch Alt Grup) <span style="color:var(--red)">*</span></label>
-        <div class="sd" id="sd-mag"><button type="button" class="sd-trigger placeholder" onclick="toggleSD('sd-mag')"><span class="sd-val">Seçin...</span><svg width="12" height="7" viewBox="0 0 12 7" fill="none"><path d="M1 1l5 4.5L11 1" stroke="#aeaea9" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></button><div class="sd-panel" id="sdp-sd-mag"></div></div>
+        <select id="sel-mag" onchange="onMagSelect(this.value)" style="width:100%;padding:14px 16px;border:0.5px solid rgba(0,0,0,0.16);border-radius:12px;font-family:DM Sans,sans-serif;font-size:16px;color:#1a1a18;background:#fff;outline:none;-webkit-appearance:none;appearance:none;">
+          <option value="">Seçin...</option>
+        </select>
       </div>
       <div class="sf">
         <label>Buyer grup <span style="color:var(--red)">*</span></label>
-        <div class="sd" id="sd-bg"><button type="button" class="sd-trigger placeholder" onclick="toggleSD('sd-bg')"><span class="sd-val">Seçin...</span><svg width="12" height="7" viewBox="0 0 12 7" fill="none"><path d="M1 1l5 4.5L11 1" stroke="#aeaea9" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></button><div class="sd-panel" id="sdp-sd-bg"></div></div>
+        <select id="sel-bg" onchange="onBgSelect(this.value)" style="width:100%;padding:14px 16px;border:0.5px solid rgba(0,0,0,0.16);border-radius:12px;font-family:DM Sans,sans-serif;font-size:16px;color:#1a1a18;background:#fff;outline:none;-webkit-appearance:none;appearance:none;">
+          <option value="">Seçin...</option>
+        </select>
       </div>
       <div class="sf">
         <label style="display:flex;justify-content:space-between;align-items:center">
           <span>Ürün klasmanı <span class="opt">isteğe bağlı</span></span>
           <button type="button" id="klClearBtn" onclick="clearKlasman()" style="display:none;background:none;border:none;font-size:12px;color:var(--text3);cursor:pointer;padding:2px 6px">× Temizle</button>
         </label>
-        <div class="sd" id="sd-kl"><button type="button" class="sd-trigger placeholder" onclick="toggleSD('sd-kl')"><span class="sd-val">—</span><svg width="12" height="7" viewBox="0 0 12 7" fill="none"><path d="M1 1l5 4.5L11 1" stroke="#aeaea9" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></button><div class="sd-panel" id="sdp-sd-kl"></div></div>
+        <select id="sel-kl" onchange="onKlSelect(this.value)" style="width:100%;padding:14px 16px;border:0.5px solid rgba(0,0,0,0.16);border-radius:12px;font-family:DM Sans,sans-serif;font-size:16px;color:#1a1a18;background:#fff;outline:none;-webkit-appearance:none;appearance:none;">
+          <option value="">—</option>
+        </select>
       </div>
       <div class="sf">
         <label>Geri bildirim içeriği <span style="color:var(--red)">*</span></label>
@@ -403,7 +409,12 @@ function getStore(){
 const sdState={};
 function sdInit(id,items,placeholder,onSelect){sdState[id]={items,value:'',label:'',onSelect:onSelect||null};const trigger=document.querySelector('#'+id+' .sd-trigger');if(!trigger)return;trigger.querySelector('.sd-val').textContent=placeholder||'Seçin...';trigger.classList.add('placeholder');}
 function sdSet(id,value,label){if(!sdState[id])return;sdState[id].value=value;sdState[id].label=label;const trigger=document.querySelector('#'+id+' .sd-trigger');trigger.querySelector('.sd-val').textContent=label||'—';trigger.classList.toggle('placeholder',!label&&!value);if(id==='sd-kl'){const btn=document.getElementById('klClearBtn');if(btn)btn.style.display=value?'inline':'none';}}
-function clearKlasman(){sdReset('sd-kl','—');const btn=document.getElementById('klClearBtn');if(btn)btn.style.display='none';}
+function clearKlasman(){
+  var sel=document.getElementById('sel-kl');
+  if(sel)sel.value='';
+  var btn=document.getElementById('klClearBtn');
+  if(btn)btn.style.display='none';
+}
 function sdGet(id){return sdState[id]?.value||''}
 function sdGetLabel(id){return sdState[id]?.label||''}
 function sdReset(id,placeholder){if(!sdState[id])return;sdState[id].value='';sdState[id].label='';const trigger=document.querySelector('#'+id+' .sd-trigger');if(trigger){trigger.querySelector('.sd-val').textContent=placeholder||'Seçin...';trigger.classList.add('placeholder');}}
@@ -531,20 +542,69 @@ function goP2fromP3(){document.getElementById('p3').style.display='none';documen
 function goP3(){if(!notes.length){alert('GembaGPT: En az bir geri bildirim ekleyin.');return}buildPV();document.getElementById('p2').style.display='none';document.getElementById('p3').style.display='block';showAB(3);scr()}
 function scr(){document.getElementById('scr').scrollTo({top:0,behavior:'smooth'})}
 
-function fillBGs(){
-  const isErkek=reyon==='Erkek';
-  document.getElementById('magField').style.display=isErkek?'block':'none';
-  if(isErkek){sdInit('sd-mag',Object.keys(erkekMAG).map(k=>({value:k,label:k})),'Seçin...',(val)=>{fillBGsFromMAG(val);});}
-  sdInit('sd-bg',[],'Seçin...',(val)=>{fillKL();});
-  sdInit('sd-kl',[],'—',null);
-  if(!isErkek){const bgs=(RD[reyon]?.bg||[]).map(b=>({value:b,label:b}));sdState['sd-bg'].items=bgs;sdState['sd-bg'].onSelect=(val)=>fillKL();}
-  sdReset('sd-mag','Seçin...');sdReset('sd-bg','Seçin...');sdReset('sd-kl','—');
+function populateSelect(selId, items, placeholder){
+  var sel=document.getElementById(selId);
+  if(!sel)return;
+  sel.innerHTML='<option value="">'+placeholder+'</option>';
+  items.forEach(function(it){
+    var opt=document.createElement('option');
+    opt.value=it.value||it;
+    opt.textContent=it.label||it;
+    sel.appendChild(opt);
+  });
 }
-function fillBGsFromMAG(mag){sdReset('sd-bg','Seçin...');sdReset('sd-kl','—');if(mag&&erkekMAG[mag]){const bgs=erkekMAG[mag].bg.map(b=>({value:b,label:b}));sdState['sd-bg'].items=bgs;sdState['sd-bg'].onSelect=()=>fillKL();}else{sdState['sd-bg'].items=[];}}
-function fillKL(){const bg=sdGet('sd-bg');sdReset('sd-kl','—');let options=[];if(reyon==='Erkek'){const mag=sdGet('sd-mag');options=(erkekMAG[mag]?.kl[bg])||[];}else{options=(RD[reyon]?.kl[bg])||[];}sdState['sd-kl'].items=options.map(k=>({value:k,label:k}));}
+
+function fillBGs(){
+  var isErkek=reyon==='Erkek';
+  document.getElementById('magField').style.display=isErkek?'block':'none';
+  if(isErkek){
+    populateSelect('sel-mag', Object.keys(erkekMAG).map(function(k){return{value:k,label:k};}), 'Seçin...');
+  }
+  populateSelect('sel-bg', [], 'Seçin...');
+  populateSelect('sel-kl', [], '—');
+  if(!isErkek){
+    var bgs=(RD[reyon]&&RD[reyon].bg)||[];
+    populateSelect('sel-bg', bgs.map(function(b){return{value:b,label:b};}), 'Seçin...');
+  }
+}
+
+function onMagSelect(mag){
+  lastMAG=mag;
+  populateSelect('sel-bg', [], 'Seçin...');
+  populateSelect('sel-kl', [], '—');
+  if(mag&&erkekMAG[mag]){
+    var bgs=erkekMAG[mag].bg.map(function(b){return{value:b,label:b};});
+    populateSelect('sel-bg', bgs, 'Seçin...');
+  }
+}
+
+function onBgSelect(bg){
+  populateSelect('sel-kl', [], '—');
+  var mag=document.getElementById('sel-mag')?document.getElementById('sel-mag').value:'';
+  var options=[];
+  if(reyon==='Erkek'){options=(erkekMAG[mag]&&erkekMAG[mag].kl[bg])||[];}
+  else{options=(RD[reyon]&&RD[reyon].kl&&RD[reyon].kl[bg])||[];}
+  populateSelect('sel-kl', options.map(function(k){return{value:k,label:k};}), '—');
+  var btn=document.getElementById('klClearBtn');
+  if(btn)btn.style.display='none';
+}
+
+function onKlSelect(val){
+  var btn=document.getElementById('klClearBtn');
+  if(btn)btn.style.display=val?'inline':'none';
+}
+
+function fillBGsFromMAG(mag){onMagSelect(mag);}
+function fillKL(){
+  var bg=document.getElementById('sel-bg')?document.getElementById('sel-bg').value:'';
+  onBgSelect(bg);
+}
 
 function saveNote(){
-  const mag=sdGet('sd-mag'),bg=sdGet('sd-bg'),kl=sdGet('sd-kl'),tx=document.getElementById('nTX').value.trim();
+  var mag=document.getElementById('sel-mag')?document.getElementById('sel-mag').value:'';
+  var bg=document.getElementById('sel-bg')?document.getElementById('sel-bg').value:'';
+  var kl=document.getElementById('sel-kl')?document.getElementById('sel-kl').value:'';
+  var tx=document.getElementById('nTX').value.trim();
   const err=document.getElementById('nerr');
   if(!bg||!tx){err.style.display='block';return}
   if(reyon==='Erkek'&&!mag){err.style.display='block';return}
@@ -559,9 +619,20 @@ function removePh(nid,i){const n=notes.find(n=>n.id===nid);if(n)n.photos.splice(
 function editNote(id){
   const n=notes.find(n=>n.id===id);if(!n)return;
   editingNoteId=id;fillBGs();
-  if(reyon==='Erkek'&&n.mag){sdSet('sd-mag',n.mag,n.mag);fillBGsFromMAG(n.mag);}
-  if(n.bg){sdSet('sd-bg',n.bg,n.bg);fillKL();}
-  if(n.kl)sdSet('sd-kl',n.kl,n.kl);
+  if(reyon==='Erkek'&&n.mag){
+    fillBGs();
+    onMagSelect(n.mag);
+    document.getElementById('sel-mag').value=n.mag;
+  }
+  if(n.bg){
+    onBgSelect(n.bg);
+    document.getElementById('sel-bg').value=n.bg;
+  }
+  if(n.kl){
+    document.getElementById('sel-kl').value=n.kl;
+    var btn=document.getElementById('klClearBtn');
+    if(btn)btn.style.display='inline';
+  }
   document.getElementById('nTX').value=n.tx;
   document.getElementById('nerr').style.display='none';
   document.getElementById('sheetTitle').textContent='Geri bildirimi düzenle';
@@ -580,7 +651,10 @@ function renderNotes(){
 
 function openSheet(){
   editingNoteId=null;inlinePhotos=[];fillBGs();
-  if(reyon==='Erkek'&&lastMAG){sdSet('sd-mag',lastMAG,lastMAG);fillBGsFromMAG(lastMAG);}
+  if(reyon==='Erkek'&&lastMAG){
+    onMagSelect(lastMAG);
+    document.getElementById('sel-mag').value=lastMAG;
+  }
   document.getElementById('nTX').value='';
   document.getElementById('nerr').style.display='none';
   document.getElementById('sheetTitle').textContent='Geri bildirim ekle';
