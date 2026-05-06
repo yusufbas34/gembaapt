@@ -32,7 +32,7 @@ body{display:flex;flex-direction:column;overflow:hidden}
 .logo{font-size:16px;font-weight:600;letter-spacing:-.4px;min-height:44px;display:flex;align-items:center;padding:0 4px}
 .logo span{color:var(--text2);font-weight:400}
 .wk{font-size:12px;color:var(--text3)}
-.scroll{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch}
+.scroll{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;position:relative;}
 .step-wrap{padding:18px 20px 0}
 .sbar{display:flex;align-items:center;gap:6px;margin-bottom:20px}
 .stp{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;flex-shrink:0;transition:all .2s}
@@ -128,11 +128,11 @@ textarea{resize:none;line-height:1.5}
 .sd-trigger svg{flex-shrink:0;margin-left:8px;transition:transform .2s}
 .sd-trigger.open-style{border-color:var(--accent);border-radius:var(--r) var(--r) 0 0;}
 .sd-trigger.open-style svg{transform:rotate(180deg)}
-.sd-panel{display:none;background:var(--bg);border:0.5px solid var(--accent);border-top:none;border-radius:0 0 var(--r) var(--r);overflow:hidden;margin-bottom:4px;}
+.sd-panel{display:none;background:var(--bg);border:0.5px solid var(--accent);border-top:none;border-radius:0 0 var(--r) var(--r);overflow:hidden;margin-bottom:4px;position:relative;z-index:600;}
 .sd-panel.open{display:block}
 .sd-search{width:100%;padding:12px 16px;border:none;border-bottom:0.5px solid var(--border);font-family:'DM Sans',sans-serif;font-size:16px;color:var(--text);background:var(--bg2);outline:none;}
-.sd-list{max-height:240px;overflow-y:auto;-webkit-overflow-scrolling:touch}
-.sd-item{padding:14px 16px;font-size:15px;color:var(--text);cursor:pointer;border-bottom:0.5px solid var(--border);transition:background .1s;}
+.sd-list{max-height:240px;overflow-y:auto;-webkit-overflow-scrolling:touch;position:relative;z-index:601;}
+.sd-item{padding:14px 16px;font-size:15px;color:var(--text);cursor:pointer;border-bottom:0.5px solid var(--border);transition:background .1s;position:relative;z-index:602;user-select:none;-webkit-user-select:none;}
 .sd-item:last-child{border-bottom:none}
 .sd-item:active,.sd-item.hover{background:var(--bg2)}
 .sd-item.selected{color:var(--accent);font-weight:500}
@@ -167,14 +167,26 @@ textarea{resize:none;line-height:1.5}
   <button id="installBtn" onclick="doInstall()" style="background:#fff;color:#1a1a18;border:none;border-radius:8px;padding:8px 14px;font-size:13px;font-weight:500;cursor:pointer;white-space:nowrap;font-family:DM Sans,sans-serif">Ekle</button>
   <button onclick="document.getElementById('installBanner').style.display='none'" style="background:none;border:none;color:rgba(255,255,255,.6);font-size:20px;cursor:pointer;padding:0;line-height:1">×</button>
 </div>
-<div id="iosBanner" style="display:none;background:#f6f5f2;border-bottom:0.5px solid rgba(0,0,0,.1);padding:10px 16px;flex-shrink:0;align-items:center;gap:10px">
-  <div style="font-size:13px;color:#1a1a18;line-height:1.5">📲 Ana ekrana eklemek için tarayıcının <strong>Paylaş</strong> menüsünden <strong>"Ana Ekrana Ekle"</strong> seçin.</div>
-  <button onclick="document.getElementById('iosBanner').style.display='none'" style="background:none;border:none;color:#aeaea9;font-size:20px;cursor:pointer;padding:0;flex-shrink:0">×</button>
-</div>
+
 <div class="scroll" id="scr">
   <div id="p1">
     <div class="step-wrap"><div class="sbar"><div class="stp a" id="s1">1</div><div class="sl"></div><div class="stp p" id="s2">2</div><div class="sl"></div><div class="stp p" id="s3">3</div></div></div>
     <div class="ph"><div class="pt">Mağaza seç</div><div class="ps">Ziyaret bilgilerini girin.</div></div>
+    <div style="margin:0 20px 16px;background:#fff8e6;border:0.5px solid #f5c842;border-radius:12px;padding:12px 14px;display:flex;gap:10px;align-items:flex-start">
+      <div style="font-size:20px;flex-shrink:0">⚠️</div>
+      <div>
+        <div style="font-size:13px;font-weight:600;color:#7a5c00;margin-bottom:3px">Mail göndermeden önce</div>
+        <div style="font-size:12px;color:#7a5c00;line-height:1.5">Outlook uygulamasında <strong>LC Waikiki kurumsal hesabınızın</strong> seçili olduğundan emin olun. Aksi halde mailiniz iletilemez.</div>
+      </div>
+    </div>
+    <!-- LC Waikiki hesap uyarısı -->
+    <div style="margin:0 20px 16px;background:#fff8e6;border:0.5px solid #f5c842;border-radius:12px;padding:12px 14px;display:flex;gap:10px;align-items:flex-start">
+      <div style="font-size:20px;flex-shrink:0">⚠️</div>
+      <div>
+        
+        <div style="font-size:12px;color:#7a5c00;line-height:1.5">Outlook uygulamasında <strong>LC Waikiki kurumsal hesabınızın</strong> seçili olduğundan emin olun. Aksi halde mailiniz iletilemez.</div>
+      </div>
+    </div>
     <div id="ubanner" style="display:none" class="ubanner">
       <div><div class="uname" id="bname"></div><div class="usub">Kayıtlı çalışan</div></div>
       <button class="btn-xs" onclick="clearUser()">Değiştir</button>
@@ -313,6 +325,7 @@ textarea{resize:none;line-height:1.5}
 <input type="file" id="pfi-inline-cam" accept="image/*" capture="environment" style="display:none" onchange="handlePhInline()"/>
 
 <script>
+
 const RD={
   "Kadın":{bg:["Örme Üst","Dokuma Üst","Dokuma Alt","Dış Giyim","İç Giyim","Aksesuar","Ayakkabı"],kl:{"Örme Üst":["Tişört Kkol","Tişört Ukol","Polo Yaka","Sweatshirt","Kapüşonlu Sweat"],"Dokuma Üst":["Gömlek U.Kol","Gömlek K.Kol","Bluz","Keten Gömlek","Casual Gömlek"],"Dokuma Alt":["Jean Pantolon","Chino","Etek","Şort","Slim Jean","Kargo"],"Dış Giyim":["Blazer","Trençkot","Mont","Parka","Yelek","Kaban"],"İç Giyim":["Atlet","Boksör","Pijama Takım","Spor Sütyeni"],"Aksesuar":["Kemer","Şapka","Bere","Çanta","Cüzdan","Atkı"],"Ayakkabı":["Sneaker","Loafer","Bot","Sandalet","Terlik"]}},
   "Erkek":{useMag:true},
@@ -322,19 +335,19 @@ const RD={
 };
 const RT={"Kadın":"tk","Erkek":"te","Çocuk":"tc","Home":"th","Bebek":"tb"};
 const erkekMAG={
-  "BUC":{bg:["CHINO DUVARI","DIŞ GİYİM","DOKUMA ÜST","ÖRME","ÖRME BASIC","TRİKO"],kl:{"CHINO DUVARI":["BASİC DOKUMA CHİNO PANTOLON İNCE","BASIC DOKUMA CHINO PANTOLON ORTA","CL BASIC DOKUMA PANTOLON KALIN","CLASSIC DOKUMA ROLLER","CLASSIC DOKUMA ŞORT"],"DIŞ GİYİM":["İNCE MONT","İNCE PUFFER MONT","MONT/KABAN KALIN","PARKA","PU MONT İNCE","PU MONT KALIN","YELEK"],"DOKUMA ÜST":["KEY DOKUMA GOMLEK K.KOL","KEY DOKUMA GOMLEK U.KOL","KEY EKOSELİ DOKUMA GOMLEK K.KOL","KEY EKOSELİ DOKUMA GOMLEK U.KOL"],"ÖRME":["BASIC ORME BİSİKLET YAKA T-SHIRT K.KOL","BASIC ORME POLO YAKA T-SHIRT K.KOL","BASIC ORME V YAKA T-SHIRT K.KOL","KEY BASKILI ORME T-SHIRT K.KOL","KEY ORME T-SHIRT K.KOL"],"ÖRME BASIC":["BASIC KEY BASKILI ORME SWEAT","CL BASIC ORME HIRKA","CL BASIC ORME PANTOLON","CL BASIC ORME ROLLER","CL BASIC ORME SORT / BERMUDA","CL BASIC ORME SWEAT","CL BASIC ORME T-SHIRT U.KOL","ÖRME ATLET"],"TRİKO":["KEY ÇİZGİLİ TRIKO KAZAK","KEY TRIKO HIRKA","KEY TRIKO HIRKA MONT","KEY TRIKO KAZAK","KEY TRIKO YELEK"]}},
-  "BUB":{bg:["BLAZER CEKET","DENİM","DIŞ GİYİM","DOKUMA ALT","DOKUMA SET","DOKUMA ÜST","ÖRME","TRİKO"],kl:{"BLAZER CEKET":["BLAZER CEKET"],"DENİM":["KEY DOKUMA JEAN PANTOLON"],"DIŞ GİYİM":["İNCE MONT","MONT/KABAN KALIN","NAYLON PUFFER MONT/KABAN","PARKA","PU MONT İNCE","PU MONT KALIN","YAGMURLUK","YELEK"],"DOKUMA ALT":["KEY DOKUMA PANTOLON ORTA","KEY DOKUMA ŞORT/BERMUDA"],"DOKUMA SET":["BLAZER CEKET SET","DOKUMA SHACKET SET","İNCE MONT SET","KEY DOKUMA GOMLEK K.KOL SET","KEY DOKUMA GOMLEK U.KOL SET","KEY DOKUMA PANTOLON ORTA SET","KEY DOKUMA ŞORT/BERMUDA SET"],"DOKUMA ÜST":["DOKUMA SHACKET","KEY BASKILI DOKUMA GOMLEK K.KOL","KEY ÇİZGİLİ DOKUMA GOMLEK U.KOL","KEY DOKUMA GOMLEK K.KOL","KEY DOKUMA GOMLEK U.KOL"],"ÖRME":["KEY BASKILI ORME T-SHIRT K.KOL","KEY ORME HIRKA","KEY ORME PANTOLON","KEY ORME SORT / BERMUDA","KEY ORME SWEAT","KEY ORME T-SHIRT K.KOL"],"TRİKO":["KEY TRIKO HIRKA","KEY TRIKO KAZAK","KEY TRIKO KAZAK K.KOL","KEY TRIKO SUVETER","KEY TRIKO YELEK"]}},
-  "BUL":{bg:["BLAZER CEKET","DIŞ GİYİM","DOKUMA ALT","DOKUMA ÜST","ÖRME","TRİKO"],kl:{"BLAZER CEKET":["BLAZER CEKET"],"DIŞ GİYİM":["İNCE MONT","MONT/KABAN KALIN","NAYLON PUFFER MONT/KABAN","PARKA","PU MONT İNCE","PU MONT KALIN","YAGMURLUK","YELEK"],"DOKUMA ALT":["KEY DOKUMA PANTOLON ORTA","KEY DOKUMA ŞORT/BERMUDA"],"DOKUMA ÜST":["DOKUMA SHACKET","KEY BASKILI DOKUMA GOMLEK K.KOL","KEY DOKUMA GOMLEK K.KOL","KEY DOKUMA GOMLEK U.KOL"],"ÖRME":["KEY BASKILI ORME T-SHIRT K.KOL","KEY ÇİZGİLİ ORME T-SHIRT K.KOL","KEY ÖRME ATLET","KEY ORME HIRKA","KEY ORME PANTOLON","KEY ORME SORT / BERMUDA","KEY ORME SWEAT","KEY ORME T-SHIRT K.KOL"],"TRİKO":["KEY TRIKO HIRKA","KEY TRIKO HIRKA MONT","KEY TRIKO KAZAK","KEY TRIKO KAZAK K.KOL","KEY TRIKO SUVETER"]}},
-  "BUXL":{bg:["DENİM","DIŞ GİYİM","DOKUMA ALT","DOKUMA ÜST","ÖRME","TRİKO"],kl:{"DENİM":["KEY DOKUMA JEAN BERMUDA","KEY DOKUMA JEAN GOMLEK K.KOL","KEY DOKUMA JEAN GOMLEK U.KOL","KEY DOKUMA JEAN MONT","KEY DOKUMA JEAN PANTOLON"],"DIŞ GİYİM":["İNCE MONT","İNCE PUFFER MONT","MONT/KABAN KALIN","NAYLON PUFFER MONT/KABAN","PARKA","PU MONT İNCE","PU MONT KALIN","YAGMURLUK","YELEK"],"DOKUMA ALT":["KEY DOKUMA PANTOLON KARGO","KEY DOKUMA PANTOLON ORTA","KEY DOKUMA ŞORT/BERMUDA"],"DOKUMA ÜST":["DOKUMA SHACKET","KEY DOKUMA GOMLEK K.KOL","KEY DOKUMA GOMLEK U.KOL"],"ÖRME":["BASIC ORME T-SHIRT K.KOL","KEY BASKILI ORME T-SHIRT K.KOL","KEY ÇİZGİLİ ORME T-SHIRT K.KOL","KEY ÖRME ATLET","KEY ORME HIRKA","KEY ORME PANTOLON","KEY ORME POLO YAKA T-SHIRT K.KOL","KEY ORME SORT / BERMUDA","KEY ORME SWEAT"],"TRİKO":["KEY ÇİZGİLİ TRIKO KAZAK","KEY TRIKO HIRKA","KEY TRIKO KAZAK","KEY TRIKO KAZAK K.KOL","KEY TRIKO KAZAK Z4"]}},
-  "BUMH":{bg:["DOKUMA ÜST","ÖRME","YÜZME GİYİM"],kl:{"DOKUMA ÜST":["KEY DOKUMA GOMLEK K.KOL"],"ÖRME":["BASIC ORME POLO YAKA T-SHIRT K.KOL","KEY ÖRME ATLET","KEY ORME T-SHIRT K.KOL"],"YÜZME GİYİM":["BASIC DOKUMA YUZME ŞORT","DOKUMA YUZME UZUN ŞORT","KEY DOKUMA YUZME ŞORT"]}},
-  "BUCF":{bg:["BLAZER CEKET","DOKUMA ALT","DOKUMA ÜST","KRAVAT/PAPYON"],kl:{"BLAZER CEKET":["BLAZER CEKET"],"DOKUMA ALT":["KEY DOKUMA PANTOLON"],"DOKUMA ÜST":["BASIC DOKUMA GOMLEK U.KOL","KEY DOKUMA GOMLEK K.KOL","KEY DOKUMA GOMLEK U.KOL"],"KRAVAT/PAPYON":["KEY AKSESUAR KRAVAT/PAPYON SMART"]}},
-  "BUGA":{bg:["AKTİF SPOR","DIŞ GİYİM","DOKUMA ALT"],kl:{"AKTİF SPOR":["BASIC ORME T-SHIRT K.KOL AKTİF SPOR","KEY ORME ATLET AKTİF SPOR","KEY ORME HIRKA AKTİF SPOR","KEY ORME PANTOLON AKTİF SPOR","KEY ORME SORT/TAYTLI SORT AKTİF SPOR","KEY ORME SWEAT AKTİF SPOR","KEY ORME T-SHIRT U.KOL AKTİF SPOR"],"DIŞ GİYİM":["MONT/KABAN KALIN"],"DOKUMA ALT":["KEY DOKUMA PANTOLON"]}},
-  "BUJD":{bg:["DENİM"],kl:{"DENİM":["BASIC DOKUMA JEAN BERMUDA","BASIC DOKUMA JEAN PANTOLON"]}},
-  "BUJW":{bg:["DENİM","DENIM DUVARI"],kl:{"DENİM":["KEY DOKUMA JEAN GOMLEK K.KOL","KEY DOKUMA JEAN GOMLEK U.KOL","KEY DOKUMA JEAN MONT"],"DENIM DUVARI":["BASIC DENIM DUVAR DOKUMA JEAN PANTOLON","BASIC DENIM DUVAR DOKUMA JEAN SORT /BERMUDA"]}},
-  "BUK":{bg:["DERİ AKSESUAR","DOKUMA AKSESUAR","STANDART DIŞI","TRİKO ÖRME AKSESUAR"],kl:{"DERİ AKSESUAR":["KEY AKSESUAR CANTA BUYUK","KEY AKSESUAR CANTA KUCUK","KEY AKSESUAR CUZDAN","KEY AKSESUAR KEMER"],"DOKUMA AKSESUAR":["KEY AKSESUAR ATKI","KEY AKSESUAR DOKUMA ŞAPKA","KEY AKSESUAR ELDIVEN"],"STANDART DIŞI":["KEY AKSESUAR TAKI"],"TRİKO ÖRME AKSESUAR":["KEY AKSESUAR HAVLU","KEY ORME AKSESUAR BERE","KEY TRIKO AKSESUAR BERE","KEY TRIKO AKSESUAR ELDIVEN","KEY TRIKO AKSESUAR KAŞKOL"]}},
-  "BUR":{bg:["ÇORAP"],kl:{"ÇORAP":["KEY AKSESUAR ÇORAP BABET","KEY AKSESUAR CORAP EV","KEY AKSESUAR CORAP PATIK","KEY AKSESUAR CORAP SNEAKER","KEY AKSESUAR CORAP SOKET"]}},
-  "BUS":{bg:["BOXER","İÇ GİYİM"],kl:{"BOXER":["İÇGYM BASIC BOXER","İÇGYM KEY BOXER","İÇGYM SLİP"],"İÇ GİYİM":["İÇGYM KEY ÖRME FANİLA K.KOL","İÇGYM ORME ATLET","İÇGYM ORME FANILA U.KOL"]}},
-  "BUSP":{bg:["PİJAMA"],kl:{"PİJAMA":["İÇGYM ÖRME PİJAMA TAKIM K.KOL-K.PAÇA","İÇGYM ÖRME PİJAMA TAKIM K.KOL-U.PAÇA","İÇGYM ÖRME PİJAMA TAKIM U.KOL-U.PAÇA","İÇGYM ÖRME PİJAMA TEK ALT KISA","İÇGYM ÖRME PİJAMA TEK ALT UZUN","İÇGYM ÖRME PİJAMA TEK ÜST","İÇGYM TERMAL ÜST","PİJAMA TERMAL ALT"]}}
+  "BUC":{bg:["CHINO DUVARI","DIŞ GİYİM","DOKUMA ÜST","ÖRME","ÖRME BASIC","TRİKO","GENEL","LINE"],kl:{"CHINO DUVARI":["BASİC DOKUMA CHİNO PANTOLON İNCE","BASIC DOKUMA CHINO PANTOLON ORTA","CL BASIC DOKUMA PANTOLON KALIN","CLASSIC DOKUMA ROLLER","CLASSIC DOKUMA ŞORT"],"DIŞ GİYİM":["İNCE MONT","İNCE PUFFER MONT","MONT/KABAN KALIN","PARKA","PU MONT İNCE","PU MONT KALIN","YELEK"],"DOKUMA ÜST":["KEY DOKUMA GOMLEK K.KOL","KEY DOKUMA GOMLEK U.KOL","KEY EKOSELİ DOKUMA GOMLEK K.KOL","KEY EKOSELİ DOKUMA GOMLEK U.KOL"],"ÖRME":["BASIC ORME BİSİKLET YAKA T-SHIRT K.KOL","BASIC ORME POLO YAKA T-SHIRT K.KOL","BASIC ORME V YAKA T-SHIRT K.KOL","KEY BASKILI ORME T-SHIRT K.KOL","KEY ORME T-SHIRT K.KOL"],"ÖRME BASIC":["BASIC KEY BASKILI ORME SWEAT","CL BASIC ORME HIRKA","CL BASIC ORME PANTOLON","CL BASIC ORME ROLLER","CL BASIC ORME SORT / BERMUDA","CL BASIC ORME SWEAT","CL BASIC ORME T-SHIRT U.KOL","ÖRME ATLET"],"TRİKO":["KEY ÇİZGİLİ TRIKO KAZAK","KEY TRIKO HIRKA","KEY TRIKO HIRKA MONT","KEY TRIKO KAZAK","KEY TRIKO YELEK"],"GENEL":["GENEL"],"LINE":["LINE"]}},
+  "BUB":{bg:["BLAZER CEKET","DENİM","DIŞ GİYİM","DOKUMA ALT","DOKUMA SET","DOKUMA ÜST","ÖRME","TRİKO","GENEL","LINE"],kl:{"BLAZER CEKET":["BLAZER CEKET"],"DENİM":["KEY DOKUMA JEAN PANTOLON"],"DIŞ GİYİM":["İNCE MONT","MONT/KABAN KALIN","NAYLON PUFFER MONT/KABAN","PARKA","PU MONT İNCE","PU MONT KALIN","YAGMURLUK","YELEK"],"DOKUMA ALT":["KEY DOKUMA PANTOLON ORTA","KEY DOKUMA ŞORT/BERMUDA"],"DOKUMA SET":["BLAZER CEKET SET","DOKUMA SHACKET SET","İNCE MONT SET","KEY DOKUMA GOMLEK K.KOL SET","KEY DOKUMA GOMLEK U.KOL SET","KEY DOKUMA PANTOLON ORTA SET","KEY DOKUMA ŞORT/BERMUDA SET"],"DOKUMA ÜST":["DOKUMA SHACKET","KEY BASKILI DOKUMA GOMLEK K.KOL","KEY ÇİZGİLİ DOKUMA GOMLEK U.KOL","KEY DOKUMA GOMLEK K.KOL","KEY DOKUMA GOMLEK U.KOL"],"ÖRME":["KEY BASKILI ORME T-SHIRT K.KOL","KEY ORME HIRKA","KEY ORME PANTOLON","KEY ORME SORT / BERMUDA","KEY ORME SWEAT","KEY ORME T-SHIRT K.KOL"],"TRİKO":["KEY TRIKO HIRKA","KEY TRIKO KAZAK","KEY TRIKO KAZAK K.KOL","KEY TRIKO SUVETER","KEY TRIKO YELEK"],"GENEL":["GENEL"],"LINE":["LINE"]}},
+  "BUL":{bg:["BLAZER CEKET","DIŞ GİYİM","DOKUMA ALT","DOKUMA ÜST","ÖRME","TRİKO","GENEL","LINE"],kl:{"BLAZER CEKET":["BLAZER CEKET"],"DIŞ GİYİM":["İNCE MONT","MONT/KABAN KALIN","NAYLON PUFFER MONT/KABAN","PARKA","PU MONT İNCE","PU MONT KALIN","YAGMURLUK","YELEK"],"DOKUMA ALT":["KEY DOKUMA PANTOLON ORTA","KEY DOKUMA ŞORT/BERMUDA"],"DOKUMA ÜST":["DOKUMA SHACKET","KEY BASKILI DOKUMA GOMLEK K.KOL","KEY DOKUMA GOMLEK K.KOL","KEY DOKUMA GOMLEK U.KOL"],"ÖRME":["KEY BASKILI ORME T-SHIRT K.KOL","KEY ÇİZGİLİ ORME T-SHIRT K.KOL","KEY ÖRME ATLET","KEY ORME HIRKA","KEY ORME PANTOLON","KEY ORME SORT / BERMUDA","KEY ORME SWEAT","KEY ORME T-SHIRT K.KOL"],"TRİKO":["KEY TRIKO HIRKA","KEY TRIKO HIRKA MONT","KEY TRIKO KAZAK","KEY TRIKO KAZAK K.KOL","KEY TRIKO SUVETER"],"GENEL":["GENEL"],"LINE":["LINE"]}},
+  "BUXL":{bg:["DENİM","DIŞ GİYİM","DOKUMA ALT","DOKUMA ÜST","ÖRME","TRİKO","GENEL","LINE"],kl:{"DENİM":["KEY DOKUMA JEAN BERMUDA","KEY DOKUMA JEAN GOMLEK K.KOL","KEY DOKUMA JEAN GOMLEK U.KOL","KEY DOKUMA JEAN MONT","KEY DOKUMA JEAN PANTOLON"],"DIŞ GİYİM":["İNCE MONT","İNCE PUFFER MONT","MONT/KABAN KALIN","NAYLON PUFFER MONT/KABAN","PARKA","PU MONT İNCE","PU MONT KALIN","YAGMURLUK","YELEK"],"DOKUMA ALT":["KEY DOKUMA PANTOLON KARGO","KEY DOKUMA PANTOLON ORTA","KEY DOKUMA ŞORT/BERMUDA"],"DOKUMA ÜST":["DOKUMA SHACKET","KEY DOKUMA GOMLEK K.KOL","KEY DOKUMA GOMLEK U.KOL"],"ÖRME":["BASIC ORME T-SHIRT K.KOL","KEY BASKILI ORME T-SHIRT K.KOL","KEY ÇİZGİLİ ORME T-SHIRT K.KOL","KEY ÖRME ATLET","KEY ORME HIRKA","KEY ORME PANTOLON","KEY ORME POLO YAKA T-SHIRT K.KOL","KEY ORME SORT / BERMUDA","KEY ORME SWEAT"],"TRİKO":["KEY ÇİZGİLİ TRIKO KAZAK","KEY TRIKO HIRKA","KEY TRIKO KAZAK","KEY TRIKO KAZAK K.KOL","KEY TRIKO KAZAK Z4"],"GENEL":["GENEL"],"LINE":["LINE"]}},
+  "BUMH":{bg:["DOKUMA ÜST","ÖRME","YÜZME GİYİM","GENEL","LINE"],kl:{"DOKUMA ÜST":["KEY DOKUMA GOMLEK K.KOL"],"ÖRME":["BASIC ORME POLO YAKA T-SHIRT K.KOL","KEY ÖRME ATLET","KEY ORME T-SHIRT K.KOL"],"YÜZME GİYİM":["BASIC DOKUMA YUZME ŞORT","DOKUMA YUZME UZUN ŞORT","KEY DOKUMA YUZME ŞORT"],"GENEL":["GENEL"],"LINE":["LINE"]}},
+  "BUCF":{bg:["BLAZER CEKET","DOKUMA ALT","DOKUMA ÜST","KRAVAT/PAPYON","GENEL","LINE"],kl:{"BLAZER CEKET":["BLAZER CEKET"],"DOKUMA ALT":["KEY DOKUMA PANTOLON"],"DOKUMA ÜST":["BASIC DOKUMA GOMLEK U.KOL","KEY DOKUMA GOMLEK K.KOL","KEY DOKUMA GOMLEK U.KOL"],"KRAVAT/PAPYON":["KEY AKSESUAR KRAVAT/PAPYON SMART"],"GENEL":["GENEL"],"LINE":["LINE"]}},
+  "BUGA":{bg:["AKTİF SPOR","DIŞ GİYİM","DOKUMA ALT","GENEL","LINE"],kl:{"AKTİF SPOR":["BASIC ORME T-SHIRT K.KOL AKTİF SPOR","KEY ORME ATLET AKTİF SPOR","KEY ORME HIRKA AKTİF SPOR","KEY ORME PANTOLON AKTİF SPOR","KEY ORME SORT/TAYTLI SORT AKTİF SPOR","KEY ORME SWEAT AKTİF SPOR","KEY ORME T-SHIRT U.KOL AKTİF SPOR"],"DIŞ GİYİM":["MONT/KABAN KALIN"],"DOKUMA ALT":["KEY DOKUMA PANTOLON"],"GENEL":["GENEL"],"LINE":["LINE"]}},
+  "BUJD":{bg:["DENİM","GENEL","LINE"],kl:{"DENİM":["BASIC DOKUMA JEAN BERMUDA","BASIC DOKUMA JEAN PANTOLON"],"GENEL":["GENEL"],"LINE":["LINE"]}},
+  "BUJW":{bg:["DENİM","DENIM DUVARI","GENEL","LINE"],kl:{"DENİM":["KEY DOKUMA JEAN GOMLEK K.KOL","KEY DOKUMA JEAN GOMLEK U.KOL","KEY DOKUMA JEAN MONT"],"DENIM DUVARI":["BASIC DENIM DUVAR DOKUMA JEAN PANTOLON","BASIC DENIM DUVAR DOKUMA JEAN SORT /BERMUDA"],"GENEL":["GENEL"],"LINE":["LINE"]}},
+  "BUK":{bg:["DERİ AKSESUAR","DOKUMA AKSESUAR","STANDART DIŞI","TRİKO ÖRME AKSESUAR","GENEL","LINE"],kl:{"DERİ AKSESUAR":["KEY AKSESUAR CANTA BUYUK","KEY AKSESUAR CANTA KUCUK","KEY AKSESUAR CUZDAN","KEY AKSESUAR KEMER"],"DOKUMA AKSESUAR":["KEY AKSESUAR ATKI","KEY AKSESUAR DOKUMA ŞAPKA","KEY AKSESUAR ELDIVEN"],"STANDART DIŞI":["KEY AKSESUAR TAKI"],"TRİKO ÖRME AKSESUAR":["KEY AKSESUAR HAVLU","KEY ORME AKSESUAR BERE","KEY TRIKO AKSESUAR BERE","KEY TRIKO AKSESUAR ELDIVEN","KEY TRIKO AKSESUAR KAŞKOL"],"GENEL":["GENEL"],"LINE":["LINE"]}},
+  "BUR":{bg:["ÇORAP","GENEL","LINE"],kl:{"ÇORAP":["KEY AKSESUAR ÇORAP BABET","KEY AKSESUAR CORAP EV","KEY AKSESUAR CORAP PATIK","KEY AKSESUAR CORAP SNEAKER","KEY AKSESUAR CORAP SOKET"],"GENEL":["GENEL"],"LINE":["LINE"]}},
+  "BUS":{bg:["BOXER","İÇ GİYİM","GENEL","LINE"],kl:{"BOXER":["İÇGYM BASIC BOXER","İÇGYM KEY BOXER","İÇGYM SLİP"],"İÇ GİYİM":["İÇGYM KEY ÖRME FANİLA K.KOL","İÇGYM ORME ATLET","İÇGYM ORME FANILA U.KOL"],"GENEL":["GENEL"],"LINE":["LINE"]}},
+  "BUSP":{bg:["PİJAMA","GENEL","LINE"],kl:{"PİJAMA":["İÇGYM ÖRME PİJAMA TAKIM K.KOL-K.PAÇA","İÇGYM ÖRME PİJAMA TAKIM K.KOL-U.PAÇA","İÇGYM ÖRME PİJAMA TAKIM U.KOL-U.PAÇA","İÇGYM ÖRME PİJAMA TEK ALT KISA","İÇGYM ÖRME PİJAMA TEK ALT UZUN","İÇGYM ÖRME PİJAMA TEK ÜST","İÇGYM TERMAL ÜST","PİJAMA TERMAL ALT"],"GENEL":["GENEL"],"LINE":["LINE"]}}
 };
 
 let notes=[],reyon='',photNoteId=null,editingNoteId=null,lastMAG='',inlinePhotos=[];
@@ -358,7 +371,21 @@ function wl(){const n=new Date(),w=gwn(n),m=["Oca","Şub","Mar","Nis","May","Haz
 document.getElementById('topWeek').textContent=wl();
 
 function loadUser(){const u=JSON.parse(localStorage.getItem('gu')||'null');if(u?.name){document.getElementById('ubanner').style.display='flex';document.getElementById('bname').textContent=u.name;document.getElementById('uform').style.display='none';return u}document.getElementById('ubanner').style.display='none';document.getElementById('uform').style.display='block';return null}
-function clearUser(){localStorage.removeItem('gu');loadUser()}
+function clearUser(){
+  localStorage.removeItem('gu');
+  localStorage.removeItem('gemba_auth');
+  AUTH=null;
+  // Login ekranına yönlendir
+  document.getElementById('loginName').value='';
+  document.getElementById('loginPin').value='';
+  document.getElementById('loginError').style.display='none';
+  document.getElementById('loginForm').style.display='block';
+  document.getElementById('registerForm').style.display='none';
+  document.getElementById('loginOverlay').style.display='flex';
+  // Formu da sıfırla
+  document.getElementById('uform').style.display='block';
+  document.getElementById('ubanner').style.display='none';
+}
 function getUser(){
   const s=JSON.parse(localStorage.getItem('gu')||'null');
   if(s?.name)return s;
@@ -386,24 +413,89 @@ function openSD(id){
   const trigger=document.querySelector('#'+id+' .sd-trigger');
   const panel=document.getElementById('sdp-'+id);
   if(!trigger||!panel)return;
-  const inp=document.createElement('input');inp.type='text';inp.className='sd-search';inp.placeholder='Ara...';inp.setAttribute('autocomplete','off');
-  const list=document.createElement('div');list.className='sd-list';
+
+  const inp=document.createElement('input');
+  inp.type='text';inp.className='sd-search';inp.placeholder='Ara...';
+  inp.setAttribute('autocomplete','off');
+
+  const list=document.createElement('div');
+  list.className='sd-list';
+
+  function doSelect(val, lbl){
+    sdState[id].value=val;
+    sdState[id].label=lbl;
+    const t=document.querySelector('#'+id+' .sd-trigger');
+    if(t){t.querySelector('.sd-val').textContent=lbl||'—';t.classList.toggle('placeholder',!lbl&&!val);}
+    if(id==='sd-kl'){const btn=document.getElementById('klClearBtn');if(btn)btn.style.display=val?'inline':'none';}
+    panel.classList.remove('open');
+    panel.innerHTML='';
+    if(trigger)trigger.classList.remove('open-style');
+    activeSD=null;sdPanel=null;
+    const bd=document.getElementById('sd-backdrop');if(bd)bd.style.display='none';
+    if(st.onSelect)st.onSelect(val,lbl);
+  }
+
   function render(q){
     const q2=(q||'').toLowerCase();
-    const filtered=st.items.filter(it=>{const lbl=(it.label||it.value||it).toLowerCase();return lbl.includes(q2)||lbl.replace(/i̇/g,'i').replace(/ı/g,'i').includes(q2.replace(/i̇/g,'i').replace(/ı/g,'i'));});
+    const filtered=st.items.filter(it=>{
+      const lbl=(it.label||it.value||it).toLowerCase();
+      return lbl.includes(q2)||lbl.replace(/i̇/g,'i').replace(/ı/g,'i').includes(q2.replace(/i̇/g,'i').replace(/ı/g,'i'));
+    });
     list.innerHTML='';
-    if(!filtered.length){list.innerHTML='<div class="sd-empty">Sonuç bulunamadı</div>';return}
-    filtered.forEach(it=>{const val=it.value!==undefined?it.value:(it||'');const lbl=it.label||it.value||it;const div=document.createElement('div');div.className='sd-item'+(st.value===val?' selected':'');div.textContent=lbl;div.addEventListener('click',()=>{sdSet(id,val,lbl);closeSD();if(st.onSelect)st.onSelect(val,lbl);});div.addEventListener('touchstart',()=>div.classList.add('hover'),{passive:true});div.addEventListener('touchend',()=>div.classList.remove('hover'),{passive:true});list.appendChild(div);});
+    if(!filtered.length){list.innerHTML='<div class="sd-empty">Sonuç bulunamadı</div>';return;}
+    filtered.forEach(it=>{
+      const val=it.value!==undefined?it.value:(it||'');
+      const lbl=it.label||it.value||it;
+      const div=document.createElement('div');
+      div.className='sd-item'+(st.value===val?' selected':'');
+      div.textContent=lbl;
+      div.style.cssText='padding:14px 16px;font-size:15px;color:var(--text);cursor:pointer;border-bottom:0.5px solid var(--border);background:var(--bg);-webkit-tap-highlight-color:rgba(0,0,0,0.1);';
+      
+      // Tek unified handler - hem mouse hem touch
+      var tapped=false;
+      div.addEventListener('touchstart',function(e){
+        tapped=false;
+        div.style.background='var(--bg2)';
+      },{passive:true});
+      div.addEventListener('touchend',function(e){
+        e.preventDefault();
+        tapped=true;
+        div.style.background='';
+        doSelect(val,lbl);
+      },{passive:false});
+      div.addEventListener('click',function(e){
+        if(!tapped) doSelect(val,lbl);
+        tapped=false;
+      });
+      list.appendChild(div);
+    });
   }
-  panel.innerHTML='';panel.appendChild(inp);panel.appendChild(list);panel.classList.add('open');trigger.classList.add('open-style');activeSD=id;sdPanel=panel;
-  render('');inp.addEventListener('input',()=>render(inp.value));
-  setTimeout(()=>{trigger.scrollIntoView({behavior:'smooth',block:'start'});setTimeout(()=>inp.focus(),150);},50);
+
+  panel.innerHTML='';
+  panel.appendChild(inp);
+  panel.appendChild(list);
+  panel.classList.add('open');
+  trigger.classList.add('open-style');
+  activeSD=id;sdPanel=panel;
+
+  render('');
+  inp.addEventListener('input',()=>render(inp.value));
+  setTimeout(()=>inp.focus(),100);
+  const bd=document.getElementById('sd-backdrop');if(bd)bd.style.display='block';
 }
+
 function closeSD(){if(sdPanel){sdPanel.classList.remove('open');sdPanel.innerHTML='';sdPanel=null;}if(activeSD){const trigger=document.querySelector('#'+activeSD+' .sd-trigger');if(trigger)trigger.classList.remove('open-style');activeSD=null;}const bd=document.getElementById('sd-backdrop');if(bd)bd.style.display='none';}
 
 function selR(el){document.querySelectorAll('.chip').forEach(c=>c.classList.remove('sel'));el.classList.add('sel');reyon=el.dataset.r;document.getElementById('rerr').style.display='none'}
 
 function goHome(){
+  // Geçmiş detay açıksa kapat
+  const histOv=document.getElementById('histOverlay');
+  if(histOv&&histOv.classList.contains('open')){
+    histOv.classList.remove('open');
+    currentHistVisit=null;
+    return;
+  }
   if(notes.length&&!confirm('Ana sayfaya dönmek istediğinize emin misiniz?'))return;
   notes=[];reyon='';inlinePhotos=[];editingNoteId=null;lastMAG='';
   document.querySelectorAll('.chip').forEach(c=>c.classList.remove('sel'));
@@ -418,9 +510,9 @@ function goHome(){
 function showAB(n){['ab1','ab2','ab3'].forEach(id=>{const el=document.getElementById(id);el.style.display='none'});if(n===1)document.getElementById('ab1').style.display='contents';else if(n===2){const el=document.getElementById('ab2');el.style.display='flex';el.style.flex='1'}else{const el=document.getElementById('ab3');el.style.display='flex';el.style.flex='1'}}
 
 function goP2(){
-  if(!getStore()){alert('Lütfen mağaza seçin.');return}
+  if(!getStore()){alert('GembaGPT: Lütfen mağaza seçin.');return}
   if(!reyon){document.getElementById('rerr').style.display='block';return}
-  const u=getUser();if(!u){alert('Lütfen adınızı girin.');return}
+  const u=getUser();if(!u){alert('GembaGPT: Lütfen adınızı girin.');return}
   loadUser();fillBGs();
   document.getElementById('p2st').textContent=getStore();
   document.getElementById('p2mt').textContent=reyon+' Reyonu · '+wl();
@@ -431,7 +523,7 @@ function goP2(){
 }
 function goP1(){closeSD();document.getElementById('p2').style.display='none';document.getElementById('p3').style.display='none';document.getElementById('p1').style.display='block';showAB(1);scr()}
 function goP2fromP3(){document.getElementById('p3').style.display='none';document.getElementById('p2').style.display='block';showAB(2);scr();renderNotes();}
-function goP3(){if(!notes.length){alert('En az bir geri bildirim ekleyin.');return}buildPV();document.getElementById('p2').style.display='none';document.getElementById('p3').style.display='block';showAB(3);scr()}
+function goP3(){if(!notes.length){alert('GembaGPT: En az bir geri bildirim ekleyin.');return}buildPV();document.getElementById('p2').style.display='none';document.getElementById('p3').style.display='block';showAB(3);scr()}
 function scr(){document.getElementById('scr').scrollTo({top:0,behavior:'smooth'})}
 
 function fillBGs(){
@@ -599,12 +691,39 @@ function buildPV(){
 function safeMailEncode(str){return str.replace(/&/g,'%26').replace(/[?]/g,'%3F').replace(/=/g,'%3D').replace(/#/g,'%23').replace(/[+]/g,'%2B').replace(/[\r\n]/g,'%0A');}
 
 async function smartSendMail(){
+  // Hesap uyarısı göster
+  const confirmed=await showOutlookWarning();
+  if(!confirmed)return;
+  
   const btn=document.getElementById('mailBtn');
   btn.textContent='⏳ Hazırlanıyor...';btn.disabled=true;
   try{
     notify('mail',{store:getStore(),reyon,week:gwn(new Date())});
     openMailFallback();
   }finally{btn.textContent='✉ Mail Gönder';btn.disabled=false;}
+}
+
+function showOutlookWarning(){
+  return new Promise((resolve)=>{
+    // Overlay oluştur
+    const overlay=document.createElement('div');
+    overlay.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:9999;display:flex;align-items:flex-end';
+    overlay.innerHTML=`
+      <div style="width:100%;background:#fff;border-radius:20px 20px 0 0;padding:24px 20px 40px;font-family:DM Sans,sans-serif">
+        <div style="width:36px;height:4px;background:#eee;border-radius:2px;margin:0 auto 20px"></div>
+        <div style="font-size:32px;text-align:center;margin-bottom:12px">⚠️</div>
+        <div style="font-size:17px;font-weight:600;color:#1a1a18;text-align:center;margin-bottom:8px">Outlook Hesabını Kontrol Et</div>
+        <div style="font-size:14px;color:#6b6b67;text-align:center;line-height:1.6;margin-bottom:24px">
+          Mail gönderilirken <strong>LC Waikiki kurumsal hesabının</strong> seçili olduğundan emin ol.<br><br>
+          Outlook → Profil fotoğrafına bas → LC Waikiki hesabını seç
+        </div>
+        <button id="warnOk" style="width:100%;background:#1a1a18;color:#fff;border:none;border-radius:12px;padding:16px;font-size:16px;font-weight:500;font-family:DM Sans,sans-serif;cursor:pointer;margin-bottom:10px">✅ Anladım, mail gönder</button>
+        <button id="warnCancel" style="width:100%;background:none;border:0.5px solid #ddd;border-radius:12px;padding:14px;font-size:15px;color:#6b6b67;font-family:DM Sans,sans-serif;cursor:pointer">İptal</button>
+      </div>`;
+    document.body.appendChild(overlay);
+    document.getElementById('warnOk').onclick=()=>{overlay.remove();resolve(true);};
+    document.getElementById('warnCancel').onclick=()=>{overlay.remove();resolve(false);};
+  });
 }
 
 function openMailFallback(){
@@ -618,8 +737,23 @@ function openMailFallback(){
     body+='━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n';
   });
   body+='İyi çalışmalar dilerim,\n'+toBold(user.name)+'\nLC Waikiki';
-  const to=window._to||'';const cc=window._cc||GEMBA_CC;
-  window.location.href='mailto:'+encodeURIComponent(to)+'?cc='+encodeURIComponent(cc)+'&subject='+encodeURIComponent(window._ms||'')+'&body='+safeMailEncode(body);
+  // Her zaman güncel hesapla, window._to boş olabilir
+  const {to:calcTo}=getMailRecipients();
+  const to=calcTo||window._to||'';
+  const cc=GEMBA_CC;
+  const wn2=gwn(new Date());
+  const subj=window._ms||(wn2+'. Hafta '+store+' '+reyon+' Reyonu Mağaza Ziyaret Notları');
+  // iOS: ms-outlook scheme ile direkt Outlook aç
+  const isIOS=/iphone|ipad|ipod/i.test(navigator.userAgent);
+  if(isIOS){
+    window.location.href='ms-outlook://compose?to='+encodeURIComponent(to)+'&cc='+encodeURIComponent(cc)+'&subject='+encodeURIComponent(subj)+'&body='+encodeURIComponent(body);
+    // Outlook yüklü değilse 1.5sn sonra mailto fallback
+    setTimeout(()=>{
+      window.location.href='mailto:'+encodeURIComponent(to)+'?cc='+encodeURIComponent(cc)+'&subject='+encodeURIComponent(subj)+'&body='+safeMailEncode(body);
+    },1500);
+  } else {
+    window.location.href='mailto:'+encodeURIComponent(to)+'?cc='+encodeURIComponent(cc)+'&subject='+encodeURIComponent(subj)+'&body='+safeMailEncode(body);
+  }
 }
 
 function copyAll(){navigator.clipboard.writeText('Konu: '+(window._ms||'')+'\n\n'+(window._mb||'')).then(()=>{const t=document.createElement('div');t.textContent='Kopyalandı!';t.style.cssText='position:fixed;bottom:90px;left:50%;transform:translateX(-50%);background:#1a1a18;color:#fff;padding:10px 22px;border-radius:100px;font-size:14px;font-family:DM Sans,sans-serif;z-index:999;pointer-events:none';document.body.appendChild(t);setTimeout(()=>t.remove(),2200);});}
@@ -628,22 +762,67 @@ showAB(1);loadUser();
 document.querySelector('.logo').addEventListener('touchend',function(e){e.preventDefault();goHome();});
 
 let currentHistVisit=null;
-function saveVisit(){
+async function saveVisit(){
   if(!notes.length){alert('Kaydedilecek geri bildirim yok.');return}
   buildPV();
   const store=getStore(),user=getUser(),wn=gwn(new Date());
   const notesNoPhotos=notes.map(n=>({...n,photos:[]}));
   const visit={id:Date.now(),store,reyon,week:wn,date:new Date().toLocaleDateString('tr-TR'),user:user?.name||'',notes:notesNoPhotos,subject:window._ms||'',body:window._mb||''};
-  const all=JSON.parse(localStorage.getItem('gemba_history')||'[]');
-  all.unshift(visit);if(all.length>30)all.splice(30);
-  try{localStorage.setItem('gemba_history',JSON.stringify(all));}catch(e){all.splice(10);try{localStorage.setItem('gemba_history',JSON.stringify(all));}catch(e2){}}
+
+  if(AUTH){
+    // Railway'e kaydet
+    try{
+      const r=await fetch(RAILWAY_URL+'/visits/save',{
+        method:'POST',headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({name:AUTH.name,pin:AUTH.pin,visit})
+      });
+      const d=await r.json();
+      if(d.ok){
+        // Railway'den güncel listeyi al
+        AUTH.visits=d.visits||[];
+      }
+    }catch(e){
+      // Offline fallback - localStorage'a geçici kaydet
+      const all=JSON.parse(localStorage.getItem('gemba_history')||'[]');
+      all.unshift(visit);if(all.length>30)all.splice(30);
+      localStorage.setItem('gemba_history',JSON.stringify(all));
+    }
+  } else {
+    // Giriş yapılmamışsa localStorage
+    const all=JSON.parse(localStorage.getItem('gemba_history')||'[]');
+    all.unshift(visit);if(all.length>30)all.splice(30);
+    try{localStorage.setItem('gemba_history',JSON.stringify(all));}catch(e){}
+  }
+
   notify('visit',{store,reyon,week:wn});
   const t=document.createElement('div');t.textContent='✓ Ziyaret kaydedildi!';t.style.cssText='position:fixed;bottom:90px;left:50%;transform:translateX(-50%);background:var(--green);color:#fff;padding:10px 22px;border-radius:100px;font-size:14px;font-family:DM Sans,sans-serif;z-index:999;pointer-events:none';document.body.appendChild(t);setTimeout(()=>t.remove(),2200);
   renderHistory();
 }
 
-function loadHistory(){return JSON.parse(localStorage.getItem('gemba_history')||'[]')}
-function deleteVisit(id,e){e.stopPropagation();if(!confirm('Bu ziyaret silinsin mi?'))return;const all=loadHistory().filter(v=>v.id!==id);localStorage.setItem('gemba_history',JSON.stringify(all));renderHistory();}
+function loadHistory(){
+  if(AUTH&&AUTH.visits) return AUTH.visits;
+  return JSON.parse(localStorage.getItem('gemba_history')||'[]');
+}
+async function deleteVisit(id,e){
+  e.stopPropagation();
+  if(!confirm('Bu ziyaret silinsin mi?'))return;
+  if(AUTH){
+    try{
+      const r=await fetch(RAILWAY_URL+'/visits/delete',{
+        method:'POST',headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({name:AUTH.name,pin:AUTH.pin,visitId:id})
+      });
+      const d=await r.json();
+      if(d.ok) AUTH.visits=d.visits||[];
+    }catch(e){
+      if(AUTH.visits) AUTH.visits=AUTH.visits.filter(v=>v.id!==id);
+    }
+  } else {
+    const all=loadHistory().filter(v=>v.id!==id);
+    localStorage.setItem('gemba_history',JSON.stringify(all));
+  }
+  renderHistory();
+}
 const reyonTagMap2={"Kadın":"tk","Erkek":"te","Çocuk":"tc","Home":"th","Bebek":"tb"};
 function renderHistory(){
   const all=loadHistory();const el=document.getElementById('histList');const sec=document.getElementById('histSection');
@@ -673,7 +852,206 @@ let deferredPrompt=null;
 window.addEventListener('beforeinstallprompt',(e)=>{e.preventDefault();deferredPrompt=e;const b=document.getElementById('installBanner');if(b){b.style.display='flex';}});
 window.addEventListener('appinstalled',()=>{const b=document.getElementById('installBanner');if(b)b.style.display='none';deferredPrompt=null;});
 function doInstall(){if(deferredPrompt){deferredPrompt.prompt();deferredPrompt.userChoice.then(()=>{deferredPrompt=null;document.getElementById('installBanner').style.display='none';});}}
-(function(){const isIOS=/iphone|ipad|ipod/i.test(navigator.userAgent);const isSafari=/safari/i.test(navigator.userAgent)&&!/chrome/i.test(navigator.userAgent);const isStandalone=window.navigator.standalone===true;if(isIOS&&isSafari&&!isStandalone){const b=document.getElementById('iosBanner');if(b)b.style.display='flex';}})();
+
+
+/* ── Safari uyarisi ── */
+(function(){
+  var ua=navigator.userAgent;
+  var isIOS=(/iphone|ipad|ipod/i).test(ua);
+  var isSafari=(/safari/i).test(ua)&&!(/chrome/i).test(ua)&&!(/edg/i).test(ua)&&!(/crios/i).test(ua);
+  var isStandalone=window.navigator.standalone===true;
+  if(isIOS&&isSafari&&!isStandalone){
+    var b=document.createElement('div');
+    b.style.cssText='position:fixed;inset:0;background:#fff;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px;text-align:center;font-family:sans-serif';
+    var h='<div style="font-size:48px;margin-bottom:16px">&#9888;&#65039;</div>';
+    h+='<div style="font-size:20px;font-weight:600;color:#1a1a18;margin-bottom:10px">Safari Desteklenmiyor</div>';
+    h+='<div style="font-size:14px;color:#6b6b67;line-height:1.6;margin-bottom:28px">GembaGPT kullanmak icin Microsoft Edge uygulamasini kullanin.</div>';
+    h+='<a href="https://apps.apple.com/tr/app/microsoft-edge-web-browser/id1288723196" style="background:#1a1a18;color:#fff;text-decoration:none;padding:16px 32px;border-radius:12px;font-size:16px;font-weight:500;margin-bottom:16px;display:block;width:100%;max-width:280px">Edge indir</a>';
+    h+='<div style="font-size:12px;color:#aaa;margin-top:12px">Adres: gembaapt.up.railway.app</div>';
+    b.innerHTML=h;
+    document.body.appendChild(b);
+  }
+})();
+
+/* ── Auth & Sync ── */
+var AUTH = null;
+
+function showRegister(){
+  document.getElementById('loginForm').style.display='none';
+  document.getElementById('registerForm').style.display='block';
+  var n=document.getElementById('loginName').value;
+  if(n) document.getElementById('regName').value=n;
+}
+function showLogin(){
+  document.getElementById('registerForm').style.display='none';
+  document.getElementById('loginForm').style.display='block';
+}
+
+async function doLogin(){
+  var name=document.getElementById('loginName').value.trim();
+  var pin=document.getElementById('loginPin').value.trim();
+  var err=document.getElementById('loginError');
+  if(!name||!pin){err.textContent='Ad ve PIN gerekli.';err.style.display='block';return;}
+  var btn=document.getElementById('loginBtn');
+  btn.textContent='Giriyor...';btn.disabled=true;
+  try{
+    var r=await fetch(RAILWAY_URL+'/auth/login',{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({name,pin})
+    });
+    var d=await r.json();
+    if(d.ok){
+      AUTH={name:d.name,pin,visits:d.visits||[]};
+      if(d.visits&&d.visits.length) localStorage.setItem('gemba_history',JSON.stringify(d.visits));
+      localStorage.setItem('gu',JSON.stringify({name:d.name}));
+      localStorage.setItem('gemba_auth',JSON.stringify({name:d.name,pin}));
+      document.getElementById('loginOverlay').style.display='none';
+      document.getElementById('bname').textContent=d.name;
+      document.getElementById('ubanner').style.display='flex';
+      document.getElementById('uform').style.display='none';
+      // Store dropdown'ı yeniden başlat
+      if(typeof sdInit==='function' && storeItems){
+        sdInit('sd-store',storeItems,'Mağaza seçiniz...',(val)=>{
+          document.getElementById('mwrap').style.display=val==='__m__'?'block':'none';
+        });
+      }
+      renderHistory();
+    } else {
+      err.textContent=d.error||'Hata.';err.style.display='block';
+    }
+  }catch(e){
+    err.textContent='Sunucuya baglanılamadı.';err.style.display='block';
+  }
+  btn.textContent='Giris Yap';btn.disabled=false;
+}
+
+async function doRegister(){
+  var name=document.getElementById('regName').value.trim();
+  var pin=document.getElementById('regPin').value.trim();
+  var err=document.getElementById('regError');
+  if(!name||!pin){err.textContent='Ad ve PIN gerekli.';err.style.display='block';return;}
+  if(pin.length!==4||isNaN(pin)){err.textContent='PIN 4 haneli sayi olmali.';err.style.display='block';return;}
+  var btn=document.getElementById('regBtn');
+  btn.textContent='Kaydediliyor...';btn.disabled=true;
+  var existingVisits=[];
+  try{existingVisits=JSON.parse(localStorage.getItem('gemba_history')||'[]');}catch(e){}
+  try{
+    var r=await fetch(RAILWAY_URL+'/auth/register',{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({name,pin,visits:existingVisits})
+    });
+    var d=await r.json();
+    if(d.ok){
+      AUTH={name:d.name,pin,visits:d.visits||[]};
+      localStorage.setItem('gu',JSON.stringify({name:d.name}));
+      localStorage.setItem('gemba_auth',JSON.stringify({name:d.name,pin}));
+      document.getElementById('loginOverlay').style.display='none';
+      document.getElementById('bname').textContent=d.name;
+      document.getElementById('ubanner').style.display='flex';
+      document.getElementById('uform').style.display='none';
+      renderHistory();
+    } else {
+      err.textContent=d.error||'Hata.';err.style.display='block';
+    }
+  }catch(e){
+    err.textContent='Sunucuya baglanılamadı.';err.style.display='block';
+  }
+  btn.textContent='Kayıt Ol';btn.disabled=false;
+}
+
+(function(){
+  try{
+    var saved=JSON.parse(localStorage.getItem('gemba_auth')||'null');
+    if(saved&&saved.name&&saved.pin){
+      // Sessiz otomatik giriş
+      autoLogin(saved.name, saved.pin);
+      return;
+    }
+    var oldUser=JSON.parse(localStorage.getItem('gu')||'null');
+    if(oldUser&&oldUser.name) document.getElementById('loginName').value=oldUser.name;
+  }catch(e){}
+})();
+
+async function autoLogin(name, pin){
+  try{
+    var r=await fetch(RAILWAY_URL+'/auth/login',{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({name,pin})
+    });
+    var d=await r.json();
+    if(d.ok){
+      AUTH={name:d.name,pin,visits:d.visits||[]};
+      localStorage.setItem('gu',JSON.stringify({name:d.name}));
+      localStorage.setItem('gemba_auth',JSON.stringify({name:d.name,pin}));
+      document.getElementById('loginOverlay').style.display='none';
+      document.getElementById('bname').textContent=d.name;
+      document.getElementById('ubanner').style.display='flex';
+      document.getElementById('uform').style.display='none';
+      renderHistory();
+    } else {
+      // Otomatik giriş başarısız - kayıtlı auth'u temizle, login ekranı göster
+      localStorage.removeItem('gemba_auth');
+      document.getElementById('loginName').value=name;
+      // Hata gösterme, kullanıcı manuel giriş yapacak
+    }
+  }catch(e){
+    // Ağ hatası - login ekranı göster, hata verme
+    document.getElementById('loginName').value=name;
+  }
+}
+
 </script>
+
+<!-- Login Overlay -->
+<div id="loginOverlay" style="position:fixed;inset:0;background:#fff;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px;font-family:DM Sans,sans-serif">
+  <div style="width:100%;max-width:360px">
+    <div style="text-align:center;margin-bottom:32px">
+      <div style="font-size:28px;font-weight:600;color:#1a1a18;letter-spacing:-.5px">Gemba<span style="color:#6b6b67;font-weight:400">GPT</span></div>
+      <div style="font-size:13px;color:#aeaea9;margin-top:6px">Mağaza Ziyaret Sistemi</div>
+    </div>
+    <div id="loginForm">
+      <div style="margin-bottom:14px">
+        <label style="font-size:13px;color:#6b6b67;display:block;margin-bottom:6px">Ad Soyad</label>
+        <input type="text" id="loginName" placeholder="Adınızı girin..." autocomplete="name"
+          style="width:100%;padding:14px 16px;border:0.5px solid rgba(0,0,0,0.16);border-radius:12px;font-size:16px;font-family:DM Sans,sans-serif;outline:none;color:#1a1a18"/>
+      </div>
+      <div style="margin-bottom:8px">
+        <label style="font-size:13px;color:#6b6b67;display:block;margin-bottom:6px">PIN <span style="color:#aeaea9;font-size:11px">(4 haneli)</span></label>
+        <input type="password" id="loginPin" placeholder="●●●●" maxlength="4" inputmode="numeric"
+          style="width:100%;padding:14px 16px;border:0.5px solid rgba(0,0,0,0.16);border-radius:12px;font-size:20px;font-family:DM Sans,sans-serif;outline:none;letter-spacing:8px;color:#1a1a18"/>
+      </div>
+      <div id="loginError" style="font-size:12px;color:#e03e3e;margin-bottom:12px;display:none;padding:0 4px"></div>
+      <button onclick="doLogin()" id="loginBtn"
+        style="width:100%;background:#1a1a18;color:#fff;border:none;border-radius:12px;padding:16px;font-size:16px;font-weight:500;font-family:DM Sans,sans-serif;cursor:pointer;margin-bottom:10px">
+        Giriş Yap
+      </button>
+      <button onclick="showRegister()"
+        style="width:100%;background:none;border:0.5px solid rgba(0,0,0,0.16);border-radius:12px;padding:14px;font-size:15px;color:#6b6b67;font-family:DM Sans,sans-serif;cursor:pointer">
+        İlk kez mi? Kayıt ol
+      </button>
+    </div>
+    <div id="registerForm" style="display:none">
+      <div style="font-size:14px;color:#6b6b67;margin-bottom:16px;text-align:center">Yeni hesap oluştur</div>
+      <div style="margin-bottom:14px">
+        <label style="font-size:13px;color:#6b6b67;display:block;margin-bottom:6px">Ad Soyad</label>
+        <input type="text" id="regName" placeholder="Adınızı girin..." autocomplete="name"
+          style="width:100%;padding:14px 16px;border:0.5px solid rgba(0,0,0,0.16);border-radius:12px;font-size:16px;font-family:DM Sans,sans-serif;outline:none;color:#1a1a18"/>
+      </div>
+      <div style="margin-bottom:8px">
+        <label style="font-size:13px;color:#6b6b67;display:block;margin-bottom:6px">PIN belirle <span style="color:#aeaea9;font-size:11px">(4 haneli sayı)</span></label>
+        <input type="password" id="regPin" placeholder="●●●●" maxlength="4" inputmode="numeric"
+          style="width:100%;padding:14px 16px;border:0.5px solid rgba(0,0,0,0.16);border-radius:12px;font-size:20px;font-family:DM Sans,sans-serif;outline:none;letter-spacing:8px;color:#1a1a18"/>
+      </div>
+      <div id="regError" style="font-size:12px;color:#e03e3e;margin-bottom:12px;display:none;padding:0 4px"></div>
+      <button onclick="doRegister()" id="regBtn"
+        style="width:100%;background:#1a9e6e;color:#fff;border:none;border-radius:12px;padding:16px;font-size:16px;font-weight:500;font-family:DM Sans,sans-serif;cursor:pointer;margin-bottom:10px">
+        Kayıt Ol
+      </button>
+      <button onclick="showLogin()"
+        style="width:100%;background:none;border:0.5px solid rgba(0,0,0,0.16);border-radius:12px;padding:14px;font-size:15px;color:#6b6b67;font-family:DM Sans,sans-serif;cursor:pointer">
+        Geri
+      </button>
+    </div>
+  </div>
+</div>
 </body>
-</html>
