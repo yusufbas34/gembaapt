@@ -182,43 +182,2479 @@ var blockN = 0;
 var logLines = [];
 
 var DEFAULT_KW = [
-  {mag:'BUC',bg:'CHINO DUVARI',kl:'BASİC DOKUMA CHİNO PANTOLON İNCE',kw:['chino','dar paca','chino pantolon']},
-  {mag:'BUC',bg:'DIŞ GİYİM',kl:'MONT/KABAN KALIN',kw:['mont','kaban','parka','kalin mont']},
-  {mag:'BUC',bg:'DIŞ GİYİM',kl:'YELEK',kw:['yelek']},
-  {mag:'BUC',bg:'DIŞ GİYİM',kl:'İNCE MONT',kw:['ince mont','puffer']},
-  {mag:'BUC',bg:'ÖRME BASIC',kl:'CL BASIC ORME SWEAT',kw:['sweat','sweatshirt','kapuşon','hoodie']},
-  {mag:'BUC',bg:'ÖRME BASIC',kl:'ÖRME ATLET',kw:['atlet','fanila']},
-  {mag:'BUC',bg:'ÖRME BASIC',kl:'CL BASIC ORME SORT / BERMUDA',kw:['sort','bermuda','şort']},
-  {mag:'BUC',bg:'ÖRME',kl:'KEY ORME T-SHIRT K.KOL',kw:['tisort','t-shirt','tshirt']},
-  {mag:'BUC',bg:'ÖRME',kl:'BASIC ORME POLO YAKA T-SHIRT K.KOL',kw:['polo']},
-  {mag:'BUC',bg:'TRİKO',kl:'KEY TRIKO HIRKA',kw:['hirka']},
-  {mag:'BUC',bg:'TRİKO',kl:'KEY TRIKO KAZAK',kw:['kazak','triko']},
-  {mag:'BUC',bg:'DOKUMA ÜST',kl:'KEY DOKUMA GOMLEK K.KOL',kw:['gomlek','dokuma gomlek']},
-  {mag:'BUB',bg:'DENİM',kl:'KEY DOKUMA JEAN PANTOLON',kw:['jean','denim','kot pantolon']},
-  {mag:'BUB',bg:'DIŞ GİYİM',kl:'MONT/KABAN KALIN',kw:['kalin kaban','mont bub']},
-  {mag:'BUB',bg:'DIŞ GİYİM',kl:'İNCE MONT',kw:['ince mont bub','yagmurluk']},
-  {mag:'BUB',bg:'BLAZER CEKET',kl:'BLAZER CEKET',kw:['blazer','takim ceket']},
-  {mag:'BUB',bg:'ÖRME',kl:'KEY ORME SWEAT',kw:['sweat bub']},
-  {mag:'BUL',bg:'ÖRME',kl:'KEY ORME T-SHIRT K.KOL',kw:['tisort bul']},
-  {mag:'BUL',bg:'TRİKO',kl:'KEY TRIKO KAZAK',kw:['kazak bul']},
-  {mag:'BUL',bg:'DIŞ GİYİM',kl:'İNCE MONT',kw:['mont bul']},
-  {mag:'BUMH',bg:'YÜZME GİYİM',kl:'KEY DOKUMA YUZME ŞORT',kw:['mayo','yuzme','deniz sortu','beach']},
-  {mag:'BUMH',bg:'ÖRME',kl:'KEY ORME T-SHIRT K.KOL',kw:['tisort bumh']},
-  {mag:'BUXL',bg:'DENİM',kl:'KEY DOKUMA JEAN PANTOLON',kw:['jean buxl','kot buxl']},
-  {mag:'BUS',bg:'BOXER',kl:'İÇGYM KEY BOXER',kw:['boxer','slip','ic camasir']},
-  {mag:'BUSP',bg:'PİJAMA',kl:'İÇGYM ÖRME PİJAMA TAKIM K.KOL-K.PAÇA',kw:['pijama','gecelik']},
-  {mag:'BUK',bg:'DERİ AKSESUAR',kl:'KEY AKSESUAR KEMER',kw:['kemer']},
-  {mag:'BUK',bg:'DERİ AKSESUAR',kl:'KEY AKSESUAR CANTA BUYUK',kw:['canta']},
-  {mag:'BUK',bg:'TRİKO ÖRME AKSESUAR',kl:'KEY TRIKO AKSESUAR KAŞKOL',kw:['atki','kaskol']},
-  {mag:'BUR',bg:'ÇORAP',kl:'KEY AKSESUAR CORAP SNEAKER',kw:['corap','soket']}
+  {
+    "mag": "BUC",
+    "bg": "CHINO DUVARI",
+    "kl": "BASİC DOKUMA CHİNO PANTOLON İNCE",
+    "kw": [
+      "alt",
+      "chino",
+      "chino pantolon",
+      "cotton pantolon",
+      "dar paca",
+      "esofman",
+      "esofman alt",
+      "pant",
+      "pantolon"
+    ]
+  },
+  {
+    "mag": "BUC",
+    "bg": "CHINO DUVARI",
+    "kl": "BASIC DOKUMA CHINO PANTOLON ORTA",
+    "kw": [
+      "alt",
+      "chino",
+      "chino pantolon",
+      "cotton pantolon",
+      "dar paca",
+      "esofman",
+      "esofman alt",
+      "pant",
+      "pantolon"
+    ]
+  },
+  {
+    "mag": "BUC",
+    "bg": "CHINO DUVARI",
+    "kl": "CL BASIC DOKUMA PANTOLON KALIN",
+    "kw": [
+      "alt",
+      "esofman",
+      "esofman alt",
+      "pant",
+      "pantolon"
+    ]
+  },
+  {
+    "mag": "BUC",
+    "bg": "CHINO DUVARI",
+    "kl": "CLASSIC DOKUMA ROLLER",
+    "kw": [
+      "dar kesim",
+      "roller",
+      "skinny",
+      "slim",
+      "slim fit"
+    ]
+  },
+  {
+    "mag": "BUC",
+    "bg": "CHINO DUVARI",
+    "kl": "CLASSIC DOKUMA ŞORT",
+    "kw": [
+      "bermuda",
+      "kisa pantolon",
+      "sort",
+      "şort"
+    ]
+  },
+  {
+    "mag": "BUC",
+    "bg": "DIŞ GİYİM",
+    "kl": "İNCE MONT",
+    "kw": [
+      "bahar montu",
+      "ceket dis",
+      "ince mont",
+      "kaban",
+      "mont",
+      "sonbahar mont"
+    ]
+  },
+  {
+    "mag": "BUC",
+    "bg": "DIŞ GİYİM",
+    "kl": "İNCE PUFFER MONT",
+    "kw": [
+      "bahar montu",
+      "bubble",
+      "bubble jacket",
+      "ceket dis",
+      "ince mont",
+      "kaban",
+      "mont",
+      "puffer",
+      "sisme",
+      "sisme mont",
+      "sonbahar mont",
+      "şişme mont"
+    ]
+  },
+  {
+    "mag": "BUC",
+    "bg": "DIŞ GİYİM",
+    "kl": "MONT/KABAN KALIN",
+    "kw": [
+      "ceket dis",
+      "kaban",
+      "kalin mont",
+      "kis montu",
+      "mont"
+    ]
+  },
+  {
+    "mag": "BUC",
+    "bg": "DIŞ GİYİM",
+    "kl": "PARKA",
+    "kw": [
+      "parka",
+      "uzun mont"
+    ]
+  },
+  {
+    "mag": "BUC",
+    "bg": "DIŞ GİYİM",
+    "kl": "PU MONT İNCE",
+    "kw": [
+      "bahar montu",
+      "ceket dis",
+      "deri gorunum",
+      "ince mont",
+      "kaban",
+      "mont",
+      "pu mont",
+      "sonbahar mont",
+      "suni deri mont"
+    ]
+  },
+  {
+    "mag": "BUC",
+    "bg": "DIŞ GİYİM",
+    "kl": "PU MONT KALIN",
+    "kw": [
+      "ceket dis",
+      "deri gorunum",
+      "kaban",
+      "kalin mont",
+      "kis montu",
+      "mont",
+      "pu mont",
+      "suni deri mont"
+    ]
+  },
+  {
+    "mag": "BUC",
+    "bg": "DIŞ GİYİM",
+    "kl": "YELEK",
+    "kw": [
+      "kolsuz dis giyim",
+      "yelek"
+    ]
+  },
+  {
+    "mag": "BUC",
+    "bg": "DOKUMA ÜST",
+    "kl": "KEY DOKUMA GOMLEK K.KOL",
+    "kw": [
+      "dokuma gomlek",
+      "gomlek",
+      "k.kol",
+      "kisa kol",
+      "kkol",
+      "kısa kollu",
+      "shirt"
+    ]
+  },
+  {
+    "mag": "BUC",
+    "bg": "DOKUMA ÜST",
+    "kl": "KEY DOKUMA GOMLEK U.KOL",
+    "kw": [
+      "dokuma gomlek",
+      "gomlek",
+      "k.kol",
+      "kisa kol",
+      "kkol",
+      "kısa kollu",
+      "shirt",
+      "uzun kol",
+      "uzun kollu"
+    ]
+  },
+  {
+    "mag": "BUC",
+    "bg": "DOKUMA ÜST",
+    "kl": "KEY EKOSELİ DOKUMA GOMLEK K.KOL",
+    "kw": [
+      "dokuma gomlek",
+      "gomlek",
+      "k.kol",
+      "kisa kol",
+      "kkol",
+      "kısa kollu",
+      "shirt"
+    ]
+  },
+  {
+    "mag": "BUC",
+    "bg": "DOKUMA ÜST",
+    "kl": "KEY EKOSELİ DOKUMA GOMLEK U.KOL",
+    "kw": [
+      "dokuma gomlek",
+      "gomlek",
+      "k.kol",
+      "kisa kol",
+      "kkol",
+      "kısa kollu",
+      "shirt",
+      "uzun kol",
+      "uzun kollu"
+    ]
+  },
+  {
+    "mag": "BUC",
+    "bg": "ÖRME",
+    "kl": "BASIC ORME BİSİKLET YAKA T-SHIRT K.KOL",
+    "kw": [
+      "bisiklet",
+      "bisiklet yaka",
+      "k.kol",
+      "kisa kol",
+      "kkol",
+      "kısa kollu",
+      "t-shirt",
+      "tisort",
+      "tshirt",
+      "yuvarlak yaka"
+    ]
+  },
+  {
+    "mag": "BUC",
+    "bg": "ÖRME",
+    "kl": "BASIC ORME POLO YAKA T-SHIRT K.KOL",
+    "kw": [
+      "k.kol",
+      "kisa kol",
+      "kkol",
+      "kısa kollu",
+      "polo",
+      "polo yaka",
+      "t-shirt",
+      "tisort",
+      "tshirt"
+    ]
+  },
+  {
+    "mag": "BUC",
+    "bg": "ÖRME",
+    "kl": "BASIC ORME V YAKA T-SHIRT K.KOL",
+    "kw": [
+      "k.kol",
+      "kisa kol",
+      "kkol",
+      "kısa kollu",
+      "t-shirt",
+      "tisort",
+      "tshirt",
+      "v yaka"
+    ]
+  },
+  {
+    "mag": "BUC",
+    "bg": "ÖRME",
+    "kl": "KEY BASKILI ORME T-SHIRT K.KOL",
+    "kw": [
+      "baskili",
+      "baskı",
+      "desenli",
+      "k.kol",
+      "kisa kol",
+      "kkol",
+      "kısa kollu",
+      "printed",
+      "t-shirt",
+      "tisort",
+      "tshirt"
+    ]
+  },
+  {
+    "mag": "BUC",
+    "bg": "ÖRME",
+    "kl": "KEY ORME T-SHIRT K.KOL",
+    "kw": [
+      "k.kol",
+      "kisa kol",
+      "kkol",
+      "kısa kollu",
+      "t-shirt",
+      "tisort",
+      "tshirt"
+    ]
+  },
+  {
+    "mag": "BUC",
+    "bg": "ÖRME BASIC",
+    "kl": "BASIC KEY BASKILI ORME SWEAT",
+    "kw": [
+      "baskili",
+      "baskı",
+      "desenli",
+      "esofman ust",
+      "hoodie",
+      "kapusonlu",
+      "printed",
+      "sweat",
+      "sweatshirt"
+    ]
+  },
+  {
+    "mag": "BUC",
+    "bg": "ÖRME BASIC",
+    "kl": "CL BASIC ORME HIRKA",
+    "kw": [
+      "fermuarli",
+      "hirka",
+      "hırka",
+      "orgu hirka"
+    ]
+  },
+  {
+    "mag": "BUC",
+    "bg": "ÖRME BASIC",
+    "kl": "CL BASIC ORME PANTOLON",
+    "kw": [
+      "alt",
+      "esofman",
+      "esofman alt",
+      "esofman pantolon",
+      "jogger",
+      "pant",
+      "pantolon"
+    ]
+  },
+  {
+    "mag": "BUC",
+    "bg": "ÖRME BASIC",
+    "kl": "CL BASIC ORME ROLLER",
+    "kw": [
+      "dar kesim",
+      "roller",
+      "skinny",
+      "slim",
+      "slim fit"
+    ]
+  },
+  {
+    "mag": "BUC",
+    "bg": "ÖRME BASIC",
+    "kl": "CL BASIC ORME SORT / BERMUDA",
+    "kw": [
+      "bermuda",
+      "kisa pantolon",
+      "sort",
+      "şort"
+    ]
+  },
+  {
+    "mag": "BUC",
+    "bg": "ÖRME BASIC",
+    "kl": "CL BASIC ORME SWEAT",
+    "kw": [
+      "esofman ust",
+      "hoodie",
+      "kapusonlu",
+      "sweat",
+      "sweatshirt"
+    ]
+  },
+  {
+    "mag": "BUC",
+    "bg": "ÖRME BASIC",
+    "kl": "CL BASIC ORME T-SHIRT U.KOL",
+    "kw": [
+      "k.kol",
+      "kisa kol",
+      "kkol",
+      "kısa kollu",
+      "t-shirt",
+      "tisort",
+      "tshirt",
+      "uzun kol",
+      "uzun kollu"
+    ]
+  },
+  {
+    "mag": "BUC",
+    "bg": "ÖRME BASIC",
+    "kl": "ÖRME ATLET",
+    "kw": [
+      "atlet",
+      "fanila atlet",
+      "kolsuz"
+    ]
+  },
+  {
+    "mag": "BUC",
+    "bg": "TRİKO",
+    "kl": "KEY ÇİZGİLİ TRIKO KAZAK",
+    "kw": [
+      "cizgi",
+      "cizgi deseni",
+      "cizgili",
+      "kazak",
+      "knitwear",
+      "stripli",
+      "suveter",
+      "triko kazak"
+    ]
+  },
+  {
+    "mag": "BUC",
+    "bg": "TRİKO",
+    "kl": "KEY TRIKO HIRKA",
+    "kw": [
+      "fermuarli",
+      "hirka",
+      "hırka",
+      "orgu hirka"
+    ]
+  },
+  {
+    "mag": "BUC",
+    "bg": "TRİKO",
+    "kl": "KEY TRIKO HIRKA MONT",
+    "kw": [
+      "ceket dis",
+      "fermuarli",
+      "hirka",
+      "hırka",
+      "kaban",
+      "mont",
+      "orgu hirka"
+    ]
+  },
+  {
+    "mag": "BUC",
+    "bg": "TRİKO",
+    "kl": "KEY TRIKO KAZAK",
+    "kw": [
+      "kazak",
+      "knitwear",
+      "suveter",
+      "triko kazak"
+    ]
+  },
+  {
+    "mag": "BUC",
+    "bg": "TRİKO",
+    "kl": "KEY TRIKO YELEK",
+    "kw": [
+      "kolsuz dis giyim",
+      "yelek"
+    ]
+  },
+  {
+    "mag": "BUB",
+    "bg": "BLAZER CEKET",
+    "kl": "BLAZER CEKET",
+    "kw": [
+      "blazer",
+      "ceket",
+      "takim ceket"
+    ]
+  },
+  {
+    "mag": "BUB",
+    "bg": "DENİM",
+    "kl": "KEY DOKUMA JEAN PANTOLON",
+    "kw": [
+      "alt",
+      "denim",
+      "denim pantolon",
+      "esofman",
+      "esofman alt",
+      "jean",
+      "jean pantolon",
+      "kot",
+      "kot pantolon",
+      "pant",
+      "pantolon"
+    ]
+  },
+  {
+    "mag": "BUB",
+    "bg": "DIŞ GİYİM",
+    "kl": "İNCE MONT",
+    "kw": [
+      "bahar montu",
+      "ceket dis",
+      "ince mont",
+      "kaban",
+      "mont",
+      "sonbahar mont"
+    ]
+  },
+  {
+    "mag": "BUB",
+    "bg": "DIŞ GİYİM",
+    "kl": "MONT/KABAN KALIN",
+    "kw": [
+      "ceket dis",
+      "kaban",
+      "kalin mont",
+      "kis montu",
+      "mont"
+    ]
+  },
+  {
+    "mag": "BUB",
+    "bg": "DIŞ GİYİM",
+    "kl": "NAYLON PUFFER MONT/KABAN",
+    "kw": [
+      "bubble",
+      "bubble jacket",
+      "ceket dis",
+      "kaban",
+      "mont",
+      "naylon",
+      "puffer",
+      "ruzgarlik",
+      "sisme",
+      "sisme mont",
+      "yagmurluk",
+      "şişme mont"
+    ]
+  },
+  {
+    "mag": "BUB",
+    "bg": "DIŞ GİYİM",
+    "kl": "PARKA",
+    "kw": [
+      "parka",
+      "uzun mont"
+    ]
+  },
+  {
+    "mag": "BUB",
+    "bg": "DIŞ GİYİM",
+    "kl": "PU MONT İNCE",
+    "kw": [
+      "bahar montu",
+      "ceket dis",
+      "deri gorunum",
+      "ince mont",
+      "kaban",
+      "mont",
+      "pu mont",
+      "sonbahar mont",
+      "suni deri mont"
+    ]
+  },
+  {
+    "mag": "BUB",
+    "bg": "DIŞ GİYİM",
+    "kl": "PU MONT KALIN",
+    "kw": [
+      "ceket dis",
+      "deri gorunum",
+      "kaban",
+      "kalin mont",
+      "kis montu",
+      "mont",
+      "pu mont",
+      "suni deri mont"
+    ]
+  },
+  {
+    "mag": "BUB",
+    "bg": "DIŞ GİYİM",
+    "kl": "YAGMURLUK",
+    "kw": [
+      "naylon",
+      "ruzgarlik",
+      "yagmurluk"
+    ]
+  },
+  {
+    "mag": "BUB",
+    "bg": "DIŞ GİYİM",
+    "kl": "YELEK",
+    "kw": [
+      "kolsuz dis giyim",
+      "yelek"
+    ]
+  },
+  {
+    "mag": "BUB",
+    "bg": "DOKUMA ALT",
+    "kl": "KEY DOKUMA PANTOLON ORTA",
+    "kw": [
+      "alt",
+      "esofman",
+      "esofman alt",
+      "pant",
+      "pantolon"
+    ]
+  },
+  {
+    "mag": "BUB",
+    "bg": "DOKUMA ALT",
+    "kl": "KEY DOKUMA ŞORT/BERMUDA",
+    "kw": [
+      "bermuda",
+      "kisa pantolon",
+      "sort",
+      "şort"
+    ]
+  },
+  {
+    "mag": "BUB",
+    "bg": "DOKUMA SET",
+    "kl": "BLAZER CEKET SET",
+    "kw": [
+      "blazer",
+      "ceket",
+      "takim ceket"
+    ]
+  },
+  {
+    "mag": "BUB",
+    "bg": "DOKUMA SET",
+    "kl": "DOKUMA SHACKET SET",
+    "kw": [
+      "disarisi",
+      "gomlek ceket",
+      "overshirt",
+      "shacket"
+    ]
+  },
+  {
+    "mag": "BUB",
+    "bg": "DOKUMA SET",
+    "kl": "İNCE MONT SET",
+    "kw": [
+      "bahar montu",
+      "ceket dis",
+      "ince mont",
+      "kaban",
+      "mont",
+      "sonbahar mont"
+    ]
+  },
+  {
+    "mag": "BUB",
+    "bg": "DOKUMA ÜST",
+    "kl": "DOKUMA SHACKET",
+    "kw": [
+      "disarisi",
+      "gomlek ceket",
+      "overshirt",
+      "shacket"
+    ]
+  },
+  {
+    "mag": "BUB",
+    "bg": "DOKUMA ÜST",
+    "kl": "KEY BASKILI DOKUMA GOMLEK K.KOL",
+    "kw": [
+      "baskili",
+      "baskı",
+      "desenli",
+      "dokuma gomlek",
+      "gomlek",
+      "k.kol",
+      "kisa kol",
+      "kkol",
+      "kısa kollu",
+      "printed",
+      "shirt"
+    ]
+  },
+  {
+    "mag": "BUB",
+    "bg": "DOKUMA ÜST",
+    "kl": "KEY DOKUMA GOMLEK K.KOL",
+    "kw": [
+      "dokuma gomlek",
+      "gomlek",
+      "k.kol",
+      "kisa kol",
+      "kkol",
+      "kısa kollu",
+      "shirt"
+    ]
+  },
+  {
+    "mag": "BUB",
+    "bg": "DOKUMA ÜST",
+    "kl": "KEY DOKUMA GOMLEK U.KOL",
+    "kw": [
+      "dokuma gomlek",
+      "gomlek",
+      "k.kol",
+      "kisa kol",
+      "kkol",
+      "kısa kollu",
+      "shirt",
+      "uzun kol",
+      "uzun kollu"
+    ]
+  },
+  {
+    "mag": "BUB",
+    "bg": "ÖRME",
+    "kl": "KEY BASKILI ORME T-SHIRT K.KOL",
+    "kw": [
+      "baskili",
+      "baskı",
+      "desenli",
+      "k.kol",
+      "kisa kol",
+      "kkol",
+      "kısa kollu",
+      "printed",
+      "t-shirt",
+      "tisort",
+      "tshirt"
+    ]
+  },
+  {
+    "mag": "BUB",
+    "bg": "ÖRME",
+    "kl": "KEY ORME HIRKA",
+    "kw": [
+      "fermuarli",
+      "hirka",
+      "hırka",
+      "orgu hirka"
+    ]
+  },
+  {
+    "mag": "BUB",
+    "bg": "ÖRME",
+    "kl": "KEY ORME PANTOLON",
+    "kw": [
+      "alt",
+      "esofman",
+      "esofman alt",
+      "esofman pantolon",
+      "jogger",
+      "pant",
+      "pantolon"
+    ]
+  },
+  {
+    "mag": "BUB",
+    "bg": "ÖRME",
+    "kl": "KEY ORME SORT / BERMUDA",
+    "kw": [
+      "bermuda",
+      "kisa pantolon",
+      "sort",
+      "şort"
+    ]
+  },
+  {
+    "mag": "BUB",
+    "bg": "ÖRME",
+    "kl": "KEY ORME SWEAT",
+    "kw": [
+      "esofman ust",
+      "hoodie",
+      "kapusonlu",
+      "sweat",
+      "sweatshirt"
+    ]
+  },
+  {
+    "mag": "BUB",
+    "bg": "ÖRME",
+    "kl": "KEY ORME T-SHIRT K.KOL",
+    "kw": [
+      "k.kol",
+      "kisa kol",
+      "kkol",
+      "kısa kollu",
+      "t-shirt",
+      "tisort",
+      "tshirt"
+    ]
+  },
+  {
+    "mag": "BUB",
+    "bg": "TRİKO",
+    "kl": "KEY TRIKO HIRKA",
+    "kw": [
+      "fermuarli",
+      "hirka",
+      "hırka",
+      "orgu hirka"
+    ]
+  },
+  {
+    "mag": "BUB",
+    "bg": "TRİKO",
+    "kl": "KEY TRIKO KAZAK",
+    "kw": [
+      "kazak",
+      "knitwear",
+      "suveter",
+      "triko kazak"
+    ]
+  },
+  {
+    "mag": "BUB",
+    "bg": "TRİKO",
+    "kl": "KEY TRIKO KAZAK K.KOL",
+    "kw": [
+      "k.kol",
+      "kazak",
+      "kisa kol",
+      "kkol",
+      "knitwear",
+      "kısa kollu",
+      "suveter",
+      "triko kazak"
+    ]
+  },
+  {
+    "mag": "BUB",
+    "bg": "TRİKO",
+    "kl": "KEY TRIKO SUVETER",
+    "kw": [
+      "kazak",
+      "suveter",
+      "triko"
+    ]
+  },
+  {
+    "mag": "BUB",
+    "bg": "TRİKO",
+    "kl": "KEY TRIKO YELEK",
+    "kw": [
+      "kolsuz dis giyim",
+      "yelek"
+    ]
+  },
+  {
+    "mag": "BUL",
+    "bg": "BLAZER CEKET",
+    "kl": "BLAZER CEKET",
+    "kw": [
+      "blazer",
+      "ceket",
+      "takim ceket"
+    ]
+  },
+  {
+    "mag": "BUL",
+    "bg": "DIŞ GİYİM",
+    "kl": "İNCE MONT",
+    "kw": [
+      "bahar montu",
+      "ceket dis",
+      "ince mont",
+      "kaban",
+      "mont",
+      "sonbahar mont"
+    ]
+  },
+  {
+    "mag": "BUL",
+    "bg": "DIŞ GİYİM",
+    "kl": "MONT/KABAN KALIN",
+    "kw": [
+      "ceket dis",
+      "kaban",
+      "kalin mont",
+      "kis montu",
+      "mont"
+    ]
+  },
+  {
+    "mag": "BUL",
+    "bg": "DIŞ GİYİM",
+    "kl": "NAYLON PUFFER MONT/KABAN",
+    "kw": [
+      "bubble",
+      "bubble jacket",
+      "ceket dis",
+      "kaban",
+      "mont",
+      "naylon",
+      "puffer",
+      "ruzgarlik",
+      "sisme",
+      "sisme mont",
+      "yagmurluk",
+      "şişme mont"
+    ]
+  },
+  {
+    "mag": "BUL",
+    "bg": "DIŞ GİYİM",
+    "kl": "PARKA",
+    "kw": [
+      "parka",
+      "uzun mont"
+    ]
+  },
+  {
+    "mag": "BUL",
+    "bg": "DIŞ GİYİM",
+    "kl": "PU MONT İNCE",
+    "kw": [
+      "bahar montu",
+      "ceket dis",
+      "deri gorunum",
+      "ince mont",
+      "kaban",
+      "mont",
+      "pu mont",
+      "sonbahar mont",
+      "suni deri mont"
+    ]
+  },
+  {
+    "mag": "BUL",
+    "bg": "DIŞ GİYİM",
+    "kl": "PU MONT KALIN",
+    "kw": [
+      "ceket dis",
+      "deri gorunum",
+      "kaban",
+      "kalin mont",
+      "kis montu",
+      "mont",
+      "pu mont",
+      "suni deri mont"
+    ]
+  },
+  {
+    "mag": "BUL",
+    "bg": "DIŞ GİYİM",
+    "kl": "YAGMURLUK",
+    "kw": [
+      "naylon",
+      "ruzgarlik",
+      "yagmurluk"
+    ]
+  },
+  {
+    "mag": "BUL",
+    "bg": "DIŞ GİYİM",
+    "kl": "YELEK",
+    "kw": [
+      "kolsuz dis giyim",
+      "yelek"
+    ]
+  },
+  {
+    "mag": "BUL",
+    "bg": "DOKUMA ALT",
+    "kl": "KEY DOKUMA PANTOLON ORTA",
+    "kw": [
+      "alt",
+      "esofman",
+      "esofman alt",
+      "pant",
+      "pantolon"
+    ]
+  },
+  {
+    "mag": "BUL",
+    "bg": "DOKUMA ALT",
+    "kl": "KEY DOKUMA ŞORT/BERMUDA",
+    "kw": [
+      "bermuda",
+      "kisa pantolon",
+      "sort",
+      "şort"
+    ]
+  },
+  {
+    "mag": "BUL",
+    "bg": "DOKUMA ÜST",
+    "kl": "DOKUMA SHACKET",
+    "kw": [
+      "disarisi",
+      "gomlek ceket",
+      "overshirt",
+      "shacket"
+    ]
+  },
+  {
+    "mag": "BUL",
+    "bg": "DOKUMA ÜST",
+    "kl": "KEY BASKILI DOKUMA GOMLEK K.KOL",
+    "kw": [
+      "baskili",
+      "baskı",
+      "desenli",
+      "dokuma gomlek",
+      "gomlek",
+      "k.kol",
+      "kisa kol",
+      "kkol",
+      "kısa kollu",
+      "printed",
+      "shirt"
+    ]
+  },
+  {
+    "mag": "BUL",
+    "bg": "DOKUMA ÜST",
+    "kl": "KEY DOKUMA GOMLEK K.KOL",
+    "kw": [
+      "dokuma gomlek",
+      "gomlek",
+      "k.kol",
+      "kisa kol",
+      "kkol",
+      "kısa kollu",
+      "shirt"
+    ]
+  },
+  {
+    "mag": "BUL",
+    "bg": "DOKUMA ÜST",
+    "kl": "KEY DOKUMA GOMLEK U.KOL",
+    "kw": [
+      "dokuma gomlek",
+      "gomlek",
+      "k.kol",
+      "kisa kol",
+      "kkol",
+      "kısa kollu",
+      "shirt",
+      "uzun kol",
+      "uzun kollu"
+    ]
+  },
+  {
+    "mag": "BUL",
+    "bg": "ÖRME",
+    "kl": "KEY BASKILI ORME T-SHIRT K.KOL",
+    "kw": [
+      "baskili",
+      "baskı",
+      "desenli",
+      "k.kol",
+      "kisa kol",
+      "kkol",
+      "kısa kollu",
+      "printed",
+      "t-shirt",
+      "tisort",
+      "tshirt"
+    ]
+  },
+  {
+    "mag": "BUL",
+    "bg": "ÖRME",
+    "kl": "KEY ÇİZGİLİ ORME T-SHIRT K.KOL",
+    "kw": [
+      "cizgi",
+      "cizgi deseni",
+      "cizgili",
+      "k.kol",
+      "kisa kol",
+      "kkol",
+      "kısa kollu",
+      "stripli",
+      "t-shirt",
+      "tisort",
+      "tshirt"
+    ]
+  },
+  {
+    "mag": "BUL",
+    "bg": "ÖRME",
+    "kl": "KEY ÖRME ATLET",
+    "kw": [
+      "atlet",
+      "fanila atlet",
+      "kolsuz"
+    ]
+  },
+  {
+    "mag": "BUL",
+    "bg": "ÖRME",
+    "kl": "KEY ORME HIRKA",
+    "kw": [
+      "fermuarli",
+      "hirka",
+      "hırka",
+      "orgu hirka"
+    ]
+  },
+  {
+    "mag": "BUL",
+    "bg": "ÖRME",
+    "kl": "KEY ORME PANTOLON",
+    "kw": [
+      "alt",
+      "esofman",
+      "esofman alt",
+      "esofman pantolon",
+      "jogger",
+      "pant",
+      "pantolon"
+    ]
+  },
+  {
+    "mag": "BUL",
+    "bg": "ÖRME",
+    "kl": "KEY ORME SORT / BERMUDA",
+    "kw": [
+      "bermuda",
+      "kisa pantolon",
+      "sort",
+      "şort"
+    ]
+  },
+  {
+    "mag": "BUL",
+    "bg": "ÖRME",
+    "kl": "KEY ORME SWEAT",
+    "kw": [
+      "esofman ust",
+      "hoodie",
+      "kapusonlu",
+      "sweat",
+      "sweatshirt"
+    ]
+  },
+  {
+    "mag": "BUL",
+    "bg": "ÖRME",
+    "kl": "KEY ORME T-SHIRT K.KOL",
+    "kw": [
+      "k.kol",
+      "kisa kol",
+      "kkol",
+      "kısa kollu",
+      "t-shirt",
+      "tisort",
+      "tshirt"
+    ]
+  },
+  {
+    "mag": "BUL",
+    "bg": "TRİKO",
+    "kl": "KEY TRIKO HIRKA",
+    "kw": [
+      "fermuarli",
+      "hirka",
+      "hırka",
+      "orgu hirka"
+    ]
+  },
+  {
+    "mag": "BUL",
+    "bg": "TRİKO",
+    "kl": "KEY TRIKO HIRKA MONT",
+    "kw": [
+      "ceket dis",
+      "fermuarli",
+      "hirka",
+      "hırka",
+      "kaban",
+      "mont",
+      "orgu hirka"
+    ]
+  },
+  {
+    "mag": "BUL",
+    "bg": "TRİKO",
+    "kl": "KEY TRIKO KAZAK",
+    "kw": [
+      "kazak",
+      "knitwear",
+      "suveter",
+      "triko kazak"
+    ]
+  },
+  {
+    "mag": "BUL",
+    "bg": "TRİKO",
+    "kl": "KEY TRIKO KAZAK K.KOL",
+    "kw": [
+      "k.kol",
+      "kazak",
+      "kisa kol",
+      "kkol",
+      "knitwear",
+      "kısa kollu",
+      "suveter",
+      "triko kazak"
+    ]
+  },
+  {
+    "mag": "BUL",
+    "bg": "TRİKO",
+    "kl": "KEY TRIKO SUVETER",
+    "kw": [
+      "kazak",
+      "suveter",
+      "triko"
+    ]
+  },
+  {
+    "mag": "BUXL",
+    "bg": "DENİM",
+    "kl": "KEY DOKUMA JEAN BERMUDA",
+    "kw": [
+      "denim",
+      "denim sort",
+      "jean",
+      "jean bermuda",
+      "kot",
+      "kot sort"
+    ]
+  },
+  {
+    "mag": "BUXL",
+    "bg": "DENİM",
+    "kl": "KEY DOKUMA JEAN GOMLEK K.KOL",
+    "kw": [
+      "denim",
+      "denim gomlek",
+      "dokuma gomlek",
+      "gomlek",
+      "jean",
+      "jean gomlek",
+      "k.kol",
+      "kisa kol",
+      "kkol",
+      "kot",
+      "kot gomlek",
+      "kısa kollu",
+      "shirt"
+    ]
+  },
+  {
+    "mag": "BUXL",
+    "bg": "DENİM",
+    "kl": "KEY DOKUMA JEAN GOMLEK U.KOL",
+    "kw": [
+      "denim",
+      "denim gomlek",
+      "dokuma gomlek",
+      "gomlek",
+      "jean",
+      "jean gomlek",
+      "k.kol",
+      "kisa kol",
+      "kkol",
+      "kot",
+      "kot gomlek",
+      "kısa kollu",
+      "shirt",
+      "uzun kol",
+      "uzun kollu"
+    ]
+  },
+  {
+    "mag": "BUXL",
+    "bg": "DENİM",
+    "kl": "KEY DOKUMA JEAN MONT",
+    "kw": [
+      "ceket dis",
+      "denim",
+      "denim ceket",
+      "jean",
+      "jean ceket",
+      "kaban",
+      "kot",
+      "kot ceket",
+      "mont"
+    ]
+  },
+  {
+    "mag": "BUXL",
+    "bg": "DENİM",
+    "kl": "KEY DOKUMA JEAN PANTOLON",
+    "kw": [
+      "alt",
+      "denim",
+      "denim pantolon",
+      "esofman",
+      "esofman alt",
+      "jean",
+      "jean pantolon",
+      "kot",
+      "kot pantolon",
+      "pant",
+      "pantolon"
+    ]
+  },
+  {
+    "mag": "BUXL",
+    "bg": "DIŞ GİYİM",
+    "kl": "İNCE MONT",
+    "kw": [
+      "bahar montu",
+      "ceket dis",
+      "ince mont",
+      "kaban",
+      "mont",
+      "sonbahar mont"
+    ]
+  },
+  {
+    "mag": "BUXL",
+    "bg": "DIŞ GİYİM",
+    "kl": "İNCE PUFFER MONT",
+    "kw": [
+      "bahar montu",
+      "bubble",
+      "bubble jacket",
+      "ceket dis",
+      "ince mont",
+      "kaban",
+      "mont",
+      "puffer",
+      "sisme",
+      "sisme mont",
+      "sonbahar mont",
+      "şişme mont"
+    ]
+  },
+  {
+    "mag": "BUXL",
+    "bg": "DIŞ GİYİM",
+    "kl": "MONT/KABAN KALIN",
+    "kw": [
+      "ceket dis",
+      "kaban",
+      "kalin mont",
+      "kis montu",
+      "mont"
+    ]
+  },
+  {
+    "mag": "BUXL",
+    "bg": "DIŞ GİYİM",
+    "kl": "NAYLON PUFFER MONT/KABAN",
+    "kw": [
+      "bubble",
+      "bubble jacket",
+      "ceket dis",
+      "kaban",
+      "mont",
+      "naylon",
+      "puffer",
+      "ruzgarlik",
+      "sisme",
+      "sisme mont",
+      "yagmurluk",
+      "şişme mont"
+    ]
+  },
+  {
+    "mag": "BUXL",
+    "bg": "DIŞ GİYİM",
+    "kl": "PARKA",
+    "kw": [
+      "parka",
+      "uzun mont"
+    ]
+  },
+  {
+    "mag": "BUXL",
+    "bg": "DIŞ GİYİM",
+    "kl": "PU MONT İNCE",
+    "kw": [
+      "bahar montu",
+      "ceket dis",
+      "deri gorunum",
+      "ince mont",
+      "kaban",
+      "mont",
+      "pu mont",
+      "sonbahar mont",
+      "suni deri mont"
+    ]
+  },
+  {
+    "mag": "BUXL",
+    "bg": "DIŞ GİYİM",
+    "kl": "PU MONT KALIN",
+    "kw": [
+      "ceket dis",
+      "deri gorunum",
+      "kaban",
+      "kalin mont",
+      "kis montu",
+      "mont",
+      "pu mont",
+      "suni deri mont"
+    ]
+  },
+  {
+    "mag": "BUXL",
+    "bg": "DIŞ GİYİM",
+    "kl": "YAGMURLUK",
+    "kw": [
+      "naylon",
+      "ruzgarlik",
+      "yagmurluk"
+    ]
+  },
+  {
+    "mag": "BUXL",
+    "bg": "DIŞ GİYİM",
+    "kl": "YELEK",
+    "kw": [
+      "kolsuz dis giyim",
+      "yelek"
+    ]
+  },
+  {
+    "mag": "BUXL",
+    "bg": "DOKUMA ALT",
+    "kl": "KEY DOKUMA PANTOLON KARGO",
+    "kw": [
+      "alt",
+      "cepli pantolon",
+      "esofman",
+      "esofman alt",
+      "kargo",
+      "kargo pantolon",
+      "pant",
+      "pantolon",
+      "utility"
+    ]
+  },
+  {
+    "mag": "BUXL",
+    "bg": "DOKUMA ALT",
+    "kl": "KEY DOKUMA PANTOLON ORTA",
+    "kw": [
+      "alt",
+      "esofman",
+      "esofman alt",
+      "pant",
+      "pantolon"
+    ]
+  },
+  {
+    "mag": "BUXL",
+    "bg": "DOKUMA ALT",
+    "kl": "KEY DOKUMA ŞORT/BERMUDA",
+    "kw": [
+      "bermuda",
+      "kisa pantolon",
+      "sort",
+      "şort"
+    ]
+  },
+  {
+    "mag": "BUXL",
+    "bg": "DOKUMA ÜST",
+    "kl": "DOKUMA SHACKET",
+    "kw": [
+      "disarisi",
+      "gomlek ceket",
+      "overshirt",
+      "shacket"
+    ]
+  },
+  {
+    "mag": "BUXL",
+    "bg": "DOKUMA ÜST",
+    "kl": "KEY DOKUMA GOMLEK K.KOL",
+    "kw": [
+      "dokuma gomlek",
+      "gomlek",
+      "k.kol",
+      "kisa kol",
+      "kkol",
+      "kısa kollu",
+      "shirt"
+    ]
+  },
+  {
+    "mag": "BUXL",
+    "bg": "DOKUMA ÜST",
+    "kl": "KEY DOKUMA GOMLEK U.KOL",
+    "kw": [
+      "dokuma gomlek",
+      "gomlek",
+      "k.kol",
+      "kisa kol",
+      "kkol",
+      "kısa kollu",
+      "shirt",
+      "uzun kol",
+      "uzun kollu"
+    ]
+  },
+  {
+    "mag": "BUXL",
+    "bg": "ÖRME",
+    "kl": "BASIC ORME T-SHIRT K.KOL",
+    "kw": [
+      "k.kol",
+      "kisa kol",
+      "kkol",
+      "kısa kollu",
+      "t-shirt",
+      "tisort",
+      "tshirt"
+    ]
+  },
+  {
+    "mag": "BUXL",
+    "bg": "ÖRME",
+    "kl": "KEY BASKILI ORME T-SHIRT K.KOL",
+    "kw": [
+      "baskili",
+      "baskı",
+      "desenli",
+      "k.kol",
+      "kisa kol",
+      "kkol",
+      "kısa kollu",
+      "printed",
+      "t-shirt",
+      "tisort",
+      "tshirt"
+    ]
+  },
+  {
+    "mag": "BUXL",
+    "bg": "ÖRME",
+    "kl": "KEY ÇİZGİLİ ORME T-SHIRT K.KOL",
+    "kw": [
+      "cizgi",
+      "cizgi deseni",
+      "cizgili",
+      "k.kol",
+      "kisa kol",
+      "kkol",
+      "kısa kollu",
+      "stripli",
+      "t-shirt",
+      "tisort",
+      "tshirt"
+    ]
+  },
+  {
+    "mag": "BUXL",
+    "bg": "ÖRME",
+    "kl": "KEY ÖRME ATLET",
+    "kw": [
+      "atlet",
+      "fanila atlet",
+      "kolsuz"
+    ]
+  },
+  {
+    "mag": "BUXL",
+    "bg": "ÖRME",
+    "kl": "KEY ORME HIRKA",
+    "kw": [
+      "fermuarli",
+      "hirka",
+      "hırka",
+      "orgu hirka"
+    ]
+  },
+  {
+    "mag": "BUXL",
+    "bg": "ÖRME",
+    "kl": "KEY ORME PANTOLON",
+    "kw": [
+      "alt",
+      "esofman",
+      "esofman alt",
+      "esofman pantolon",
+      "jogger",
+      "pant",
+      "pantolon"
+    ]
+  },
+  {
+    "mag": "BUXL",
+    "bg": "ÖRME",
+    "kl": "KEY ORME POLO YAKA T-SHIRT K.KOL",
+    "kw": [
+      "k.kol",
+      "kisa kol",
+      "kkol",
+      "kısa kollu",
+      "polo",
+      "polo yaka",
+      "t-shirt",
+      "tisort",
+      "tshirt"
+    ]
+  },
+  {
+    "mag": "BUXL",
+    "bg": "ÖRME",
+    "kl": "KEY ORME SORT / BERMUDA",
+    "kw": [
+      "bermuda",
+      "kisa pantolon",
+      "sort",
+      "şort"
+    ]
+  },
+  {
+    "mag": "BUXL",
+    "bg": "ÖRME",
+    "kl": "KEY ORME SWEAT",
+    "kw": [
+      "esofman ust",
+      "hoodie",
+      "kapusonlu",
+      "sweat",
+      "sweatshirt"
+    ]
+  },
+  {
+    "mag": "BUXL",
+    "bg": "TRİKO",
+    "kl": "KEY ÇİZGİLİ TRIKO KAZAK",
+    "kw": [
+      "cizgi",
+      "cizgi deseni",
+      "cizgili",
+      "kazak",
+      "knitwear",
+      "stripli",
+      "suveter",
+      "triko kazak"
+    ]
+  },
+  {
+    "mag": "BUXL",
+    "bg": "TRİKO",
+    "kl": "KEY TRIKO HIRKA",
+    "kw": [
+      "fermuarli",
+      "hirka",
+      "hırka",
+      "orgu hirka"
+    ]
+  },
+  {
+    "mag": "BUXL",
+    "bg": "TRİKO",
+    "kl": "KEY TRIKO KAZAK",
+    "kw": [
+      "kazak",
+      "knitwear",
+      "suveter",
+      "triko kazak"
+    ]
+  },
+  {
+    "mag": "BUXL",
+    "bg": "TRİKO",
+    "kl": "KEY TRIKO KAZAK K.KOL",
+    "kw": [
+      "k.kol",
+      "kazak",
+      "kisa kol",
+      "kkol",
+      "knitwear",
+      "kısa kollu",
+      "suveter",
+      "triko kazak"
+    ]
+  },
+  {
+    "mag": "BUXL",
+    "bg": "TRİKO",
+    "kl": "KEY TRIKO KAZAK Z4",
+    "kw": [
+      "kazak",
+      "knitwear",
+      "suveter",
+      "triko kazak"
+    ]
+  },
+  {
+    "mag": "BUMH",
+    "bg": "DOKUMA ÜST",
+    "kl": "KEY DOKUMA GOMLEK K.KOL",
+    "kw": [
+      "dokuma gomlek",
+      "gomlek",
+      "k.kol",
+      "kisa kol",
+      "kkol",
+      "kısa kollu",
+      "shirt"
+    ]
+  },
+  {
+    "mag": "BUMH",
+    "bg": "ÖRME",
+    "kl": "BASIC ORME POLO YAKA T-SHIRT K.KOL",
+    "kw": [
+      "k.kol",
+      "kisa kol",
+      "kkol",
+      "kısa kollu",
+      "polo",
+      "polo yaka",
+      "t-shirt",
+      "tisort",
+      "tshirt"
+    ]
+  },
+  {
+    "mag": "BUMH",
+    "bg": "ÖRME",
+    "kl": "KEY ÖRME ATLET",
+    "kw": [
+      "atlet",
+      "fanila atlet",
+      "kolsuz"
+    ]
+  },
+  {
+    "mag": "BUMH",
+    "bg": "ÖRME",
+    "kl": "KEY ORME T-SHIRT K.KOL",
+    "kw": [
+      "k.kol",
+      "kisa kol",
+      "kkol",
+      "kısa kollu",
+      "t-shirt",
+      "tisort",
+      "tshirt"
+    ]
+  },
+  {
+    "mag": "BUMH",
+    "bg": "YÜZME GİYİM",
+    "kl": "BASIC DOKUMA YUZME ŞORT",
+    "kw": [
+      "beach",
+      "bermuda",
+      "bikini",
+      "deniz sortu",
+      "kisa pantolon",
+      "mayo",
+      "sort",
+      "yuzme",
+      "şort"
+    ]
+  },
+  {
+    "mag": "BUMH",
+    "bg": "YÜZME GİYİM",
+    "kl": "DOKUMA YUZME UZUN ŞORT",
+    "kw": [
+      "beach",
+      "bermuda",
+      "bikini",
+      "deniz sortu",
+      "kisa pantolon",
+      "mayo",
+      "sort",
+      "u.kol",
+      "ukol",
+      "uzun kol",
+      "uzun kollu",
+      "yuzme",
+      "şort"
+    ]
+  },
+  {
+    "mag": "BUMH",
+    "bg": "YÜZME GİYİM",
+    "kl": "KEY DOKUMA YUZME ŞORT",
+    "kw": [
+      "beach",
+      "bermuda",
+      "bikini",
+      "deniz sortu",
+      "kisa pantolon",
+      "mayo",
+      "sort",
+      "yuzme",
+      "şort"
+    ]
+  },
+  {
+    "mag": "BUCF",
+    "bg": "BLAZER CEKET",
+    "kl": "BLAZER CEKET",
+    "kw": [
+      "blazer",
+      "ceket",
+      "takim ceket"
+    ]
+  },
+  {
+    "mag": "BUCF",
+    "bg": "DOKUMA ALT",
+    "kl": "KEY DOKUMA PANTOLON",
+    "kw": [
+      "alt",
+      "esofman",
+      "esofman alt",
+      "pant",
+      "pantolon"
+    ]
+  },
+  {
+    "mag": "BUCF",
+    "bg": "DOKUMA ÜST",
+    "kl": "BASIC DOKUMA GOMLEK U.KOL",
+    "kw": [
+      "dokuma gomlek",
+      "gomlek",
+      "k.kol",
+      "kisa kol",
+      "kkol",
+      "kısa kollu",
+      "shirt",
+      "uzun kol",
+      "uzun kollu"
+    ]
+  },
+  {
+    "mag": "BUCF",
+    "bg": "DOKUMA ÜST",
+    "kl": "KEY DOKUMA GOMLEK K.KOL",
+    "kw": [
+      "dokuma gomlek",
+      "gomlek",
+      "k.kol",
+      "kisa kol",
+      "kkol",
+      "kısa kollu",
+      "shirt"
+    ]
+  },
+  {
+    "mag": "BUCF",
+    "bg": "DOKUMA ÜST",
+    "kl": "KEY DOKUMA GOMLEK U.KOL",
+    "kw": [
+      "dokuma gomlek",
+      "gomlek",
+      "k.kol",
+      "kisa kol",
+      "kkol",
+      "kısa kollu",
+      "shirt",
+      "uzun kol",
+      "uzun kollu"
+    ]
+  },
+  {
+    "mag": "BUCF",
+    "bg": "KRAVAT/PAPYON",
+    "kl": "KEY AKSESUAR KRAVAT/PAPYON SMART",
+    "kw": [
+      "kravat",
+      "papyon",
+      "tie"
+    ]
+  },
+  {
+    "mag": "BUGA",
+    "bg": "AKTİF SPOR",
+    "kl": "BASIC ORME T-SHIRT K.KOL AKTİF SPOR",
+    "kw": [
+      "aktif",
+      "fitness",
+      "k.kol",
+      "kisa kol",
+      "kkol",
+      "kosu",
+      "kısa kollu",
+      "spor",
+      "t-shirt",
+      "tisort",
+      "tshirt"
+    ]
+  },
+  {
+    "mag": "BUGA",
+    "bg": "AKTİF SPOR",
+    "kl": "KEY ORME ATLET AKTİF SPOR",
+    "kw": [
+      "aktif",
+      "atlet",
+      "fanila atlet",
+      "fitness",
+      "kolsuz",
+      "kosu",
+      "spor"
+    ]
+  },
+  {
+    "mag": "BUGA",
+    "bg": "AKTİF SPOR",
+    "kl": "KEY ORME HIRKA AKTİF SPOR",
+    "kw": [
+      "aktif",
+      "fermuarli",
+      "fitness",
+      "hirka",
+      "hırka",
+      "kosu",
+      "orgu hirka",
+      "spor"
+    ]
+  },
+  {
+    "mag": "BUGA",
+    "bg": "AKTİF SPOR",
+    "kl": "KEY ORME PANTOLON AKTİF SPOR",
+    "kw": [
+      "aktif",
+      "alt",
+      "esofman",
+      "esofman alt",
+      "esofman pantolon",
+      "fitness",
+      "jogger",
+      "kosu",
+      "pant",
+      "pantolon",
+      "spor"
+    ]
+  },
+  {
+    "mag": "BUGA",
+    "bg": "AKTİF SPOR",
+    "kl": "KEY ORME SORT/TAYTLI SORT AKTİF SPOR",
+    "kw": [
+      "aktif",
+      "bermuda",
+      "fitness",
+      "kisa pantolon",
+      "kosu",
+      "sort",
+      "spor",
+      "spor sort",
+      "spor tayt",
+      "tayt",
+      "taytli sort",
+      "taytlı şort",
+      "şort"
+    ]
+  },
+  {
+    "mag": "BUGA",
+    "bg": "AKTİF SPOR",
+    "kl": "KEY ORME SWEAT AKTİF SPOR",
+    "kw": [
+      "aktif",
+      "esofman ust",
+      "fitness",
+      "hoodie",
+      "kapusonlu",
+      "kosu",
+      "spor",
+      "sweat",
+      "sweatshirt"
+    ]
+  },
+  {
+    "mag": "BUGA",
+    "bg": "AKTİF SPOR",
+    "kl": "KEY ORME T-SHIRT U.KOL AKTİF SPOR",
+    "kw": [
+      "aktif",
+      "fitness",
+      "k.kol",
+      "kisa kol",
+      "kkol",
+      "kosu",
+      "kısa kollu",
+      "spor",
+      "t-shirt",
+      "tisort",
+      "tshirt",
+      "uzun kol",
+      "uzun kollu"
+    ]
+  },
+  {
+    "mag": "BUGA",
+    "bg": "DIŞ GİYİM",
+    "kl": "MONT/KABAN KALIN",
+    "kw": [
+      "ceket dis",
+      "kaban",
+      "kalin mont",
+      "kis montu",
+      "mont"
+    ]
+  },
+  {
+    "mag": "BUGA",
+    "bg": "DOKUMA ALT",
+    "kl": "KEY DOKUMA PANTOLON",
+    "kw": [
+      "alt",
+      "esofman",
+      "esofman alt",
+      "pant",
+      "pantolon"
+    ]
+  },
+  {
+    "mag": "BUJD",
+    "bg": "DENİM",
+    "kl": "BASIC DOKUMA JEAN BERMUDA",
+    "kw": [
+      "denim",
+      "denim sort",
+      "jean",
+      "jean bermuda",
+      "kot",
+      "kot sort"
+    ]
+  },
+  {
+    "mag": "BUJD",
+    "bg": "DENİM",
+    "kl": "BASIC DOKUMA JEAN PANTOLON",
+    "kw": [
+      "alt",
+      "denim",
+      "denim pantolon",
+      "esofman",
+      "esofman alt",
+      "jean",
+      "jean pantolon",
+      "kot",
+      "kot pantolon",
+      "pant",
+      "pantolon"
+    ]
+  },
+  {
+    "mag": "BUJW",
+    "bg": "DENİM",
+    "kl": "KEY DOKUMA JEAN GOMLEK K.KOL",
+    "kw": [
+      "denim",
+      "denim gomlek",
+      "dokuma gomlek",
+      "gomlek",
+      "jean",
+      "jean gomlek",
+      "k.kol",
+      "kisa kol",
+      "kkol",
+      "kot",
+      "kot gomlek",
+      "kısa kollu",
+      "shirt"
+    ]
+  },
+  {
+    "mag": "BUJW",
+    "bg": "DENİM",
+    "kl": "KEY DOKUMA JEAN GOMLEK U.KOL",
+    "kw": [
+      "denim",
+      "denim gomlek",
+      "dokuma gomlek",
+      "gomlek",
+      "jean",
+      "jean gomlek",
+      "k.kol",
+      "kisa kol",
+      "kkol",
+      "kot",
+      "kot gomlek",
+      "kısa kollu",
+      "shirt",
+      "uzun kol",
+      "uzun kollu"
+    ]
+  },
+  {
+    "mag": "BUJW",
+    "bg": "DENİM",
+    "kl": "KEY DOKUMA JEAN MONT",
+    "kw": [
+      "ceket dis",
+      "denim",
+      "denim ceket",
+      "jean",
+      "jean ceket",
+      "kaban",
+      "kot",
+      "kot ceket",
+      "mont"
+    ]
+  },
+  {
+    "mag": "BUJW",
+    "bg": "DENIM DUVARI",
+    "kl": "BASIC DENIM DUVAR DOKUMA JEAN PANTOLON",
+    "kw": [
+      "alt",
+      "denim",
+      "denim pantolon",
+      "esofman",
+      "esofman alt",
+      "jean",
+      "jean pantolon",
+      "kot",
+      "kot pantolon",
+      "pant",
+      "pantolon"
+    ]
+  },
+  {
+    "mag": "BUJW",
+    "bg": "DENIM DUVARI",
+    "kl": "BASIC DENIM DUVAR DOKUMA JEAN SORT /BERMUDA",
+    "kw": [
+      "bermuda",
+      "denim",
+      "denim sort",
+      "jean",
+      "jean bermuda",
+      "kisa pantolon",
+      "kot",
+      "kot sort",
+      "sort",
+      "şort"
+    ]
+  },
+  {
+    "mag": "BUK",
+    "bg": "DERİ AKSESUAR",
+    "kl": "KEY AKSESUAR CANTA BUYUK",
+    "kw": [
+      "bag",
+      "canta",
+      "sirt cantasi"
+    ]
+  },
+  {
+    "mag": "BUK",
+    "bg": "DERİ AKSESUAR",
+    "kl": "KEY AKSESUAR CANTA KUCUK",
+    "kw": [
+      "bag",
+      "canta",
+      "sirt cantasi"
+    ]
+  },
+  {
+    "mag": "BUK",
+    "bg": "DERİ AKSESUAR",
+    "kl": "KEY AKSESUAR KEMER",
+    "kw": [
+      "belt",
+      "kemer"
+    ]
+  },
+  {
+    "mag": "BUK",
+    "bg": "DOKUMA AKSESUAR",
+    "kl": "KEY AKSESUAR ATKI",
+    "kw": [
+      "atki",
+      "atkı",
+      "kaskol"
+    ]
+  },
+  {
+    "mag": "BUK",
+    "bg": "DOKUMA AKSESUAR",
+    "kl": "KEY AKSESUAR DOKUMA ŞAPKA",
+    "kw": [
+      "cap",
+      "sapka",
+      "şapka"
+    ]
+  },
+  {
+    "mag": "BUK",
+    "bg": "STANDART DIŞI",
+    "kl": "KEY AKSESUAR TAKI",
+    "kw": [
+      "bileklik",
+      "kolye",
+      "taki"
+    ]
+  },
+  {
+    "mag": "BUK",
+    "bg": "TRİKO ÖRME AKSESUAR",
+    "kl": "KEY AKSESUAR HAVLU",
+    "kw": [
+      "havlu",
+      "towel"
+    ]
+  },
+  {
+    "mag": "BUK",
+    "bg": "TRİKO ÖRME AKSESUAR",
+    "kl": "KEY ORME AKSESUAR BERE",
+    "kw": [
+      "bere",
+      "bone",
+      "kasket"
+    ]
+  },
+  {
+    "mag": "BUK",
+    "bg": "TRİKO ÖRME AKSESUAR",
+    "kl": "KEY TRIKO AKSESUAR BERE",
+    "kw": [
+      "bere",
+      "bone",
+      "kasket"
+    ]
+  },
+  {
+    "mag": "BUR",
+    "bg": "ÇORAP",
+    "kl": "KEY AKSESUAR ÇORAP BABET",
+    "kw": [
+      "babet",
+      "corap",
+      "soket"
+    ]
+  },
+  {
+    "mag": "BUR",
+    "bg": "ÇORAP",
+    "kl": "KEY AKSESUAR CORAP EV",
+    "kw": [
+      "babet",
+      "corap",
+      "soket"
+    ]
+  },
+  {
+    "mag": "BUR",
+    "bg": "ÇORAP",
+    "kl": "KEY AKSESUAR CORAP PATIK",
+    "kw": [
+      "babet",
+      "corap",
+      "soket"
+    ]
+  },
+  {
+    "mag": "BUR",
+    "bg": "ÇORAP",
+    "kl": "KEY AKSESUAR CORAP SNEAKER",
+    "kw": [
+      "babet",
+      "corap",
+      "soket"
+    ]
+  },
+  {
+    "mag": "BUR",
+    "bg": "ÇORAP",
+    "kl": "KEY AKSESUAR CORAP SOKET",
+    "kw": [
+      "babet",
+      "corap",
+      "soket"
+    ]
+  },
+  {
+    "mag": "BUS",
+    "bg": "BOXER",
+    "kl": "İÇGYM BASIC BOXER",
+    "kw": [
+      "boxer",
+      "ic camasir",
+      "slip"
+    ]
+  },
+  {
+    "mag": "BUS",
+    "bg": "BOXER",
+    "kl": "İÇGYM KEY BOXER",
+    "kw": [
+      "boxer",
+      "ic camasir",
+      "slip"
+    ]
+  },
+  {
+    "mag": "BUS",
+    "bg": "İÇ GİYİM",
+    "kl": "İÇGYM KEY ÖRME FANİLA K.KOL",
+    "kw": [
+      "atlet",
+      "fanila",
+      "ic atlet",
+      "k.kol",
+      "kisa kol",
+      "kkol",
+      "kısa kollu"
+    ]
+  },
+  {
+    "mag": "BUS",
+    "bg": "İÇ GİYİM",
+    "kl": "İÇGYM ORME ATLET",
+    "kw": [
+      "atlet",
+      "fanila atlet",
+      "kolsuz"
+    ]
+  },
+  {
+    "mag": "BUS",
+    "bg": "İÇ GİYİM",
+    "kl": "İÇGYM ORME FANILA U.KOL",
+    "kw": [
+      "atlet",
+      "fanila",
+      "ic atlet",
+      "k.kol",
+      "kisa kol",
+      "kkol",
+      "kısa kollu",
+      "uzun kol",
+      "uzun kollu"
+    ]
+  },
+  {
+    "mag": "BUSP",
+    "bg": "PİJAMA",
+    "kl": "İÇGYM ÖRME PİJAMA TAKIM K.KOL-K.PAÇA",
+    "kw": [
+      "gecelik",
+      "k.kol",
+      "kisa kol",
+      "kkol",
+      "kısa kollu",
+      "pijama",
+      "pijama takim"
+    ]
+  },
+  {
+    "mag": "BUSP",
+    "bg": "PİJAMA",
+    "kl": "İÇGYM ÖRME PİJAMA TAKIM K.KOL-U.PAÇA",
+    "kw": [
+      "gecelik",
+      "k.kol",
+      "kisa kol",
+      "kkol",
+      "kısa kollu",
+      "pijama",
+      "pijama takim"
+    ]
+  },
+  {
+    "mag": "BUSP",
+    "bg": "PİJAMA",
+    "kl": "İÇGYM ÖRME PİJAMA TAKIM U.KOL-U.PAÇA",
+    "kw": [
+      "gecelik",
+      "k.kol",
+      "kisa kol",
+      "kkol",
+      "kısa kollu",
+      "pijama",
+      "pijama takim",
+      "uzun kol",
+      "uzun kollu"
+    ]
+  },
+  {
+    "mag": "BUSP",
+    "bg": "PİJAMA",
+    "kl": "İÇGYM ÖRME PİJAMA TEK ALT KISA",
+    "kw": [
+      "gecelik",
+      "k.kol",
+      "kisa kol",
+      "kkol",
+      "kısa kollu",
+      "pijama",
+      "pijama takim"
+    ]
+  },
+  {
+    "mag": "BUSP",
+    "bg": "PİJAMA",
+    "kl": "İÇGYM ÖRME PİJAMA TEK ALT UZUN",
+    "kw": [
+      "gecelik",
+      "pijama",
+      "pijama takim",
+      "u.kol",
+      "ukol",
+      "uzun kol",
+      "uzun kollu"
+    ]
+  },
+  {
+    "mag": "BUSP",
+    "bg": "PİJAMA",
+    "kl": "İÇGYM ÖRME PİJAMA TEK ÜST",
+    "kw": [
+      "gecelik",
+      "pijama",
+      "pijama takim"
+    ]
+  },
+  {
+    "mag": "BUSP",
+    "bg": "PİJAMA",
+    "kl": "İÇGYM TERMAL ÜST",
+    "kw": [
+      "iclik",
+      "kışlık ic",
+      "termal",
+      "thermal"
+    ]
+  },
+  {
+    "mag": "BUSP",
+    "bg": "PİJAMA",
+    "kl": "PİJAMA TERMAL ALT",
+    "kw": [
+      "gecelik",
+      "iclik",
+      "kışlık ic",
+      "pijama",
+      "pijama takim",
+      "termal",
+      "thermal"
+    ]
+  }
 ];
 
 // ═══ INIT ═══
 (function init(){
-  try{ var s=localStorage.getItem('gemba_kw2'); KW=s?JSON.parse(s):JSON.parse(JSON.stringify(DEFAULT_KW)); }
-  catch(e){ KW=JSON.parse(JSON.stringify(DEFAULT_KW)); }
-  try{ var s=localStorage.getItem('gemba_mdb2'); if(s){ MDB=JSON.parse(s); if(MDB.length) showMStats(); } }
-  catch(e){ MDB=[]; }
+  // KW kurallarini Railway'den yukle
+  fetch('/kw/load').then(function(r){ return r.json(); }).then(function(d){
+    if(d.ok && d.rules && d.rules.length){
+      KW=d.rules;
+    } else {
+      try{ var s=localStorage.getItem('gemba_kw2'); KW=s?JSON.parse(s):JSON.parse(JSON.stringify(DEFAULT_KW)); }
+      catch(e){ KW=JSON.parse(JSON.stringify(DEFAULT_KW)); }
+    }
+  }).catch(function(){
+    try{ var s=localStorage.getItem('gemba_kw2'); KW=s?JSON.parse(s):JSON.parse(JSON.stringify(DEFAULT_KW)); }
+    catch(e){ KW=JSON.parse(JSON.stringify(DEFAULT_KW)); }
+  });
+  // Model DB Railway yukle
+  fetch('/models/load').then(function(r){ return r.json(); }).then(function(d){
+    if(d.ok && d.models && d.models.length){
+      MDB=d.models;
+      showMStats();
+    } else {
+      // Fallback localStorage
+      try{ var s=localStorage.getItem('gemba_mdb2'); if(s){ MDB=JSON.parse(s); if(MDB.length) showMStats(); } }catch(e){ MDB=[]; }
+    }
+  }).catch(function(){
+    try{ var s=localStorage.getItem('gemba_mdb2'); if(s){ MDB=JSON.parse(s); if(MDB.length) showMStats(); } }catch(e){ MDB=[]; }
+  });
   addBlock();
 })();
 
@@ -404,15 +2840,31 @@ function buildResults(all, kwRes, aiRes){
   all.forEach(function(item, i){
     var ai = (aiRes||[]).find(function(a){ return a.index===i; }) || {};
     var kw = kwRes[i];
+    // KW model DB'den geldiyse AI'nin ezmesine izin verme
+    var finalBG, finalKL, finalSrc;
+    if(kw.src==='model'){
+      // Model DB eşleşmesi — AI düzeltemez
+      finalBG=kw.bg; finalKL=kw.kl; finalSrc='model';
+      if(ai.bg && ai.bg!==kw.bg) log('⚠ '+(i+1)+'. Model DB korundu: '+kw.bg+' (AI: '+ai.bg+')', '#c8900a');
+    } else if(ai.bg && ai.confidence==='high'){
+      // AI yüksek güven — kabul et
+      finalBG=ai.bg; finalKL=ai.kl||kw.kl||null; finalSrc='ai';
+      if(kw.bg && ai.bg!==kw.bg) log('↻ '+(i+1)+'. AI (high): '+kw.bg+' → '+ai.bg, '#5040a0');
+    } else if(ai.bg && ai.bg!==kw.bg && kw.bg){
+      // AI farklı öneriyor ama KW var — ikisini göster, KW'yi koru
+      finalBG=kw.bg; finalKL=kw.kl||null; finalSrc='kw';
+      log('? '+(i+1)+'. AI ('+ai.confidence+'): '+ai.bg+' — KW korundu: '+kw.bg, '#c8900a');
+    } else {
+      finalBG=ai.bg||kw.bg||null; finalKL=ai.kl||kw.kl||null;
+      finalSrc=ai.bg?'ai':kw.src;
+    }
+
     RES.push({
       id:i, text:item.text, mag:item.mag,
-      bg: ai.bg||kw.bg||null,
-      kl: ai.kl||kw.kl||null,
-      src: ai.bg ? (kw.src==='model'?'model':'ai') : kw.src,
+      bg: finalBG, kl: finalKL, src: finalSrc,
       reason: ai.reason||'',
       status:'pending', edit:false
     });
-    if(ai.bg && kw.bg && ai.bg!==kw.bg) log('↻ '+(i+1)+'. AI: '+kw.bg+' → '+ai.bg, '#5040a0');
   });
   document.getElementById('phase').innerHTML='<span style="color:#1a9e6e;font-weight:500">✓ Tamamlandı</span>';
   renderRes();
@@ -696,9 +3148,20 @@ function addRule(){
   addRuleForMAG(mag);
 }
 
-function saveKW(){
-  localStorage.setItem('gemba_kw2', JSON.stringify(KW));
-  toast('✓ Kaydedildi');
+async function saveKW(){
+  try{
+    var r=await fetch('/kw/save',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({rules:KW})
+    });
+    var d=await r.json();
+    if(d.ok) toast('✓ '+d.count+' kural kaydedildi');
+    else toast('Kayit hatasi');
+  }catch(e){
+    localStorage.setItem('gemba_kw2', JSON.stringify(KW));
+    toast('✓ Kaydedildi (offline)');
+  }
 }
 
 // ═══ MODEL DB ═══
@@ -735,6 +3198,8 @@ function parseCSV(txt){
   });
   toast(added+' model eklendi'+(skipped?' ('+skipped+' atlandı)':''));
   showMStats();
+  // Otomatik kaydet
+  saveMDB();
 }
 
 function showMStats(){
@@ -757,14 +3222,29 @@ function renderMtbl(){
   document.getElementById('mbody').innerHTML=html;
 }
 
-function saveMDB(){
-  localStorage.setItem('gemba_mdb2', JSON.stringify(MDB));
-  toast('✓ '+MDB.length+' model kaydedildi');
+async function saveMDB(){
+  try{
+    var r=await fetch('/models/save',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({models:MDB})
+    });
+    var d=await r.json();
+    if(d.ok) toast('OK: '+d.count+' model kaydedildi');
+    else toast('Kayıt hatasi: ' + (d.error||''));
+  }catch(e){
+    // Fallback localStorage
+    localStorage.setItem('gemba_mdb2', JSON.stringify(MDB));
+    toast('✓ '+MDB.length+' model kaydedildi (offline)');
+  }
 }
 
-function clearMDB(){
+async function clearMDB(){
   if(!confirm('Tüm modeller silinsin mi?')) return;
   MDB=[];
+  try{
+    await fetch('/models/save',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({models:[]})});
+  }catch(e){}
   localStorage.removeItem('gemba_mdb2');
   document.getElementById('mstats').style.display='none';
   toast('Temizlendi');
