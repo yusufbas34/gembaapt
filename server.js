@@ -131,6 +131,30 @@ app.post('/notify-user', (req, res) => {
   res.json({ok:true});
 });
 
+
+// ── Backup / Restore ─────────────────────────────────────────────────────────
+const BACKUP_KEY = process.env.BACKUP_KEY || 'gemba2024';
+
+// Backup indir: /admin/backup?key=gemba2024
+app.get('/admin/backup', (req, res) => {
+  if(req.query.key !== BACKUP_KEY) return res.status(403).send('Yetkisiz');
+  const data = loadData();
+  const filename = 'gemba_backup_' + new Date().toISOString().slice(0,10) + '.json';
+  res.setHeader('Content-Disposition', 'attachment; filename="' + filename + '"');
+  res.setHeader('Content-Type', 'application/json');
+  res.send(JSON.stringify(data, null, 2));
+});
+
+// Restore: POST /admin/restore?key=gemba2024
+app.post('/admin/restore', (req, res) => {
+  if(req.query.key !== BACKUP_KEY) return res.status(403).send('Yetkisiz');
+  const data = req.body;
+  if(!data||!data.users) return res.status(400).json({ok:false, error:'Gecersiz veri'});
+  saveData(data);
+  const count = Object.keys(data.users).length;
+  res.json({ok:true, message: count + ' kullanici geri yuklendi'});
+});
+
 // ── Static ───────────────────────────────────────────────────────────────────
 app.get('/gemba.png',(req,res)=>{
   const file=path.join(__dirname,'gemba.png');
