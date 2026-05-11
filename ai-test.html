@@ -3,206 +3,160 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
-<title>GembaGPT — AI Test</title>
+<title>GembaGPT AI Test</title>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet"/>
 <style>
-:root{
-  --bg:#fff;--bg2:#f6f5f2;--bg3:#eeedea;
-  --text:#1a1a18;--text2:#6b6b67;--text3:#aeaea9;
-  --border:rgba(0,0,0,0.09);--border2:rgba(0,0,0,0.16);
-  --accent:#1a1a18;--green:#1a9e6e;--red:#e03e3e;--yellow:#c8900a;
-  --r:12px;
-}
+:root{--bg:#fff;--bg2:#f6f5f2;--bg3:#eeedea;--text:#1a1a18;--text2:#6b6b67;--text3:#aeaea9;--border:rgba(0,0,0,0.09);--bd2:rgba(0,0,0,0.16);--accent:#1a1a18;--green:#1a9e6e;--red:#e03e3e;--yellow:#c8900a;--r:12px;}
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
-body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;min-height:100vh;padding:0 0 80px}
-
-.header{text-align:center;padding:28px 20px 20px}
-.header h1{font-size:22px;font-weight:600;letter-spacing:-.4px}
-.header h1 span{color:var(--text2);font-weight:400}
-.badge{display:inline-block;background:var(--bg2);border:0.5px solid var(--border2);border-radius:100px;padding:4px 12px;font-size:11px;color:var(--text2);margin-top:6px}
-
-.tabs{display:flex;padding:0 16px;gap:6px;margin-bottom:16px}
-.tab{flex:1;padding:10px 4px;text-align:center;font-size:13px;font-weight:500;color:var(--text3);cursor:pointer;border-radius:10px;border:0.5px solid transparent;transition:all .15s;background:var(--bg2)}
-.tab.active{background:var(--accent);color:#fff;border-color:var(--accent)}
-
-.page{display:none;padding:0 16px}
-.page.show{display:block}
-
-.card{background:var(--bg2);border-radius:14px;padding:16px;margin-bottom:14px}
+body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;padding:0 0 80px}
+.hdr{text-align:center;padding:24px 20px 16px}
+.hdr h1{font-size:22px;font-weight:600;letter-spacing:-.4px}
+.hdr h1 span{color:var(--text2);font-weight:400}
+.badge{display:inline-block;background:var(--bg2);border:0.5px solid var(--bd2);border-radius:100px;padding:4px 12px;font-size:11px;color:var(--text2);margin-top:6px}
+.tabs{display:flex;padding:0 16px;gap:6px;margin-bottom:14px}
+.tab{flex:1;padding:10px 4px;text-align:center;font-size:13px;font-weight:500;color:var(--text3);cursor:pointer;border-radius:10px;background:var(--bg2);transition:all .15s}
+.tab.on{background:var(--accent);color:#fff}
+.pg{display:none;padding:0 16px}
+.pg.on{display:block}
+.card{background:var(--bg2);border-radius:14px;padding:16px;margin-bottom:12px}
 .lbl{font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.08em;margin-bottom:10px}
-
-select,textarea,input[type=text]{
-  width:100%;padding:12px 14px;border:0.5px solid var(--border2);border-radius:var(--r);
-  font-family:'DM Sans',sans-serif;font-size:15px;color:var(--text);background:var(--bg);
-  outline:none;-webkit-appearance:none;appearance:none;
-}
+select,textarea{width:100%;padding:12px 14px;border:0.5px solid var(--bd2);border-radius:var(--r);font-family:'DM Sans',sans-serif;font-size:15px;color:var(--text);background:var(--bg);outline:none;-webkit-appearance:none}
 textarea{resize:vertical;line-height:1.6}
-
 .btn{width:100%;padding:14px;border:none;border-radius:var(--r);font-family:'DM Sans',sans-serif;font-size:15px;font-weight:500;cursor:pointer;margin-bottom:10px}
-.btn-p{background:var(--accent);color:#fff}
-.btn-s{background:var(--bg2);color:var(--text);border:0.5px solid var(--border2)}
-.btn:disabled{opacity:.4}
-
-.steps{display:flex;gap:6px;padding:0 16px;margin-bottom:16px}
+.bp{background:var(--accent);color:#fff}
+.bs{background:var(--bg2);color:var(--text);border:0.5px solid var(--bd2)}
+.steps{display:flex;gap:6px;margin-bottom:14px}
 .stp{flex:1;height:3px;border-radius:2px;background:var(--bg3)}
-.stp.done{background:var(--green)}
-.stp.active{background:var(--accent)}
-
-/* Results */
+.stp.done{background:var(--green)}.stp.act{background:var(--accent)}
 .rcard{background:var(--bg2);border-radius:var(--r);padding:14px;margin-bottom:10px;border:0.5px solid var(--border)}
-.rcard.ok{border-color:var(--green)}
-.rcard.skip{opacity:.6;border-color:var(--border)}
-.rtxt{font-size:14px;color:var(--text);line-height:1.5;margin-bottom:8px}
-.rtags{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px}
+.rcard.ok{border-color:var(--green)}.rcard.skip{opacity:.6}
+.rtxt{font-size:14px;line-height:1.5;margin-bottom:8px}
+.tags{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:8px}
 .tag{font-size:11px;font-weight:600;padding:3px 10px;border-radius:100px}
-.t-bg{background:#e1f5ee;color:#085041}
-.t-kl{background:#fef3cd;color:#7a5200}
-.t-ai{background:#ede8ff;color:#5040a0}
-.t-kw{background:#e8f0fe;color:#1a56b0}
-.t-model{background:#e6fff4;color:#007050}
-.t-empty{background:var(--bg3);color:var(--text3)}
-.rbtns{display:flex;gap:8px}
-.rbtn{padding:7px 14px;border-radius:8px;font-size:13px;border:0.5px solid var(--border2);background:none;color:var(--text2);cursor:pointer;font-family:'DM Sans',sans-serif}
+.tm{background:var(--bg3);color:var(--text2);border:0.5px solid var(--bd2)}
+.tmodel{background:#e6fff4;color:#007050;border:0.5px solid #99ddc8}
+.tai{background:#ede8ff;color:#5040a0;border:0.5px solid #c4b8f0}
+.tkw{background:#e8f0fe;color:#1a56b0;border:0.5px solid #b0c8f8}
+.tbg{background:#e1f5ee;color:#085041;border:0.5px solid #99d4c0}
+.tkl{background:#fef3cd;color:#7a5200;border:0.5px solid #e8d080}
+.rbtns{display:flex;gap:8px;flex-wrap:wrap}
+.rbtn{padding:7px 14px;border-radius:8px;font-size:13px;border:0.5px solid var(--bd2);background:none;color:var(--text2);cursor:pointer;font-family:'DM Sans',sans-serif}
 .rbtn.ok{border-color:var(--green);color:var(--green)}
-.rbtn.skip{border-color:var(--red);color:var(--red)}
+.rbtn.sk{border-color:var(--red);color:var(--red)}
 .redit{margin-top:10px;padding-top:10px;border-top:0.5px solid var(--border)}
-.relbl{font-size:11px;color:var(--text3);margin-bottom:4px}
-
-/* Log */
-.log{background:var(--bg3);border-radius:var(--r);padding:12px;font-size:12px;color:var(--text2);max-height:180px;overflow-y:auto;line-height:1.8;margin-bottom:14px;font-family:monospace}
-
-/* KW Editor */
-.kwrule{border-bottom:0.5px solid var(--border);padding:12px}
-
-/* Accordion KW */
-.mag-group{margin-bottom:8px;border:0.5px solid var(--border2);border-radius:12px;overflow:hidden}
-.mag-header{padding:12px 16px;background:var(--bg2);display:flex;align-items:center;justify-content:space-between;cursor:pointer;user-select:none}
-.mag-title{font-size:13px;font-weight:600;color:var(--accent)}
-.mag-count{font-size:11px;color:var(--text3)}
-.mag-arrow{font-size:12px;color:var(--text3);transition:transform .2s}
-.mag-body{display:none;padding:8px}
-.mag-body.open{display:block}
-.bg-group{margin-bottom:6px;border:0.5px solid var(--border);border-radius:8px;overflow:hidden}
-.bg-header{padding:10px 12px;background:var(--bg3);display:flex;align-items:center;justify-content:space-between;cursor:pointer}
-.bg-title{font-size:12px;font-weight:600;color:var(--text)}
-.bg-body{display:none;padding:8px 12px}
-.bg-body.open{display:block}
-.kl-group{margin-bottom:8px;padding:8px;background:var(--bg);border-radius:6px;border:0.5px solid var(--border)}
-.kl-title{font-size:11px;font-weight:600;color:var(--text2);margin-bottom:6px;display:flex;justify-content:space-between;align-items:center}
-
-.kwrule:last-child{border-bottom:none}
-.kwbg{font-size:12px;font-weight:600;color:var(--accent);margin-bottom:8px}
-.kwchips{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px}
-.kwchip{display:flex;align-items:center;gap:4px;background:var(--bg3);border:0.5px solid var(--border);border-radius:100px;padding:4px 10px;font-size:12px;color:var(--text2)}
-.kwchip button{background:none;border:none;color:var(--text3);cursor:pointer;font-size:15px;padding:0;line-height:1}
-.kwadd{display:flex;gap:6px;margin-top:6px}
-.kwinput{flex:1;background:var(--bg3);border:0.5px solid var(--border);border-radius:8px;padding:8px 12px;font-size:13px;color:var(--text);font-family:'DM Sans',sans-serif;outline:none}
-.kwbtn{background:none;border:0.5px solid var(--border2);border-radius:8px;padding:8px 12px;color:var(--text2);font-size:13px;cursor:pointer;white-space:nowrap}
-
-/* Model DB */
-.upload{border:1.5px dashed var(--border2);border-radius:12px;padding:28px;text-align:center;cursor:pointer;background:var(--bg2)}
-.upload:active{background:var(--bg3)}
-.mstats{display:flex;gap:8px;margin:14px 0}
+.rlab{font-size:11px;color:var(--text3);margin-bottom:4px}
+.log{background:var(--bg3);border-radius:var(--r);padding:12px;font-size:12px;color:var(--text2);max-height:160px;overflow-y:auto;line-height:1.8;margin-bottom:12px;font-family:monospace}
+.acc-mag{margin-bottom:8px;border:0.5px solid var(--bd2);border-radius:12px;overflow:hidden}
+.acc-mhdr{padding:12px 16px;background:var(--bg2);display:flex;align-items:center;justify-content:space-between;cursor:pointer}
+.acc-mbody{display:none;padding:8px}
+.acc-mbody.open{display:block}
+.acc-bg{margin-bottom:6px;border:0.5px solid var(--border);border-radius:8px;overflow:hidden}
+.acc-bhdr{padding:10px 12px;background:var(--bg3);display:flex;align-items:center;justify-content:space-between;cursor:pointer}
+.acc-bbody{display:none;padding:8px 12px}
+.acc-bbody.open{display:block}
+.kl-box{margin-bottom:8px;padding:8px;background:var(--bg);border-radius:6px;border:0.5px solid var(--border)}
+.chips{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:6px}
+.chip{display:flex;align-items:center;gap:3px;background:var(--bg2);border:0.5px solid var(--border);border-radius:100px;padding:4px 10px;font-size:12px;color:var(--text2)}
+.chip button{background:none;border:none;color:var(--text3);cursor:pointer;font-size:14px;padding:0;line-height:1}
+.kadd{display:flex;gap:6px}
+.kinput{flex:1;background:var(--bg2);border:0.5px solid var(--border);border-radius:8px;padding:8px 12px;font-size:13px;color:var(--text);font-family:'DM Sans',sans-serif;outline:none}
+.kbtn{background:none;border:0.5px solid var(--bd2);border-radius:8px;padding:8px 12px;color:var(--text2);font-size:13px;cursor:pointer;white-space:nowrap}
+.upload{border:1.5px dashed var(--bd2);border-radius:12px;padding:28px;text-align:center;cursor:pointer;background:var(--bg2)}
+.mstats{display:flex;gap:8px;margin:12px 0}
 .mstat{flex:1;background:var(--bg2);border-radius:10px;padding:10px;text-align:center}
-.mstat-n{font-size:18px;font-weight:600;color:var(--accent)}
-.mstat-l{font-size:11px;color:var(--text3);margin-top:2px}
-.mtable{width:100%;border-collapse:collapse;font-size:13px}
-.mtable th{text-align:left;padding:8px;background:var(--bg3);color:var(--text3);font-size:11px;font-weight:600;text-transform:uppercase}
-.mtable td{padding:8px;border-bottom:0.5px solid var(--border);color:var(--text)}
+.mstn{font-size:18px;font-weight:600;color:var(--accent)}
+.mstl{font-size:11px;color:var(--text3);margin-top:2px}
+.mtbl{width:100%;border-collapse:collapse;font-size:13px}
+.mtbl th{text-align:left;padding:8px;background:var(--bg3);color:var(--text3);font-size:11px;font-weight:600;text-transform:uppercase}
+.mtbl td{padding:8px;border-bottom:0.5px solid var(--border)}
 .srch{width:100%;padding:10px 14px;background:var(--bg2);border:0.5px solid var(--border);border-radius:8px;font-family:'DM Sans',sans-serif;font-size:14px;color:var(--text);outline:none;margin-bottom:10px}
 </style>
 </head>
 <body>
-
-<div class="header">
+<div class="hdr">
   <h1>Gemba<span>GPT</span></h1>
   <div class="badge">🧪 AI Analiz — Test Modu</div>
 </div>
 
 <div class="tabs">
-  <div class="tab active" id="tab-analiz" onclick="goTab('analiz')">🔍 Analiz</div>
-  <div class="tab" id="tab-kw" onclick="goTab('kw')">⚙️ Kelimeler</div>
-  <div class="tab" id="tab-model" onclick="goTab('model')">📦 Modeller</div>
+  <div class="tab on" id="tab-a" onclick="goTab('a')">🔍 Analiz</div>
+  <div class="tab" id="tab-k" onclick="goTab('k')">⚙️ Kelimeler</div>
+  <div class="tab" id="tab-m" onclick="goTab('m')">📦 Modeller</div>
 </div>
 
-<!-- ANALIZ -->
-<div id="pg-analiz" class="page show">
+<!-- ANALİZ -->
+<div class="pg on" id="pg-a">
   <div class="steps">
-    <div class="stp active" id="stp1"></div>
-    <div class="stp" id="stp2"></div>
-    <div class="stp" id="stp3"></div>
+    <div class="stp act" id="s1"></div>
+    <div class="stp" id="s2"></div>
+    <div class="stp" id="s3"></div>
   </div>
-
-  <div id="pg-analiz-1">
-    <div id="magBlockList"></div>
-    <button class="btn btn-s" onclick="addMagBlock()" style="margin-bottom:10px">+ MAG Ekle</button>
-    <button class="btn btn-p" onclick="startAnalysis()">🔍 Analiz Et</button>
+  <div id="a1">
+    <div id="magBlocks"></div>
+    <button class="btn bs" onclick="addBlock()">+ MAG Ekle</button>
+    <button class="btn bp" onclick="runAnalysis()">🔍 Analiz Et</button>
   </div>
-
-  <div id="pg-analiz-2" style="display:none">
-    <div id="phaseBox" style="margin-bottom:12px;font-size:13px;color:var(--text2)"></div>
-    <div id="logBox" class="log" style="display:none"></div>
-    <div id="resultList"></div>
-    <div id="analiz2btns" style="display:none;display:flex;gap:8px;margin-top:4px">
-      <button class="btn btn-s" onclick="backToInput()" style="flex:0 0 52px">←</button>
-      <button class="btn btn-p" onclick="confirmAll()">✓ Tümünü Onayla</button>
+  <div id="a2" style="display:none">
+    <div id="phase" style="font-size:13px;color:var(--text2);margin-bottom:10px"></div>
+    <div id="logbox" class="log" style="display:none"></div>
+    <div id="rlist"></div>
+    <div id="a2btns" style="display:none">
+      <button class="btn bs" style="width:52px;flex-shrink:0" onclick="backToInput()">←</button>
+      <button class="btn bp" onclick="confirmAll()">✓ Tümünü Onayla</button>
     </div>
   </div>
-
-  <div id="pg-analiz-3" style="display:none">
+  <div id="a3" style="display:none">
     <div class="card">
       <div class="lbl">Sonuç</div>
-      <div id="summaryBox"></div>
+      <div id="summary"></div>
     </div>
-    <button class="btn btn-s" onclick="restart()">← Yeni Analiz</button>
-    <button class="btn btn-p" onclick="copyResult()">📋 Kopyala</button>
+    <button class="btn bs" onclick="restart()">← Yeni Analiz</button>
+    <button class="btn bp" onclick="copyResult()">📋 Kopyala</button>
   </div>
 </div>
 
-<!-- KELIMELER -->
-<div id="pg-kw" class="page">
+<!-- KELİMELER -->
+<div class="pg" id="pg-k">
   <div class="card" style="padding:0;overflow:hidden">
-    <div id="kwList"></div>
+    <div id="kwlist"></div>
   </div>
-  <button class="btn btn-s" onclick="addRule()">+ Yeni Kural</button>
-  <button class="btn btn-p" onclick="saveKW()">💾 Kaydet</button>
+  <button class="btn bs" onclick="addRule()">+ Yeni Kural Ekle</button>
+  <button class="btn bp" onclick="saveKW()">💾 Kaydet</button>
 </div>
 
 <!-- MODELLER -->
-<div id="pg-model" class="page">
+<div class="pg" id="pg-m">
   <div class="card">
     <div class="lbl">Model Listesi Yükle</div>
-    <div style="font-size:12px;color:var(--text3);margin-bottom:12px">Format: <strong>MAG | BG | KLASMAN | MODEL ADI</strong><br>Her satır bir model. CSV veya TXT.</div>
-    <div class="upload" onclick="document.getElementById('csvFile').click()">
+    <div style="font-size:12px;color:var(--text3);margin-bottom:12px">Format: <strong>MAG | BG | KLASMAN | MODEL ADI</strong> — Her satır bir model</div>
+    <div class="upload" onclick="document.getElementById('csvf').click()">
       <div style="font-size:28px;margin-bottom:6px">📂</div>
-      <div style="font-size:14px;color:var(--text2);margin-bottom:4px">Dosya seç veya sürükle</div>
-      <div style="font-size:12px;color:var(--text3)">Excel → Farklı Kaydet → CSV UTF-8</div>
+      <div style="font-size:14px;color:var(--text2)">Dosya seç veya sürükle bırak</div>
+      <div style="font-size:12px;color:var(--text3);margin-top:4px">Excel → Farklı Kaydet → CSV UTF-8</div>
     </div>
-    <input type="file" id="csvFile" accept=".csv,.txt" style="display:none" onchange="loadCSV(this)"/>
+    <input type="file" id="csvf" accept=".csv,.txt" style="display:none" onchange="loadCSV(this)"/>
   </div>
-  <div id="modelStats" style="display:none">
+  <div id="mstats" style="display:none">
     <div class="mstats">
-      <div class="mstat"><div class="mstat-n" id="stM">0</div><div class="mstat-l">Model</div></div>
-      <div class="mstat"><div class="mstat-n" id="stA">0</div><div class="mstat-l">MAG</div></div>
-      <div class="mstat"><div class="mstat-n" id="stB">0</div><div class="mstat-l">Buyer Grup</div></div>
+      <div class="mstat"><div class="mstn" id="sm">0</div><div class="mstl">Model</div></div>
+      <div class="mstat"><div class="mstn" id="sa">0</div><div class="mstl">MAG</div></div>
+      <div class="mstat"><div class="mstn" id="sb">0</div><div class="mstl">BG</div></div>
     </div>
-    <input class="srch" id="mSearch" placeholder="Model ara..." oninput="renderModels()"/>
-    <div style="overflow-x:auto;max-height:350px;overflow-y:auto;border-radius:var(--r);border:0.5px solid var(--border)">
-      <table class="mtable">
-        <thead><tr><th>Model</th><th>MAG</th><th>BG</th><th>Klasman</th></tr></thead>
-        <tbody id="mBody"></tbody>
-      </table>
+    <input class="srch" id="msrch" placeholder="Model ara..." oninput="renderMtbl()"/>
+    <div style="overflow:auto;max-height:350px;border-radius:var(--r);border:0.5px solid var(--border)">
+      <table class="mtbl"><thead><tr><th>Model</th><th>MAG</th><th>BG</th><th>Klasman</th></tr></thead>
+      <tbody id="mbody"></tbody></table>
     </div>
     <div style="display:flex;gap:8px;margin-top:12px">
-      <button class="btn btn-p" onclick="saveModels()">💾 Kaydet</button>
-      <button class="btn btn-s" onclick="clearModels()">🗑 Temizle</button>
+      <button class="btn bp" onclick="saveMDB()">💾 Kaydet</button>
+      <button class="btn bs" onclick="clearMDB()">🗑 Temizle</button>
     </div>
   </div>
 </div>
 
 <script>
-/* ─────────── DATA ─────────── */
-var erkekMAG={
+// ═══ DATA ═══
+var ERKEK = {
   "BUC":{bg:["CHINO DUVARI","DIŞ GİYİM","DOKUMA ÜST","ÖRME","ÖRME BASIC","TRİKO"],kl:{"CHINO DUVARI":["BASİC DOKUMA CHİNO PANTOLON İNCE","BASIC DOKUMA CHINO PANTOLON ORTA","CL BASIC DOKUMA PANTOLON KALIN","CLASSIC DOKUMA ROLLER","CLASSIC DOKUMA ŞORT"],"DIŞ GİYİM":["İNCE MONT","İNCE PUFFER MONT","MONT/KABAN KALIN","PARKA","PU MONT İNCE","PU MONT KALIN","YELEK"],"DOKUMA ÜST":["KEY DOKUMA GOMLEK K.KOL","KEY DOKUMA GOMLEK U.KOL","KEY EKOSELİ DOKUMA GOMLEK K.KOL","KEY EKOSELİ DOKUMA GOMLEK U.KOL"],"ÖRME":["BASIC ORME BİSİKLET YAKA T-SHIRT K.KOL","BASIC ORME POLO YAKA T-SHIRT K.KOL","BASIC ORME V YAKA T-SHIRT K.KOL","KEY BASKILI ORME T-SHIRT K.KOL","KEY ORME T-SHIRT K.KOL"],"ÖRME BASIC":["BASIC KEY BASKILI ORME SWEAT","CL BASIC ORME HIRKA","CL BASIC ORME PANTOLON","CL BASIC ORME ROLLER","CL BASIC ORME SORT / BERMUDA","CL BASIC ORME SWEAT","CL BASIC ORME T-SHIRT U.KOL","ÖRME ATLET"],"TRİKO":["KEY ÇİZGİLİ TRIKO KAZAK","KEY TRIKO HIRKA","KEY TRIKO HIRKA MONT","KEY TRIKO KAZAK","KEY TRIKO YELEK"]}},
   "BUB":{bg:["BLAZER CEKET","DENİM","DIŞ GİYİM","DOKUMA ALT","DOKUMA SET","DOKUMA ÜST","ÖRME","TRİKO"],kl:{"BLAZER CEKET":["BLAZER CEKET"],"DENİM":["KEY DOKUMA JEAN PANTOLON"],"DIŞ GİYİM":["İNCE MONT","MONT/KABAN KALIN","NAYLON PUFFER MONT/KABAN","PARKA","PU MONT İNCE","PU MONT KALIN","YAGMURLUK","YELEK"],"DOKUMA ALT":["KEY DOKUMA PANTOLON ORTA","KEY DOKUMA ŞORT/BERMUDA"],"DOKUMA SET":["BLAZER CEKET SET","DOKUMA SHACKET SET","İNCE MONT SET"],"DOKUMA ÜST":["DOKUMA SHACKET","KEY BASKILI DOKUMA GOMLEK K.KOL","KEY DOKUMA GOMLEK K.KOL","KEY DOKUMA GOMLEK U.KOL"],"ÖRME":["KEY BASKILI ORME T-SHIRT K.KOL","KEY ORME HIRKA","KEY ORME PANTOLON","KEY ORME SORT / BERMUDA","KEY ORME SWEAT","KEY ORME T-SHIRT K.KOL"],"TRİKO":["KEY TRIKO HIRKA","KEY TRIKO KAZAK","KEY TRIKO KAZAK K.KOL","KEY TRIKO SUVETER","KEY TRIKO YELEK"]}},
   "BUL":{bg:["BLAZER CEKET","DIŞ GİYİM","DOKUMA ALT","DOKUMA ÜST","ÖRME","TRİKO"],kl:{"BLAZER CEKET":["BLAZER CEKET"],"DIŞ GİYİM":["İNCE MONT","MONT/KABAN KALIN","NAYLON PUFFER MONT/KABAN","PARKA","PU MONT İNCE","PU MONT KALIN","YAGMURLUK","YELEK"],"DOKUMA ALT":["KEY DOKUMA PANTOLON ORTA","KEY DOKUMA ŞORT/BERMUDA"],"DOKUMA ÜST":["DOKUMA SHACKET","KEY BASKILI DOKUMA GOMLEK K.KOL","KEY DOKUMA GOMLEK K.KOL","KEY DOKUMA GOMLEK U.KOL"],"ÖRME":["KEY BASKILI ORME T-SHIRT K.KOL","KEY ÇİZGİLİ ORME T-SHIRT K.KOL","KEY ÖRME ATLET","KEY ORME HIRKA","KEY ORME PANTOLON","KEY ORME SORT / BERMUDA","KEY ORME SWEAT","KEY ORME T-SHIRT K.KOL"],"TRİKO":["KEY TRIKO HIRKA","KEY TRIKO HIRKA MONT","KEY TRIKO KAZAK","KEY TRIKO KAZAK K.KOL","KEY TRIKO SUVETER"]}},
@@ -218,496 +172,546 @@ var erkekMAG={
   "BUSP":{bg:["PİJAMA"],kl:{"PİJAMA":["İÇGYM ÖRME PİJAMA TAKIM K.KOL-K.PAÇA","İÇGYM ÖRME PİJAMA TAKIM K.KOL-U.PAÇA","İÇGYM ÖRME PİJAMA TAKIM U.KOL-U.PAÇA","İÇGYM ÖRME PİJAMA TEK ALT KISA","İÇGYM ÖRME PİJAMA TEK ALT UZUN","İÇGYM ÖRME PİJAMA TEK ÜST","İÇGYM TERMAL ÜST","PİJAMA TERMAL ALT"]}}
 };
 
-/* ─────────── STATE ─────────── */
-var KW_RULES = [];
-var MODEL_DB = [];
-var results = [];
-var currentMAG = '';
+var MAGLIST = Object.keys(ERKEK);
+
+// ═══ STATE ═══
+var KW = [];
+var MDB = [];
+var RES = [];
+var blockN = 0;
 var logLines = [];
 
 var DEFAULT_KW = [
-  {mag:'BUC', bg:'CHINO DUVARI', kl:'', kw:['chino','chino pantolon','dokuma pantolon']},
-  {mag:'BUC', bg:'DIŞ GİYİM', kl:'MONT/KABAN KALIN', kw:['mont','kaban','parka']},
-  {mag:'BUC', bg:'DIŞ GİYİM', kl:'YELEK', kw:['yelek']},
-  {mag:'BUC', bg:'ÖRME BASIC', kl:'CL BASIC ORME SWEAT', kw:['sweat','sweatshirt','kapuşon','hoodie']},
-  {mag:'BUC', bg:'ÖRME BASIC', kl:'ÖRME ATLET', kw:['atlet','fanila']},
-  {mag:'BUC', bg:'ÖRME', kl:'KEY ORME T-SHIRT K.KOL', kw:['tisort','t-shirt','tshirt']},
-  {mag:'BUC', bg:'ÖRME', kl:'BASIC ORME POLO YAKA T-SHIRT K.KOL', kw:['polo']},
-  {mag:'BUC', bg:'TRİKO', kl:'KEY TRIKO HIRKA', kw:['hirka']},
-  {mag:'BUC', bg:'TRİKO', kl:'KEY TRIKO KAZAK', kw:['kazak','triko']},
-  {mag:'BUC', bg:'DOKUMA ÜST', kl:'KEY DOKUMA GOMLEK K.KOL', kw:['gomlek kısa','gomlek k.kol']},
-  {mag:'BUC', bg:'DOKUMA ÜST', kl:'KEY DOKUMA GOMLEK U.KOL', kw:['gomlek uzun','gomlek u.kol']},
-  {mag:'BUB', bg:'DENİM', kl:'KEY DOKUMA JEAN PANTOLON', kw:['jean','denim pantolon','kot pantolon']},
-  {mag:'BUB', bg:'DIŞ GİYİM', kl:'MONT/KABAN KALIN', kw:['kalin mont','kaban']},
-  {mag:'BUB', bg:'DIŞ GİYİM', kl:'İNCE MONT', kw:['ince mont','yagmurluk']},
-  {mag:'BUB', bg:'ÖRME', kl:'KEY ORME SWEAT', kw:['sweat bub','sweatshirt bub']},
-  {mag:'BUB', bg:'DOKUMA ÜST', kl:'KEY DOKUMA GOMLEK K.KOL', kw:['gomlek bub']},
-  {mag:'BUB', bg:'BLAZER CEKET', kl:'BLAZER CEKET', kw:['blazer','takim elbise']},
-  {mag:'BUL', bg:'ÖRME', kl:'KEY ORME T-SHIRT K.KOL', kw:['tisort bul']},
-  {mag:'BUL', bg:'TRİKO', kl:'KEY TRIKO KAZAK', kw:['kazak bul']},
-  {mag:'BUL', bg:'DIŞ GİYİM', kl:'İNCE MONT', kw:['mont bul']},
-  {mag:'BUMH', bg:'YÜZME GİYİM', kl:'KEY DOKUMA YUZME ŞORT', kw:['mayo','yuzme','bikini','deniz sortu']},
-  {mag:'BUMH', bg:'ÖRME', kl:'KEY ORME T-SHIRT K.KOL', kw:['tisort bumh']},
-  {mag:'BUXL', bg:'DENİM', kl:'KEY DOKUMA JEAN PANTOLON', kw:['jean buxl','kot buxl']},
-  {mag:'BUXL', bg:'DIŞ GİYİM', kl:'MONT/KABAN KALIN', kw:['mont buxl']},
-  {mag:'BUS', bg:'BOXER', kl:'İÇGYM KEY BOXER', kw:['boxer','slip']},
-  {mag:'BUS', bg:'İÇ GİYİM', kl:'İÇGYM ORME ATLET', kw:['ic atlet','fanila ic']},
-  {mag:'BUSP', bg:'PİJAMA', kl:'İÇGYM ÖRME PİJAMA TAKIM K.KOL-K.PAÇA', kw:['pijama','gecelik']},
-  {mag:'BUK', bg:'DERİ AKSESUAR', kl:'KEY AKSESUAR KEMER', kw:['kemer']},
-  {mag:'BUK', bg:'DERİ AKSESUAR', kl:'KEY AKSESUAR CANTA BUYUK', kw:['canta']},
-  {mag:'BUK', bg:'TRİKO ÖRME AKSESUAR', kl:'KEY TRIKO AKSESUAR KAŞKOL', kw:['atki','kaskol']},
-  {mag:'BUK', bg:'TRİKO ÖRME AKSESUAR', kl:'KEY TRIKO AKSESUAR BERE', kw:['bere']},
-  {mag:'BUR', bg:'ÇORAP', kl:'KEY AKSESUAR CORAP SNEAKER', kw:['corap','soket','babet']}
+  {mag:'BUC',bg:'CHINO DUVARI',kl:'BASİC DOKUMA CHİNO PANTOLON İNCE',kw:['chino','dar paca','chino pantolon']},
+  {mag:'BUC',bg:'DIŞ GİYİM',kl:'MONT/KABAN KALIN',kw:['mont','kaban','parka','kalin mont']},
+  {mag:'BUC',bg:'DIŞ GİYİM',kl:'YELEK',kw:['yelek']},
+  {mag:'BUC',bg:'DIŞ GİYİM',kl:'İNCE MONT',kw:['ince mont','puffer']},
+  {mag:'BUC',bg:'ÖRME BASIC',kl:'CL BASIC ORME SWEAT',kw:['sweat','sweatshirt','kapuşon','hoodie']},
+  {mag:'BUC',bg:'ÖRME BASIC',kl:'ÖRME ATLET',kw:['atlet','fanila']},
+  {mag:'BUC',bg:'ÖRME BASIC',kl:'CL BASIC ORME SORT / BERMUDA',kw:['sort','bermuda','şort']},
+  {mag:'BUC',bg:'ÖRME',kl:'KEY ORME T-SHIRT K.KOL',kw:['tisort','t-shirt','tshirt']},
+  {mag:'BUC',bg:'ÖRME',kl:'BASIC ORME POLO YAKA T-SHIRT K.KOL',kw:['polo']},
+  {mag:'BUC',bg:'TRİKO',kl:'KEY TRIKO HIRKA',kw:['hirka']},
+  {mag:'BUC',bg:'TRİKO',kl:'KEY TRIKO KAZAK',kw:['kazak','triko']},
+  {mag:'BUC',bg:'DOKUMA ÜST',kl:'KEY DOKUMA GOMLEK K.KOL',kw:['gomlek','dokuma gomlek']},
+  {mag:'BUB',bg:'DENİM',kl:'KEY DOKUMA JEAN PANTOLON',kw:['jean','denim','kot pantolon']},
+  {mag:'BUB',bg:'DIŞ GİYİM',kl:'MONT/KABAN KALIN',kw:['kalin kaban','mont bub']},
+  {mag:'BUB',bg:'DIŞ GİYİM',kl:'İNCE MONT',kw:['ince mont bub','yagmurluk']},
+  {mag:'BUB',bg:'BLAZER CEKET',kl:'BLAZER CEKET',kw:['blazer','takim ceket']},
+  {mag:'BUB',bg:'ÖRME',kl:'KEY ORME SWEAT',kw:['sweat bub']},
+  {mag:'BUL',bg:'ÖRME',kl:'KEY ORME T-SHIRT K.KOL',kw:['tisort bul']},
+  {mag:'BUL',bg:'TRİKO',kl:'KEY TRIKO KAZAK',kw:['kazak bul']},
+  {mag:'BUL',bg:'DIŞ GİYİM',kl:'İNCE MONT',kw:['mont bul']},
+  {mag:'BUMH',bg:'YÜZME GİYİM',kl:'KEY DOKUMA YUZME ŞORT',kw:['mayo','yuzme','deniz sortu','beach']},
+  {mag:'BUMH',bg:'ÖRME',kl:'KEY ORME T-SHIRT K.KOL',kw:['tisort bumh']},
+  {mag:'BUXL',bg:'DENİM',kl:'KEY DOKUMA JEAN PANTOLON',kw:['jean buxl','kot buxl']},
+  {mag:'BUS',bg:'BOXER',kl:'İÇGYM KEY BOXER',kw:['boxer','slip','ic camasir']},
+  {mag:'BUSP',bg:'PİJAMA',kl:'İÇGYM ÖRME PİJAMA TAKIM K.KOL-K.PAÇA',kw:['pijama','gecelik']},
+  {mag:'BUK',bg:'DERİ AKSESUAR',kl:'KEY AKSESUAR KEMER',kw:['kemer']},
+  {mag:'BUK',bg:'DERİ AKSESUAR',kl:'KEY AKSESUAR CANTA BUYUK',kw:['canta']},
+  {mag:'BUK',bg:'TRİKO ÖRME AKSESUAR',kl:'KEY TRIKO AKSESUAR KAŞKOL',kw:['atki','kaskol']},
+  {mag:'BUR',bg:'ÇORAP',kl:'KEY AKSESUAR CORAP SNEAKER',kw:['corap','soket']}
 ];
 
-/* ─────────── INIT ─────────── */
-(function(){
-  try{ var s=localStorage.getItem('gemba_kw'); if(s) KW_RULES=JSON.parse(s); else KW_RULES=JSON.parse(JSON.stringify(DEFAULT_KW)); }catch(e){ KW_RULES=JSON.parse(JSON.stringify(DEFAULT_KW)); }
-  try{ var s=localStorage.getItem('gemba_models'); if(s){ MODEL_DB=JSON.parse(s); if(MODEL_DB.length) showModelStats(); } }catch(e){ MODEL_DB=[]; }
+// ═══ INIT ═══
+(function init(){
+  try{ var s=localStorage.getItem('gemba_kw2'); KW=s?JSON.parse(s):JSON.parse(JSON.stringify(DEFAULT_KW)); }
+  catch(e){ KW=JSON.parse(JSON.stringify(DEFAULT_KW)); }
+  try{ var s=localStorage.getItem('gemba_mdb2'); if(s){ MDB=JSON.parse(s); if(MDB.length) showMStats(); } }
+  catch(e){ MDB=[]; }
+  addBlock();
 })();
 
-/* ─────────── TABS ─────────── */
-function goTab(t){
-  ['analiz','kw','model'].forEach(function(id){
-    document.getElementById('tab-'+id).className='tab'+(id===t?' active':'');
-    document.getElementById('pg-'+id).className='page'+(id===t?' show':'');
+// ═══ TABS ═══
+function goTab(t) {
+  ['a','k','m'].forEach(function(id){
+    document.getElementById('tab-'+id).className = 'tab'+(id===t?' on':'');
+    document.getElementById('pg-'+id).className = 'pg'+(id===t?' on':'');
   });
-  if(t==='kw') renderKW();
-  if(t==='model' && MODEL_DB.length) showModelStats();
+  if(t==='k') renderKW();
+  if(t==='m' && MDB.length) showMStats();
 }
 
-/* ─────────── HELPERS ─────────── */
-function norm(s){
-  return s.toLowerCase()
+// ═══ HELPERS ═══
+function nr(s){
+  return (s||'').toLowerCase()
     .replace(/ğ/g,'g').replace(/ü/g,'u').replace(/ş/g,'s')
     .replace(/ı/g,'i').replace(/ö/g,'o').replace(/ç/g,'c')
     .replace(/İ/g,'i').replace(/Ğ/g,'g').replace(/Ü/g,'u')
     .replace(/Ş/g,'s').replace(/Ö/g,'o').replace(/Ç/g,'c');
 }
 
-function addLog(txt, cls){
-  logLines.push('<div style="color:'+(cls||'#6b6b67')+'">'+txt+'</div>');
-  var el=document.getElementById('logBox');
-  el.innerHTML=logLines.join('');
+function log(txt, color){
+  logLines.push('<span style="color:'+(color||'#6b6b67')+'">'+txt+'</span>');
+  var el=document.getElementById('logbox');
+  el.innerHTML=logLines.join('<br>');
   el.scrollTop=el.scrollHeight;
 }
 
 function toast(msg){
   var t=document.createElement('div');
   t.textContent=msg;
-  t.style.cssText='position:fixed;bottom:30px;left:50%;transform:translateX(-50%);background:#1a1a18;color:#fff;padding:10px 24px;border-radius:100px;font-size:14px;z-index:9999;white-space:nowrap';
-  document.body.appendChild(t);setTimeout(function(){t.remove();},2200);
+  t.style.cssText='position:fixed;bottom:30px;left:50%;transform:translateX(-50%);background:#1a1a18;color:#fff;padding:10px 24px;border-radius:100px;font-size:14px;z-index:9999;white-space:nowrap;pointer-events:none';
+  document.body.appendChild(t);
+  setTimeout(function(){t.remove();},2200);
 }
 
-/* ─────────── KW MATCH ─────────── */
+// ═══ MAG BLOCKS ═══
+function addBlock(){
+  blockN++;
+  var n = blockN;
+  var wrap = document.createElement('div');
+  wrap.className = 'card';
+  wrap.id = 'bl'+n;
+  wrap.style.marginBottom = '10px';
+
+  var hdr = document.createElement('div');
+  hdr.style.cssText = 'display:flex;justify-content:space-between;align-items:center;margin-bottom:10px';
+
+  var lbl = document.createElement('div');
+  lbl.className = 'lbl';
+  lbl.style.margin = '0';
+  lbl.textContent = 'MAG '+n;
+  hdr.appendChild(lbl);
+
+  if(n > 1){
+    var rb = document.createElement('button');
+    rb.textContent = 'Kaldır';
+    rb.style.cssText = 'background:none;border:none;color:var(--red);font-size:13px;cursor:pointer';
+    (function(id){ rb.onclick = function(){ document.getElementById(id).remove(); }; })('bl'+n);
+    hdr.appendChild(rb);
+  }
+  wrap.appendChild(hdr);
+
+  var sel = document.createElement('select');
+  sel.className = 'bsel';
+  sel.style.marginBottom = '10px';
+  var opt0 = document.createElement('option');
+  opt0.value = '';
+  opt0.textContent = 'MAG seçin...';
+  sel.appendChild(opt0);
+  MAGLIST.forEach(function(m){
+    var o=document.createElement('option');
+    o.value=m; o.textContent=m;
+    sel.appendChild(o);
+  });
+  wrap.appendChild(sel);
+
+  var ta = document.createElement('textarea');
+  ta.className = 'btxt';
+  ta.rows = 5;
+  ta.placeholder = 'Her satıra bir geri bildirim...\n\nÖrnek:\nDar paça chino lazım\nLacivert sweat isteniyor';
+  wrap.appendChild(ta);
+
+  var hint = document.createElement('div');
+  hint.style.cssText = 'font-size:11px;color:var(--text3);margin-top:6px';
+  hint.textContent = 'Her satır ayrı analiz edilir';
+  wrap.appendChild(hint);
+
+  document.getElementById('magBlocks').appendChild(wrap);
+}
+
+// ═══ KW MATCH ═══
 function kwMatch(text, mag){
-  var n=norm(text);
-  var magData=erkekMAG[mag];
-  if(!magData) return {bg:null,kl:null,src:'empty'};
+  var n = nr(text);
 
   // 1. Model DB
-  for(var i=0;i<MODEL_DB.length;i++){
-    var m=MODEL_DB[i];
-    if(m.mag && m.mag!==mag) continue;
-    var mn=norm(m.model);
-    var parts=mn.split(' ').filter(function(p){return p.length>2;});
-    var hits=0;
-    parts.forEach(function(p){if(n.includes(p))hits++;});
-    if(hits>0 && hits>=Math.ceil(parts.length*0.6)){
-      return {bg:m.bg,kl:m.kl,src:'model',modelName:m.model};
+  for(var i=0; i<MDB.length; i++){
+    var m = MDB[i];
+    if(m.mag && m.mag !== mag) continue;
+    var parts = m.normalized.split(' ').filter(function(p){ return p.length>2; });
+    if(!parts.length) continue;
+    var hits = 0;
+    parts.forEach(function(p){ if(n.includes(p)) hits++; });
+    if(hits > 0 && hits >= Math.ceil(parts.length*0.6)){
+      return {bg:m.bg, kl:m.kl, src:'model', model:m.model};
     }
   }
 
-  // 2. KW Rules - mag ve kl ile eşleştir
-  for(var i=0;i<KW_RULES.length;i++){
-    var rule=KW_RULES[i];
-    // MAG filtresi - kural için MAG belirtilmişse kontrol et
+  // 2. KW rules
+  for(var i=0; i<KW.length; i++){
+    var rule = KW[i];
     if(rule.mag && rule.mag !== mag) continue;
-    if(!magData.bg.includes(rule.bg)) continue;
-    for(var j=0;j<rule.kw.length;j++){
-      if(n.includes(norm(rule.kw[j]))){
-        var bg=rule.bg;
-        // KL: önce kuralda tanımlı olanı kullan
-        var kl=rule.kl||null;
-        // Yoksa KL listesinden bul
-        if(!kl && magData.kl && magData.kl[bg]){
-          var klList=magData.kl[bg];
-          var hint=norm(rule.kw[j]);
-          klList.forEach(function(k){if(norm(k).includes(hint))kl=k;});
-        }
-        return {bg:bg,kl:kl,src:'kw'};
+    var md = ERKEK[mag];
+    if(!md || !md.bg.includes(rule.bg)) continue;
+    for(var j=0; j<rule.kw.length; j++){
+      if(n.includes(nr(rule.kw[j]))){
+        return {bg:rule.bg, kl:rule.kl||null, src:'kw'};
       }
     }
   }
 
-  return {bg:null,kl:null,src:'empty'};
+  return {bg:null, kl:null, src:'empty'};
 }
 
-/* ─────────── ANALYSIS ─────────── */
-function startAnalysis(){
-  // Tüm MAG bloklarını topla
-  var blocks=[];
-  var blockEls=document.querySelectorAll('.mag-block');
-  blockEls.forEach(function(el){
-    var mag=el.querySelector('.mag-block-sel').value;
-    var raw=el.querySelector('.mag-block-txt').value.trim();
+// ═══ ANALYSIS ═══
+function runAnalysis(){
+  var blocks = document.querySelectorAll('#magBlocks .card');
+  var all = [];
+  blocks.forEach(function(b){
+    var mag = b.querySelector('.bsel').value;
+    var raw = b.querySelector('.btxt').value.trim();
     if(mag && raw){
-      var fbs=raw.split('\n').map(function(l){return l.trim();}).filter(Boolean);
-      if(fbs.length) blocks.push({mag:mag, fbs:fbs});
+      raw.split('\n').forEach(function(line){
+        var t=line.trim();
+        if(t) all.push({mag:mag, text:t});
+      });
     }
   });
-  if(!blocks.length){alert('En az bir MAG ve geri bildirim girin!');return;}
 
-  // Tüm geri bildirimleri düzleştir, MAG bilgisiyle birlikte
-  var allFbs=[];
-  blocks.forEach(function(b){
-    b.fbs.forEach(function(fb){
-      allFbs.push({mag:b.mag, text:fb});
-    });
-  });
+  if(!all.length){ alert('En az bir MAG ve geri bildirim girin!'); return; }
 
-  currentMAG = blocks[0].mag; // compat
-  var fbs = allFbs.map(function(f){return f.text;});
-  var mags = allFbs.map(function(f){return f.mag;});
-
-  document.getElementById('stp1').className='stp done';
-  document.getElementById('stp2').className='stp active';
-  document.getElementById('pg-analiz-1').style.display='none';
-  document.getElementById('pg-analiz-2').style.display='block';
-  document.getElementById('logBox').style.display='block';
-  document.getElementById('analiz2btns').style.display='none';
+  document.getElementById('s1').className='stp done';
+  document.getElementById('s2').className='stp act';
+  document.getElementById('a1').style.display='none';
+  document.getElementById('a2').style.display='block';
+  document.getElementById('logbox').style.display='block';
+  document.getElementById('a2btns').style.display='none';
   logLines=[];
-  results=[];
+  RES=[];
 
-  // Phase 1: KW
-  document.getElementById('phaseBox').innerHTML='<span style="color:#1a56b0;font-weight:500">🔑 Anahtar Kelime Analizi...</span>';
-  addLog('── Phase 1: Anahtar Kelime ──', '#1a56b0');
+  // Phase 1
+  document.getElementById('phase').innerHTML='<span style="color:#1a56b0;font-weight:500">🔑 Anahtar Kelime Analizi...</span>';
+  log('── Phase 1: KW ──', '#1a56b0');
 
-  var kwRes=[];
-  fbs.forEach(function(fb,i){
-    var r=kwMatch(fb, mags[i]);
+  var kwRes = [];
+  all.forEach(function(item, i){
+    var r = kwMatch(item.text, item.mag);
     kwRes.push(r);
-    var magLabel='['+mags[i]+'] ';
-    if(r.bg) addLog('✓ '+(i+1)+'. '+magLabel+r.src.toUpperCase()+': '+r.bg+(r.kl?' / '+r.kl:'')+(r.modelName?' ('+r.modelName+')':''), '#1a9e6e');
-    else addLog('? '+(i+1)+'. '+magLabel+'Eşleşme yok', '#c8900a');
+    if(r.bg) log('✓ '+(i+1)+'. ['+item.mag+'] '+r.src+': '+r.bg+(r.kl?' / '+r.kl:''), '#1a9e6e');
+    else log('? '+(i+1)+'. ['+item.mag+'] eşleşme yok', '#c8900a');
   });
 
-  // Phase 2: AI
   setTimeout(function(){
-    document.getElementById('phaseBox').innerHTML='<span style="color:#5040a0;font-weight:500">🤖 AI Doğrulama...</span>';
-    addLog('── Phase 2: Claude AI ──', '#5040a0');
+    document.getElementById('phase').innerHTML='<span style="color:#5040a0;font-weight:500">🤖 Claude AI Doğrulama...</span>';
+    log('── Phase 2: AI ──', '#5040a0');
 
-    callAI(mag, fbs, kwRes).then(function(aiRes){
-      addLog('✓ AI tamamlandı', '#1a9e6e');
+    var fbs = all.map(function(a){ return a.text; });
+    var mags = all.map(function(a){ return a.mag; });
 
-      fbs.forEach(function(fb,i){
-        var ai=aiRes.find(function(a){return a.index===i;})||{};
-        var kw=kwRes[i];
-        var finalBG = ai.bg || kw.bg || null;
-        var finalKL = ai.kl || kw.kl || null;
-        var src = ai.bg ? (kw.src==='model'?'model':'ai') : kw.src;
-        if(ai.bg && kw.bg && ai.bg!==kw.bg) addLog('↻ ['+(i+1)+'] AI düzeltti: '+kw.bg+' → '+ai.bg, '#5040a0');
-        results.push({id:i,text:fb,mag:mags[i],bg:finalBG,kl:finalKL,src:src,reason:ai.reason||'',status:'pending',edit:false});
-      });
-
-      document.getElementById('phaseBox').innerHTML='<span style="color:#1a9e6e;font-weight:500">✓ Analiz tamamlandı</span>';
-      renderResults();
-      document.getElementById('analiz2btns').style.display='flex';
-
+    callAI(all[0].mag, fbs, kwRes, mags).then(function(aiRes){
+      log('✓ AI tamamlandı', '#1a9e6e');
+      buildResults(all, kwRes, aiRes);
     }).catch(function(e){
-      addLog('⚠ AI hatası: '+e.message+' — KW kullanılıyor', '#e03e3e');
-      fbs.forEach(function(fb,i){
-        var kw=kwRes[i];
-        results.push({id:i,text:fb,mag:mags[i],bg:kw.bg,kl:kw.kl,src:kw.src,reason:'',status:'pending',edit:false});
-      });
-      document.getElementById('phaseBox').innerHTML='<span style="color:#c8900a;font-weight:500">⚠ AI erişilemedi — KW sonuçları</span>';
-      renderResults();
-      document.getElementById('analiz2btns').style.display='flex';
+      log('⚠ AI: '+e.message+' — KW kullanılıyor', '#e03e3e');
+      buildResults(all, kwRes, []);
     });
-  }, 500);
+  }, 400);
 }
 
-async function callAI(mag, fbs, kwRes){
-  var body={mag:mags[0], feedbacks:fbs, kwResults:kwRes, mags:mags};
-  var r=await fetch('/ai/analyze',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
-  var d=await r.json();
+function buildResults(all, kwRes, aiRes){
+  RES = [];
+  all.forEach(function(item, i){
+    var ai = (aiRes||[]).find(function(a){ return a.index===i; }) || {};
+    var kw = kwRes[i];
+    RES.push({
+      id:i, text:item.text, mag:item.mag,
+      bg: ai.bg||kw.bg||null,
+      kl: ai.kl||kw.kl||null,
+      src: ai.bg ? (kw.src==='model'?'model':'ai') : kw.src,
+      reason: ai.reason||'',
+      status:'pending', edit:false
+    });
+    if(ai.bg && kw.bg && ai.bg!==kw.bg) log('↻ '+(i+1)+'. AI: '+kw.bg+' → '+ai.bg, '#5040a0');
+  });
+  document.getElementById('phase').innerHTML='<span style="color:#1a9e6e;font-weight:500">✓ Tamamlandı</span>';
+  renderRes();
+  document.getElementById('a2btns').style.display='flex';
+}
+
+async function callAI(mag, fbs, kwRes, mags){
+  var r = await fetch('/ai/analyze',{
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({mag:mag, feedbacks:fbs, kwResults:kwRes, mags:mags})
+  });
+  var d = await r.json();
   if(!d.ok) throw new Error(d.error||'AI hatası');
   return d.results;
 }
 
-function renderResults(){
-  var html='';
-  results.forEach(function(r){
-  var magData=erkekMAG[r.mag||currentMAG]||{};
-    var magTag=r.mag?'<span class="tag" style="background:var(--bg3);color:var(--text2);border:0.5px solid var(--border2)">'+r.mag+'</span>':'';
-    var srcTag=r.src==='model'?'<span class="tag t-model">📦 Model</span>':
-               r.src==='ai'?'<span class="tag t-ai">🤖 AI</span>':
-               r.src==='kw'?'<span class="tag t-kw">🔑 KW</span>':
-               '<span class="tag t-empty">— Boş</span>';
-    var bgTag=r.bg?'<span class="tag t-bg">'+r.bg+'</span>':'<span class="tag t-empty">BG ?</span>';
-    var klTag=r.kl?'<span class="tag t-kl">'+r.kl+'</span>':'';
-    var cls=r.status==='confirmed'?' ok':r.status==='rejected'?' skip':'';
+function renderRes(){
+  var html = '';
+  RES.forEach(function(r){
+    var md = ERKEK[r.mag]||{};
+    var magTag = '<span class="tag tm">'+r.mag+'</span>';
+    var srcTag = r.src==='model'?'<span class="tag tmodel">📦 Model</span>':
+                 r.src==='ai'?'<span class="tag tai">🤖 AI</span>':
+                 r.src==='kw'?'<span class="tag tkw">🔑 KW</span>':
+                 '<span class="tag tm">— Boş</span>';
+    var bgTag = r.bg?'<span class="tag tbg">'+r.bg+'</span>':'<span class="tag tm">BG ?</span>';
+    var klTag = r.kl?'<span class="tag tkl">'+r.kl+'</span>':'';
+    var cls = r.status==='confirmed'?' ok':r.status==='rejected'?' skip':'';
 
-    var bgOpts=(magData.bg||[]).map(function(b){return '<option value="'+b+'"'+(r.bg===b?' selected':'')+'>'+b+'</option>';}).join('');
-    var klOpts=(r.bg&&magData.kl&&magData.kl[r.bg]?magData.kl[r.bg]:[]).map(function(k){return '<option value="'+k+'"'+(r.kl===k?' selected':'')+'>'+k+'</option>';}).join('');
+    var bgOpts = (md.bg||[]).map(function(b){
+      return '<option value="'+b+'"'+(r.bg===b?' selected':'')+'>'+b+'</option>';
+    }).join('');
+    var klOpts = (r.bg&&md.kl&&md.kl[r.bg]?md.kl[r.bg]:[]).map(function(k){
+      return '<option value="'+k+'"'+(r.kl===k?' selected':'')+'>'+k+'</option>';
+    }).join('');
 
-    html+='<div class="rcard'+cls+'" id="rc'+r.id+'">';
-    html+='<div class="rtxt">'+r.text+'</div>';
-    html+='<div class="rtags">'+magTag+srcTag+bgTag+klTag+'</div>';
-    if(r.reason) html+='<div style="font-size:11px;color:var(--text3);margin-bottom:6px">'+r.reason+'</div>';
+    html += '<div class="rcard'+cls+'" id="rc'+r.id+'">';
+    html += '<div class="rtxt">'+r.text+'</div>';
+    html += '<div class="tags">'+magTag+srcTag+bgTag+klTag+'</div>';
+    if(r.reason) html += '<div style="font-size:11px;color:var(--text3);margin-bottom:6px">'+r.reason+'</div>';
 
     if(r.edit){
-      html+='<div class="redit">';
-      html+='<div class="relbl">Buyer Grup</div><select onchange="updBG('+r.id+',this.value)" style="margin-bottom:8px"><option value="">— Boş</option>'+bgOpts+'</select>';
-      html+='<div class="relbl">Klasman</div><select onchange="updKL('+r.id+',this.value)"><option value="">— Boş</option>'+klOpts+'</select>';
-      html+='<div class="rbtns" style="margin-top:10px"><button class="rbtn ok" onclick="confirm1('+r.id+')">✓ Onayla</button><button class="rbtn" onclick="cancelEdit('+r.id+')">İptal</button></div>';
-      html+='</div>';
+      html += '<div class="redit">';
+      html += '<div class="rlab">Buyer Grup</div>';
+      html += '<select style="margin-bottom:8px" onchange="chBG('+r.id+',this.value)"><option value="">— Boş</option>'+bgOpts+'</select>';
+      html += '<div class="rlab">Klasman</div>';
+      html += '<select onchange="chKL('+r.id+',this.value)"><option value="">— Boş</option>'+klOpts+'</select>';
+      html += '<div class="rbtns" style="margin-top:10px">';
+      html += '<button class="rbtn ok" onclick="cnf('+r.id+')">✓ Onayla</button>';
+      html += '<button class="rbtn" onclick="cancelEdit('+r.id+')">İptal</button>';
+      html += '</div></div>';
     } else if(r.status==='pending'){
-      html+='<div class="rbtns"><button class="rbtn ok" onclick="confirm1('+r.id+')">✓ Onayla</button><button class="rbtn" onclick="editR('+r.id+')">✏ Düzenle</button><button class="rbtn skip" onclick="skip1('+r.id+')">✕ Boş</button></div>';
+      html += '<div class="rbtns">';
+      html += '<button class="rbtn ok" onclick="cnf('+r.id+')">✓ Onayla</button>';
+      html += '<button class="rbtn" onclick="editR('+r.id+')">✏ Düzenle</button>';
+      html += '<button class="rbtn sk" onclick="skp('+r.id+')">✕ Boş</button>';
+      html += '</div>';
     } else if(r.status==='confirmed'){
-      html+='<div style="font-size:12px;color:var(--green)">✓ Onaylandı</div>';
+      html += '<div style="font-size:12px;color:var(--green)">✓ Onaylandı</div>';
     } else {
-      html+='<div style="font-size:12px;color:var(--text3)">— Boş bırakıldı</div>';
+      html += '<div style="font-size:12px;color:var(--text3)">— Boş bırakıldı</div>';
     }
-    html+='</div>';
+    html += '</div>';
   });
-  document.getElementById('resultList').innerHTML=html;
+  document.getElementById('rlist').innerHTML = html;
 }
 
-function confirm1(id){results[id].status='confirmed';results[id].edit=false;renderResults();checkDone();}
-function skip1(id){results[id].status='rejected';results[id].bg=null;results[id].kl=null;results[id].edit=false;renderResults();checkDone();}
-function editR(id){results[id].edit=true;renderResults();}
-function cancelEdit(id){results[id].edit=false;renderResults();}
-function updBG(id,val){
-  results[id].bg=val||null;results[id].kl=null;
-  var mag=results[id].mag||currentMAG;
-  var magData=erkekMAG[mag]||{};
-  var klOpts=(val&&magData.kl&&magData.kl[val]?magData.kl[val]:[]).map(function(k){return '<option value="'+k+'">'+k+'</option>';}).join('');
+function cnf(id){ RES[id].status='confirmed'; RES[id].edit=false; renderRes(); checkDone(); }
+function skp(id){ RES[id].status='rejected'; RES[id].bg=null; RES[id].kl=null; RES[id].edit=false; renderRes(); checkDone(); }
+function editR(id){ RES[id].edit=true; renderRes(); }
+function cancelEdit(id){ RES[id].edit=false; renderRes(); }
+
+function chBG(id, val){
+  RES[id].bg=val||null; RES[id].kl=null;
+  var md=ERKEK[RES[id].mag]||{};
+  var klOpts=(val&&md.kl&&md.kl[val]?md.kl[val]:[]).map(function(k){
+    return '<option value="'+k+'">'+k+'</option>';
+  }).join('');
   var sels=document.querySelectorAll('#rc'+id+' select');
   if(sels[1]) sels[1].innerHTML='<option value="">— Boş</option>'+klOpts;
 }
-function updKL(id,val){results[id].kl=val||null;}
+function chKL(id, val){ RES[id].kl=val||null; }
 
 function checkDone(){
-  if(results.every(function(r){return r.status!=='pending';})) showSummary();
+  if(RES.every(function(r){ return r.status!=='pending'; })) showSummary();
 }
 
 function confirmAll(){
-  results.forEach(function(r){if(r.status==='pending'){r.status='confirmed';r.edit=false;}});
+  RES.forEach(function(r){ if(r.status==='pending'){ r.status='confirmed'; r.edit=false; } });
   showSummary();
 }
 
 function showSummary(){
-  document.getElementById('stp2').className='stp done';
-  document.getElementById('stp3').className='stp active';
-  document.getElementById('pg-analiz-2').style.display='none';
-  document.getElementById('pg-analiz-3').style.display='block';
+  document.getElementById('s2').className='stp done';
+  document.getElementById('s3').className='stp act';
+  document.getElementById('a2').style.display='none';
+  document.getElementById('a3').style.display='block';
 
   var groups={};
-  results.forEach(function(r){
-    var key=(r.status==='rejected'||!r.bg)?'__':r.bg+'|'+(r.kl||'');
-    if(!groups[key]) groups[key]={bg:r.bg,kl:r.kl,notes:[]};
+  RES.forEach(function(r){
+    var key = (r.status==='rejected'||!r.bg)?'__empty__':(r.mag+'|'+r.bg+'|'+(r.kl||''));
+    if(!groups[key]) groups[key]={mag:r.mag,bg:r.bg,kl:r.kl,notes:[]};
     groups[key].notes.push(r.text);
   });
 
   var html='';
   Object.values(groups).forEach(function(g){
-    html+='<div style="margin-bottom:14px">';
-    if(g.bg) html+='<div style="font-size:13px;font-weight:600;color:var(--accent);margin-bottom:2px">👔 '+g.bg+'</div>';
+    html+='<div style="margin-bottom:14px;padding-bottom:12px;border-bottom:0.5px solid var(--border)">';
+    if(g.bg){
+      html+='<div style="font-size:11px;color:var(--text3);margin-bottom:2px">'+g.mag+'</div>';
+      html+='<div style="font-size:13px;font-weight:600;color:var(--accent);margin-bottom:2px">👔 '+g.bg+'</div>';
+    }
     if(g.kl) html+='<div style="font-size:12px;color:var(--text2);margin-bottom:4px">🏷 '+g.kl+'</div>';
     if(!g.bg) html+='<div style="font-size:13px;color:var(--text3);margin-bottom:4px">— Sınıflandırılmadı</div>';
-    g.notes.forEach(function(n){html+='<div style="font-size:13px;color:var(--text);padding:2px 0">• '+n+'</div>';});
+    g.notes.forEach(function(n){ html+='<div style="font-size:13px;color:var(--text);padding:2px 0">• '+n+'</div>'; });
     html+='</div>';
   });
-  document.getElementById('summaryBox').innerHTML=html;
+  document.getElementById('summary').innerHTML=html;
 }
 
 function copyResult(){
-  var txt='MAG: '+currentMAG+'\n\n';
+  var txt='';
   var groups={};
-  results.forEach(function(r){
+  RES.forEach(function(r){
     var key=(r.bg||'__')+'|'+(r.kl||'__');
-    if(!groups[key]) groups[key]={bg:r.bg,kl:r.kl,notes:[]};
+    if(!groups[key]) groups[key]={mag:r.mag,bg:r.bg,kl:r.kl,notes:[]};
     groups[key].notes.push(r.text);
   });
   Object.values(groups).forEach(function(g){
-    if(g.bg) txt+='👔 '+g.bg+'\n';
-    if(g.kl) txt+='   🏷 '+g.kl+'\n';
-    g.notes.forEach(function(n){txt+='   • '+n+'\n';});
+    txt+='['+g.mag+'] ';
+    if(g.bg) txt+=g.bg;
+    if(g.kl) txt+=' / '+g.kl;
+    txt+='\n';
+    g.notes.forEach(function(n){ txt+='  • '+n+'\n'; });
     txt+='\n';
   });
-  navigator.clipboard.writeText(txt).then(function(){toast('✓ Kopyalandı!');});
+  navigator.clipboard.writeText(txt).then(function(){ toast('✓ Kopyalandı!'); });
 }
 
 function backToInput(){
-  document.getElementById('pg-analiz-1').style.display='block';
-  document.getElementById('pg-analiz-2').style.display='none';
-  document.getElementById('stp1').className='stp active';
-  document.getElementById('stp2').className='stp';
+  document.getElementById('a2').style.display='none';
+  document.getElementById('a1').style.display='block';
+  document.getElementById('s1').className='stp act';
+  document.getElementById('s2').className='stp';
 }
 
 function restart(){
-  results=[];logLines=[];
-  document.getElementById('pg-analiz-3').style.display='none';
-  document.getElementById('pg-analiz-1').style.display='block';
-  document.getElementById('fbInput').value='';
-  document.getElementById('magSel').value='';
-  document.getElementById('stp1').className='stp active';
-  document.getElementById('stp2').className='stp';
-  document.getElementById('stp3').className='stp';
+  RES=[];logLines=[];
+  document.getElementById('a3').style.display='none';
+  document.getElementById('a1').style.display='block';
+  document.querySelectorAll('.btxt').forEach(function(t){ t.value=''; });
+  document.querySelectorAll('.bsel').forEach(function(s){ s.value=''; });
+  document.getElementById('s1').className='stp act';
+  document.getElementById('s2').className='stp';
+  document.getElementById('s3').className='stp';
 }
 
-/* ─────────── KW EDITOR ─────────── */
-function toggleAccordion(id){
+// ═══ KW EDITOR ═══
+function togAcc(id){
   var el=document.getElementById(id);
-  if(!el)return;
+  if(!el) return;
   el.classList.toggle('open');
-  var arrow=document.getElementById('arr-'+id);
-  if(arrow) arrow.textContent=el.classList.contains('open')?'▲':'▼';
+  var arr=document.getElementById('arr'+id);
+  if(arr) arr.textContent=el.classList.contains('open')?'▲':'▼';
 }
 
 function renderKW(){
-  // MAG → BG → KL → keywords şeklinde grupla
   var grouped={};
-  KW_RULES.forEach(function(rule,ri){
-    var mag=rule.mag||'(MAG yok)';
-    var bg=rule.bg||'(BG yok)';
-    var kl=rule.kl||'(KL yok)';
+  KW.forEach(function(rule,ri){
+    var mag=rule.mag||'(yok)';
+    var bg=rule.bg||'(yok)';
+    var kl=rule.kl||'(yok)';
     if(!grouped[mag]) grouped[mag]={};
     if(!grouped[mag][bg]) grouped[mag][bg]={};
     if(!grouped[mag][bg][kl]) grouped[mag][bg][kl]=[];
-    grouped[mag][bg][kl].push({rule:rule, ri:ri});
+    grouped[mag][bg][kl].push(ri);
   });
 
   var html='';
   Object.keys(grouped).forEach(function(mag){
-    var bgCount=Object.keys(grouped[mag]).length;
-    var ruleCount=0;
+    var mid='mag_'+mag.replace(/[^a-z0-9]/gi,'_');
+    var cnt=0;
     Object.keys(grouped[mag]).forEach(function(bg){
-      Object.keys(grouped[mag][bg]).forEach(function(kl){
-        ruleCount+=grouped[mag][bg][kl].length;
-      });
+      Object.keys(grouped[mag][bg]).forEach(function(kl){ cnt+=grouped[mag][bg][kl].length; });
     });
-    var magId='mag-'+mag.replace(/[^a-zA-Z0-9]/g,'_');
-    html+='<div class="mag-group">';
-    html+='<div class="mag-header" onclick="toggleAccordion(''+magId+'')">';
-    html+='<div class="mag-title">📦 '+mag+'</div>';
-    html+='<div style="display:flex;align-items:center;gap:8px"><span class="mag-count">'+ruleCount+' kural</span><span id="arr-'+magId+'" class="mag-arrow">▼</span></div>';
+    html+='<div class="acc-mag">';
+    html+='<div class="acc-mhdr" onclick="togAcc(\''+mid+'\')">';
+    html+='<strong style="font-size:13px">📦 '+mag+'</strong>';
+    html+='<span style="display:flex;gap:8px;align-items:center;font-size:12px;color:var(--text3)">'+cnt+' kural <span id="arr'+mid+'">▼</span></span>';
     html+='</div>';
-    html+='<div class="mag-body" id="'+magId+'">';
+    html+='<div class="acc-mbody" id="'+mid+'">';
 
     Object.keys(grouped[mag]).forEach(function(bg){
-      var bgId=magId+'_'+bg.replace(/[^a-zA-Z0-9]/g,'_');
-      var klCount=Object.keys(grouped[mag][bg]).length;
-      html+='<div class="bg-group">';
-      html+='<div class="bg-header" onclick="toggleAccordion(''+bgId+'')">';
-      html+='<span class="bg-title">👔 '+bg+'</span>';
-      html+='<span style="display:flex;align-items:center;gap:6px"><span style="font-size:11px;color:var(--text3)">'+klCount+' klasman</span><span id="arr-'+bgId+'" style="font-size:11px;color:var(--text3)">▼</span></span>';
+      var bid=mid+'_'+bg.replace(/[^a-z0-9]/gi,'_');
+      var klcnt=Object.keys(grouped[mag][bg]).length;
+      html+='<div class="acc-bg">';
+      html+='<div class="acc-bhdr" onclick="togAcc(\''+bid+'\')">';
+      html+='<span style="font-size:12px;font-weight:600">👔 '+bg+'</span>';
+      html+='<span style="display:flex;gap:6px;align-items:center;font-size:11px;color:var(--text3)">'+klcnt+' klasman <span id="arr'+bid+'">▼</span></span>';
       html+='</div>';
-      html+='<div class="bg-body" id="'+bgId+'">';
+      html+='<div class="acc-bbody" id="'+bid+'">';
 
       Object.keys(grouped[mag][bg]).forEach(function(kl){
-        var entries=grouped[mag][bg][kl];
-        html+='<div class="kl-group">';
-        html+='<div class="kl-title">';
+        var ris=grouped[mag][bg][kl];
+        html+='<div class="kl-box">';
+        html+='<div style="font-size:11px;font-weight:600;color:var(--text2);margin-bottom:6px;display:flex;justify-content:space-between">';
         html+='<span>🏷 '+kl+'</span>';
-        // Add kw button for this kl
-        var ri=entries[0].ri;
-        html+='<button onclick="addKWToRule('+ri+')" style="background:none;border:0.5px solid var(--border2);border-radius:6px;padding:3px 8px;font-size:11px;color:var(--text2);cursor:pointer">+ Kelime</button>';
+        html+='<button class="kbtn" onclick="showKAdd('+ris[0]+')">+ Kelime</button>';
         html+='</div>';
-        entries.forEach(function(e){
-          var ri=e.ri;
-          var chips=e.rule.kw.map(function(kw,ki){
-            return '<div class="kwchip">'+kw+'<button onclick="delKW('+ri+','+ki+')">×</button></div>';
-          }).join('');
-          html+='<div class="kwchips" id="chips-'+ri+'">'+chips+'</div>';
-          html+='<div class="kwadd" id="kwadd-'+ri+'" style="display:none">';
-          html+='<input class="kwinput" id="kwin'+ri+'" placeholder="Kelime...">';
-          html+='<button class="kwbtn" onclick="addKW('+ri+')">Ekle</button>';
-          html+='<button class="kwbtn" onclick="hideKWAdd('+ri+')">İptal</button>';
+        ris.forEach(function(ri){
+          html+='<div class="chips" id="chips'+ri+'">';
+          KW[ri].kw.forEach(function(kw,ki){
+            html+='<div class="chip">'+kw+'<button onclick="delKW('+ri+','+ki+')">×</button></div>';
+          });
+          html+='</div>';
+          html+='<div class="kadd" id="kadd'+ri+'" style="display:none">';
+          html+='<input class="kinput" id="kin'+ri+'" placeholder="Kelime...">';
+          html+='<button class="kbtn" onclick="addKW('+ri+')">Ekle</button>';
+          html+='<button class="kbtn" onclick="hideKAdd('+ri+')">İptal</button>';
           html+='</div>';
         });
         html+='</div>';
       });
 
-      // Yeni KL ekle butonu
       html+='<div style="padding:6px 4px">';
-      html+='<button onclick="addRuleForBG(''+mag+'',''+bg+'')" style="width:100%;padding:7px;background:none;border:0.5px dashed var(--border2);border-radius:6px;font-size:12px;color:var(--text3);cursor:pointer">+ Bu BG için yeni klasman/kural ekle</button>';
+      html+='<button onclick="addRuleForBG(\''+mag+'\',\''+bg+'\')" style="width:100%;padding:7px;background:none;border:0.5px dashed var(--bd2);border-radius:6px;font-size:12px;color:var(--text3);cursor:pointer">+ Yeni klasman/kural ekle</button>';
       html+='</div>';
       html+='</div></div>';
     });
 
-    // Yeni BG ekle
     html+='<div style="padding:6px">';
-    html+='<button onclick="addRuleForMAG(''+mag+'')" style="width:100%;padding:8px;background:none;border:0.5px dashed var(--border2);border-radius:8px;font-size:12px;color:var(--text3);cursor:pointer">+ '+mag+' için yeni BG/kural ekle</button>';
+    html+='<button onclick="addRuleForMAG(\''+mag+'\')" style="width:100%;padding:8px;background:none;border:0.5px dashed var(--bd2);border-radius:8px;font-size:12px;color:var(--text3);cursor:pointer">+ '+mag+' için yeni BG kuralı</button>';
     html+='</div>';
     html+='</div></div>';
   });
 
-  // Yeni MAG ekle
-  html+='<div style="margin-top:8px">';
-  html+='<button onclick="addRule()" style="width:100%;padding:10px;background:none;border:0.5px dashed var(--border2);border-radius:10px;font-size:13px;color:var(--text2);cursor:pointer">+ Yeni MAG Kuralı Ekle</button>';
+  html+='<div style="padding:8px">';
+  html+='<button onclick="addRule()" style="width:100%;padding:10px;background:none;border:0.5px dashed var(--bd2);border-radius:10px;font-size:13px;color:var(--text2);cursor:pointer">+ Yeni MAG Kuralı</button>';
   html+='</div>';
 
-  document.getElementById('kwList').innerHTML=html;
+  document.getElementById('kwlist').innerHTML=html;
 }
 
-function addKWToRule(ri){
-  var el=document.getElementById('kwadd-'+ri);
-  if(el){el.style.display='flex';document.getElementById('kwin'+ri).focus();}
+function showKAdd(ri){ document.getElementById('kadd'+ri).style.display='flex'; document.getElementById('kin'+ri).focus(); }
+function hideKAdd(ri){ document.getElementById('kadd'+ri).style.display='none'; }
+
+function addKW(ri){
+  var inp=document.getElementById('kin'+ri);
+  var v=inp.value.trim().toLowerCase();
+  if(!v) return;
+  if(!KW[ri].kw.includes(v)) KW[ri].kw.push(v);
+  inp.value='';
+  renderKW();
 }
-function hideKWAdd(ri){
-  var el=document.getElementById('kwadd-'+ri);
-  if(el) el.style.display='none';
-}
+
+function delKW(ri,ki){ KW[ri].kw.splice(ki,1); renderKW(); }
 
 function addRuleForBG(mag, bg){
   var kl=prompt('Klasman adı (boş bırakabilirsiniz):');
-  KW_RULES.push({mag:mag, bg:bg, kl:kl||'', kw:[]});
+  if(kl===null) return;
+  KW.push({mag:mag, bg:bg, kl:kl.toUpperCase().trim(), kw:[]});
   renderKW();
 }
 
 function addRuleForMAG(mag){
-  var magData=erkekMAG[mag];
-  if(!magData){alert('MAG bulunamadı');return;}
-  var bgSel='<select id="newBGSel" style="width:100%;padding:8px;margin:8px 0;border:0.5px solid var(--border2);border-radius:8px;font-size:14px">';
-  bgSel+=magData.bg.map(function(b){return '<option>'+b+'</option>';}).join('');
-  bgSel+='</select>';
-  var div=document.createElement('div');
-  div.innerHTML='<p style="font-size:14px;margin-bottom:6px">Buyer Grup seç:</p>'+bgSel;
-  var bg=prompt(mag+' için BG seçin:
-'+magData.bg.join(', '));
+  var md=ERKEK[mag];
+  if(!md){ alert('MAG bulunamadı'); return; }
+  var bg=prompt(mag+' için BG seçin:\n'+md.bg.join(', '));
   if(!bg) return;
   bg=bg.toUpperCase().trim();
-  if(!magData.bg.includes(bg)){alert('Geçersiz BG');return;}
-  var kl=prompt('Klasman (boş bırakabilirsiniz):');
-  KW_RULES.push({mag:mag, bg:bg, kl:kl||'', kw:[]});
-  renderKW();
+  if(!md.bg.includes(bg)){ alert('Geçersiz BG'); return; }
+  addRuleForBG(mag, bg);
 }
 
 function addRule(){
-  var mag=prompt('MAG seçin:\n'+Object.keys(erkekMAG).join(', '));
+  var mag=prompt('MAG:\n'+MAGLIST.join(', '));
   if(!mag) return;
   mag=mag.toUpperCase().trim();
-  if(!erkekMAG[mag]){alert('Geçersiz MAG');return;}
+  if(!ERKEK[mag]){ alert('Geçersiz MAG'); return; }
   addRuleForMAG(mag);
 }
+
 function saveKW(){
-  localStorage.setItem('gemba_kw',JSON.stringify(KW_RULES));
+  localStorage.setItem('gemba_kw2', JSON.stringify(KW));
   toast('✓ Kaydedildi');
 }
 
-/* ─────────── MODEL DB ─────────── */
+// ═══ MODEL DB ═══
 function loadCSV(inp){
   var file=inp.files[0];
-  if(!file)return;
-  var reader=new FileReader();
-  reader.onload=function(e){parseCSV(e.target.result);};
-  reader.readAsText(file,'UTF-8');
+  if(!file) return;
+  var r=new FileReader();
+  r.onload=function(e){ parseCSV(e.target.result); };
+  r.readAsText(file,'UTF-8');
 }
 
 function parseCSV(txt){
-  var lines=txt.split(/\r?\n/).filter(function(l){return l.trim();});
+  var lines=txt.split(/\r?\n/).filter(function(l){ return l.trim(); });
   var added=0, skipped=0;
   lines.forEach(function(line){
     var parts;
@@ -715,115 +719,56 @@ function parseCSV(txt){
     else if(line.includes('|')) parts=line.split('|');
     else if(line.includes('\t')) parts=line.split('\t');
     else parts=line.split(',');
-    parts=parts.map(function(p){return p.trim().replace(/^["']|["']$/g,'');});
-    if(parts.length<4){skipped++;return;}
+    parts=parts.map(function(p){ return p.trim().replace(/^["']|["']$/g,''); });
+    if(parts.length<4){ skipped++; return; }
     var mag=parts[0].toUpperCase().trim();
     var bg=parts[1].toUpperCase().trim();
     var kl=parts[2].toUpperCase().trim();
     var model=parts[3].trim();
-    if(mag==='MAG'||!mag||!model){skipped++;return;}
-    var dup=MODEL_DB.some(function(m){return m.mag===mag&&m.bg===bg&&m.kl===kl&&m.model===model;});
+    if(mag==='MAG'||!mag||!model){ skipped++; return; }
+    var dup=MDB.some(function(m){ return m.mag===mag&&m.bg===bg&&m.kl===kl&&m.model===model; });
     if(!dup){
       var n=model.toLowerCase().replace(/[.,]/g,' ').replace(/\s+/g,' ').trim();
-      MODEL_DB.push({mag:mag,bg:bg,kl:kl,model:model,normalized:n});
+      MDB.push({mag:mag,bg:bg,kl:kl,model:model,normalized:n});
       added++;
     } else skipped++;
   });
   toast(added+' model eklendi'+(skipped?' ('+skipped+' atlandı)':''));
-  showModelStats();
+  showMStats();
 }
 
-function showModelStats(){
-  document.getElementById('modelStats').style.display='block';
-  document.getElementById('stM').textContent=MODEL_DB.length;
-  document.getElementById('stA').textContent=[...new Set(MODEL_DB.map(function(m){return m.mag;}))].length;
-  document.getElementById('stB').textContent=[...new Set(MODEL_DB.map(function(m){return m.bg;}))].length;
-  renderModels();
+function showMStats(){
+  document.getElementById('mstats').style.display='block';
+  document.getElementById('sm').textContent=MDB.length;
+  document.getElementById('sa').textContent=[...new Set(MDB.map(function(m){ return m.mag; }))].length;
+  document.getElementById('sb').textContent=[...new Set(MDB.map(function(m){ return m.bg; }))].length;
+  renderMtbl();
 }
 
-function renderModels(){
-  var q=(document.getElementById('mSearch').value||'').toLowerCase();
-  var filtered=MODEL_DB.filter(function(m){
+function renderMtbl(){
+  var q=(document.getElementById('msrch').value||'').toLowerCase();
+  var f=MDB.filter(function(m){
     return !q||m.model.toLowerCase().includes(q)||m.mag.toLowerCase().includes(q)||m.bg.toLowerCase().includes(q);
   });
-  var html=filtered.slice(0,200).map(function(m){
+  var html=f.slice(0,200).map(function(m){
     return '<tr><td><strong>'+m.model+'</strong></td><td>'+m.mag+'</td><td>'+m.bg+'</td><td style="color:var(--text3)">'+m.kl+'</td></tr>';
   }).join('');
-  if(filtered.length>200) html+='<tr><td colspan="4" style="color:var(--text3);text-align:center">+'+(filtered.length-200)+' daha</td></tr>';
-  document.getElementById('mBody').innerHTML=html;
+  if(f.length>200) html+='<tr><td colspan="4" style="color:var(--text3);text-align:center">+'+(f.length-200)+' daha</td></tr>';
+  document.getElementById('mbody').innerHTML=html;
 }
 
-function saveModels(){
-  localStorage.setItem('gemba_models',JSON.stringify(MODEL_DB));
-  toast('✓ '+MODEL_DB.length+' model kaydedildi');
+function saveMDB(){
+  localStorage.setItem('gemba_mdb2', JSON.stringify(MDB));
+  toast('✓ '+MDB.length+' model kaydedildi');
 }
-function clearModels(){
-  if(!confirm('Tüm modeller silinsin mi?'))return;
-  MODEL_DB=[];
-  localStorage.removeItem('gemba_models');
-  document.getElementById('modelStats').style.display='none';
+
+function clearMDB(){
+  if(!confirm('Tüm modeller silinsin mi?')) return;
+  MDB=[];
+  localStorage.removeItem('gemba_mdb2');
+  document.getElementById('mstats').style.display='none';
   toast('Temizlendi');
 }
-/* ── Multi-MAG blocks ── */
-var magBlockCount = 0;
-var MAG_LIST = ['BUC','BUB','BUL','BUXL','BUMH','BUCF','BUGA','BUJD','BUJW','BUK','BUR','BUS','BUSP'];
-
-function addMagBlock(){
-  magBlockCount++;
-  var id = 'mb'+magBlockCount;
-  var n = magBlockCount;
-
-  var wrapper = document.createElement('div');
-  wrapper.className = 'card mag-block';
-  wrapper.id = id;
-
-  // Header
-  var hdr = document.createElement('div');
-  hdr.style.cssText = 'display:flex;justify-content:space-between;align-items:center;margin-bottom:10px';
-  var title = document.createElement('div');
-  title.className = 'lbl';
-  title.style.margin = '0';
-  title.textContent = 'MAG ' + n;
-  hdr.appendChild(title);
-  if(n > 1){
-    var rmBtn = document.createElement('button');
-    rmBtn.textContent = 'Kaldır';
-    rmBtn.style.cssText = 'background:none;border:none;color:var(--red);font-size:13px;cursor:pointer';
-    rmBtn.onclick = function(){ wrapper.remove(); };
-    hdr.appendChild(rmBtn);
-  }
-  wrapper.appendChild(hdr);
-
-  // MAG select
-  var sel = document.createElement('select');
-  sel.className = 'mag-block-sel';
-  sel.style.cssText = 'width:100%;padding:12px 14px;border:0.5px solid var(--border2);border-radius:var(--r);font-family:DM Sans,sans-serif;font-size:15px;color:var(--text);background:var(--bg);outline:none;-webkit-appearance:none;margin-bottom:10px';
-  sel.innerHTML = '<option value="">MAG seçin...</option>' + MAG_LIST.map(function(m){return '<option>'+m+'</option>';}).join('');
-  wrapper.appendChild(sel);
-
-  // Textarea
-  var ta = document.createElement('textarea');
-  ta.className = 'mag-block-txt';
-  ta.rows = 5;
-  ta.placeholder = 'Her satıra bir geri bildirim...
-
-Örnek:
-Dar paça chino lazım
-Lacivert sweat isteniyor';
-  ta.style.cssText = 'width:100%;padding:12px 14px;border:0.5px solid var(--border2);border-radius:var(--r);font-family:DM Sans,sans-serif;font-size:15px;color:var(--text);background:var(--bg);outline:none;resize:vertical;line-height:1.6';
-  wrapper.appendChild(ta);
-
-  var hint = document.createElement('div');
-  hint.style.cssText = 'font-size:11px;color:var(--text3);margin-top:6px';
-  hint.textContent = 'Her satır ayrı analiz edilir';
-  wrapper.appendChild(hint);
-
-  document.getElementById('magBlockList').appendChild(wrapper);
-}
-
-// Init: ilk MAG bloğunu ekle
-addMagBlock();
-
 </script>
 </body>
 </html>
