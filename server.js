@@ -172,20 +172,28 @@ app.post('/ai/analyze', async (req, res) => {
     return (i+1)+'. "'+f+'" → KW önerisi: BG='+(kw.bg||'?')+', KL='+(kw.kl||'?');
   }).join('\n');
 
-  const prompt = `LC Waikiki erkek reyonu mağaza ziyaret sistemi için geri bildirim analizi.
+  const prompt = `LC Waikiki erkek reyonu mağaza ziyaret sistemi geri bildirim sınıflandırma.
 
 MAG: ${mag}
-Buyer Gruplar: ${bgList}
-Klasmanlar:
+Geçerli Buyer Gruplar: ${bgList}
+Geçerli Klasmanlar (BG -> KL eşlemesi):
 ${klSummary}
 
-Geri bildirimler (anahtar kelime analizi önerileriyle):
+GÖREV: Her geri bildirim için doğru BG ve KL belirle.
+
+KRİTİK KURALLAR:
+1. SADECE yukarıda listelenen BG ve KL değerlerini kullan. Listede olmayan değer yazma.
+2. Anahtar kelime analizi (KW) zaten bir öneri sunmuş. KW önerisini YALNIZCA açıkça yanlışsa değiştir.
+3. KW önerisi mantıklıysa aynen kabul et, "high" confidence ver.
+4. Emin değilsen KW önerisini koru, değiştirme.
+5. Hiçbir BG veya KL bulamıyorsan null yaz.
+6. Uydurma, tahmin etme — sadece metinde açıkça geçen ürün/kategori bilgisine dayan.
+
+Geri bildirimler ve KW önerileri:
 ${feedbacksWithKW}
 
-Her geri bildirim için en uygun BG ve KL belirle. Sadece listede olan değerleri kullan. Emin değilsen null bırak.
-
-Sadece JSON döndür:
-[{"index":0,"bg":"BG_ADI_VEYA_NULL","kl":"KL_ADI_VEYA_NULL","confidence":"high/medium/low","reason":"kisa aciklama türkçe"}]`;
+Sadece JSON döndür, başka hiçbir şey yazma:
+[{"index":0,"bg":"BG_ADI veya null","kl":"KL_ADI veya null","confidence":"high/medium/low","reason":"kisa aciklama"}]`;
 
   try {
     const response = await fetch('https://api.anthropic.com/v1/messages', {
@@ -210,6 +218,53 @@ Sadece JSON döndür:
   } catch(e) {
     res.json({ok:false, error: e.message});
   }
+});
+
+
+
+// ── KW Rules ────────────────────────────────────────────────────────────────
+const KW_FILE = path.join(path.dirname(process.env.DATA_PATH || '/app/data/data.json'), 'kw_rules.json');
+
+function loadKWFile(){ try{ return JSON.parse(fs.readFileSync(KW_FILE,'utf8')); }catch(e){ return null; } }
+function saveKWFile(data){ fs.writeFileSync(KW_FILE, JSON.stringify(data)); }
+
+app.post('/kw/save', (req, res) => {
+  const {rules} = req.body||{};
+  if(!Array.isArray(rules)) return res.json({ok:false, error:'Gecersiz veri'});
+  saveKWFile(rules);
+  res.json({ok:true, count:rules.length});
+});
+
+app.get('/kw/load', (req, res) => {
+  const rules = loadKWFile();
+  res.json({ok:true, rules});
+});
+
+// ── Model DB ────────────────────────────────────────────────────────────────
+const MODEL_FILE = process.env.DATA_PATH
+  ? path.join(path.dirname(process.env.DATA_PATH || '/app/data/data.json'), 'models.json')
+  : path.join('/app/data', 'models.json');
+
+function loadModels(){
+  try{ return JSON.parse(fs.readFileSync(MODEL_FILE,'utf8')); }
+  catch(e){ return []; }
+}
+function saveModels(data){
+  fs.writeFileSync(MODEL_FILE, JSON.stringify(data));
+}
+
+// Model listesini kaydet
+app.post('/models/save', (req, res) => {
+  const {models} = req.body||{};
+  if(!Array.isArray(models)) return res.json({ok:false, error:'Geçersiz veri'});
+  saveModels(models);
+  res.json({ok:true, count:models.length});
+});
+
+// Model listesini yükle
+app.get('/models/load', (req, res) => {
+  const models = loadModels();
+  res.json({ok:true, models});
 });
 
 // ── Backup / Restore ─────────────────────────────────────────────────────────
@@ -246,6 +301,7 @@ app.get('/manifest.json',(req,res)=>{
   res.sendFile(path.join(__dirname,'manifest.json'));
 });
 app.use(express.static(path.join(__dirname)));
+app.get('/ai-test.html',(req,res)=>res.sendFile(path.join(__dirname,'ai-test.html')));
 app.get('*',(req,res)=>res.sendFile(path.join(__dirname,'index.html')));
 
 app.listen(PORT,()=>{
