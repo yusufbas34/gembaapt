@@ -191,6 +191,14 @@ textarea{resize:none;line-height:1.5}
         <div style="font-size:12px;color:#7a5c00;line-height:1.5">Outlook uygulamasında <strong>LC Waikiki kurumsal hesabınızın</strong> seçili olduğundan emin olun. Aksi halde mailiniz iletilemez.</div>
       </div>
     </div>
+    <!-- LC Waikiki hesap uyarısı -->
+    <div style="margin:0 20px 16px;background:#fff8e6;border:0.5px solid #f5c842;border-radius:12px;padding:12px 14px;display:flex;gap:10px;align-items:flex-start">
+      <div style="font-size:20px;flex-shrink:0">⚠️</div>
+      <div>
+        
+        <div style="font-size:12px;color:#7a5c00;line-height:1.5">Outlook uygulamasında <strong>LC Waikiki kurumsal hesabınızın</strong> seçili olduğundan emin olun. Aksi halde mailiniz iletilemez.</div>
+      </div>
+    </div>
     <div id="ubanner" style="display:none" class="ubanner">
       <div><div class="uname" id="bname"></div><div class="usub">Kayıtlı çalışan</div></div>
       <button class="btn-xs" onclick="clearUser()">Değiştir</button>
@@ -200,13 +208,12 @@ textarea{resize:none;line-height:1.5}
     </div>
     <div class="div"></div>
     <div class="fg"><label class="fl">Mağaza</label>
-      <div class="store-wrap" id="storeWrap">
-      <input type="text" id="storeInput" class="store-input"
-  placeholder="Mağaza ara veya seç..."
-  autocomplete="off"
-  onfocus="openStore()"
-  oninput="filterStore(this.value)">
-      </div>
+    <div class="store-wrap" id="storeWrap">
+      <input type="text" id="storeInput" class="store-input" placeholder="Mağaza ara veya seç..." autocomplete="off"
+        oninput="filterStore(this.value)" onfocus="openStore()" onclick="openStore()"
+        style="background-image:url('data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'12\' height=\'7\' viewBox=\'0 0 12 7\'%3E%3Cpath d=\'M1 1l5 4.5L11 1\' stroke=\'%23aeaea9\' stroke-width=\'1.5\' fill=\'none\' stroke-linecap=\'round\' stroke-linejoin=\'round\'/%3E%3C/svg%3E');background-repeat:no-repeat;background-position:right 14px center;padding-right:38px"/>
+      <div class="store-dropdown" id="storeDropdown"></div>
+    </div>
     <div class="fg" id="mwrap" style="display:none"><label class="fl">Mağaza adı</label><input type="text" id="stMan" placeholder="Mağaza adını yazın..."/></div>
     <div class="sl2">Reyon seçiniz</div>
     <div class="rscroll">
@@ -841,16 +848,7 @@ function openMailFallback(){
     window.location.href='mailto:'+encodeURIComponent(to)+'?cc='+encodeURIComponent(cc)+'&subject='+encodeURIComponent(subj)+'&body='+safeMailEncode(body);
   }
 }
-function openStore() {
-  const dropdown = document.getElementById('storeDropdown');
-  dropdown.style.display = 'block';   // Listeyi göster
-  renderStoreOpts(document.getElementById('storeInput').value);
 
-  setTimeout(() => {
-    document.addEventListener('click', closeStoreOutside);
-  }, 0);
-}
-  
 function copyAll(){navigator.clipboard.writeText('Konu: '+(window._ms||'')+'\n\n'+(window._mb||'')).then(()=>{const t=document.createElement('div');t.textContent='Kopyalandı!';t.style.cssText='position:fixed;bottom:90px;left:50%;transform:translateX(-50%);background:#1a1a18;color:#fff;padding:10px 22px;border-radius:100px;font-size:14px;font-family:DM Sans,sans-serif;z-index:999;pointer-events:none';document.body.appendChild(t);setTimeout(()=>t.remove(),2200);});}
 
 showAB(1);loadUser();
@@ -1103,68 +1101,77 @@ async function autoLogin(name, pin){
 
 
 /* ── Mağaza Arama ── */
+/* ── Mağaza Arama ── */
 function initStoreSearch(){
   renderStoreOpts('');
 }
 
-function closeStore() {
-  const dropdown = document.getElementById('storeDropdown');
-  dropdown.style.display = 'none';   // Listeyi gizle
-  document.removeEventListener('click', closeStoreOutside);
+function openStore(){
+  var inp = document.getElementById('storeInput');
+  // Tıklandığında mevcut metni seçili hale getir ki silip yeni arama yapmak kolay olsun
+  inp.select();
+  document.getElementById('storeDropdown').classList.add('open');
+  renderStoreOpts(inp.value);
+  setTimeout(function(){
+    document.addEventListener('click', closeStoreOutside);
+  }, 0);
 }
+
 function closeStoreOutside(e){
-  // Overlay açıksa mağaza dropdown'ı kapatma
-  var ov=document.getElementById('ov');
-  if(ov&&ov.classList.contains('open')) return;
-  var wrap=document.getElementById('storeWrap');
-  if(wrap&&!wrap.contains(e.target)) closeStore();
+  var ov = document.getElementById('ov');
+  if(ov && ov.classList.contains('open')) return;
+  var wrap = document.getElementById('storeWrap');
+  if(wrap && !wrap.contains(e.target)) closeStore();
 }
 
 function closeStore(){
   document.getElementById('storeDropdown').classList.remove('open');
-  var inp=document.getElementById('storeInput');
-  if(!inp.dataset.value){inp.value='';inp.readOnly=true;}
-  else inp.readOnly=true;
-  document.removeEventListener('click',closeStoreOutside);
+  document.removeEventListener('click', closeStoreOutside);
 }
 
-function filterStore(value) {
-  renderStoreOpts(value);
+function filterStore(q){
+  renderStoreOpts(q);
+  document.getElementById('storeDropdown').classList.add('open');
 }
 
 function renderStoreOpts(q){
-  var dropdown=document.getElementById('storeDropdown');
+  var dropdown = document.getElementById('storeDropdown');
   if(!dropdown) return;
-  var currentVal=document.getElementById('storeInput').dataset.value||'';
-  var qn=(q||'').toLowerCase();
-  var filtered=storeItems.filter(function(it){
+  var currentVal = document.getElementById('storeInput').dataset.value || '';
+  var qn = (q || '').toLowerCase();
+  
+  var filtered = storeItems.filter(function(it){
     if(!q) return true;
     return it.label.toLowerCase().includes(qn);
   });
+  
   if(!filtered.length){
-    dropdown.innerHTML='<div class="store-empty">Sonuç bulunamadı</div>';
+    dropdown.innerHTML = '<div class="store-empty">Sonuç bulunamadı</div>';
     return;
   }
-  var html=filtered.slice(0,80).map(function(it){
-    var sel=currentVal===it.value?' selected':'';
-    return '<div class="store-opt'+sel+'" data-val="'+it.value+'" data-lbl="'+it.label+'">'+it.label+'</div>';
+  
+  var html = filtered.slice(0, 80).map(function(it){
+    var sel = currentVal === it.value ? ' selected' : '';
+    return '<div class="store-opt' + sel + '" data-val="' + it.value + '" data-lbl="' + it.label + '">' + it.label + '</div>';
   }).join('');
-  if(filtered.length>80) html+='<div class="store-empty">+'+(filtered.length-80)+' daha — aramayı daralt</div>';
-  dropdown.innerHTML=html;
+  
+  if(filtered.length > 80) html += '<div class="store-empty">+' + (filtered.length - 80) + ' daha — aramayı daralt</div>';
+  
+  dropdown.innerHTML = html;
+  
   dropdown.querySelectorAll('.store-opt').forEach(function(el){
-    el.addEventListener('mousedown',function(e){e.preventDefault();selectStore(el.dataset.val,el.dataset.lbl);});
-    el.addEventListener('touchend',function(e){e.preventDefault();e.stopPropagation();selectStore(el.dataset.val,el.dataset.lbl);},{passive:false});
+    el.addEventListener('mousedown', function(e){ e.preventDefault(); selectStore(el.dataset.val, el.dataset.lbl); });
+    el.addEventListener('touchend', function(e){ e.preventDefault(); e.stopPropagation(); selectStore(el.dataset.val, el.dataset.lbl); }, {passive: false});
   });
 }
 
-function selectStore(val,lbl){
-  var inp=document.getElementById('storeInput');
-  inp.value=lbl;
-  inp.dataset.value=val;
-  inp.readOnly=true;
-  document.getElementById('mwrap').style.display=val==='__m__'?'block':'none';
+function selectStore(val, lbl){
+  var inp = document.getElementById('storeInput');
+  inp.value = lbl;
+  inp.dataset.value = val;
+  document.getElementById('mwrap').style.display = (val === '__m__') ? 'block' : 'none';
   document.getElementById('storeDropdown').classList.remove('open');
-  document.removeEventListener('click',closeStoreOutside);
+  document.removeEventListener('click', closeStoreOutside);
 }
 
 function onStoreSelect(){}
