@@ -59,6 +59,18 @@ textarea{resize:none;line-height:1.5}
 .rscroll::-webkit-scrollbar{display:none}
 .chip{flex-shrink:0;padding:10px 18px;border-radius:100px;min-height:44px;border:0.5px solid var(--border2);font-size:14px;font-weight:500;color:var(--text2);background:var(--bg);cursor:pointer;transition:all .15s;display:flex;align-items:center;gap:6px;white-space:nowrap;}
 .chip.sel{background:var(--accent);color:#fff;border-color:var(--accent)}
+
+/* Searchable store */
+.store-wrap{position:relative}
+.store-input{width:100%;padding:14px 16px;border:0.5px solid var(--border2);border-radius:var(--r);font-family:'DM Sans',sans-serif;font-size:16px;color:var(--text);background:var(--bg);outline:none;cursor:pointer}
+.store-input::placeholder{color:var(--text3)}
+.store-dropdown{position:absolute;top:100%;left:0;right:0;background:var(--bg);border:0.5px solid var(--accent);border-top:none;border-radius:0 0 var(--r) var(--r);max-height:260px;overflow-y:auto;z-index:600;display:none;box-shadow:0 4px 12px rgba(0,0,0,0.1)}
+.store-dropdown.open{display:block}
+.store-opt{padding:13px 16px;font-size:15px;color:var(--text);cursor:pointer;border-bottom:0.5px solid var(--border)}
+.store-opt:last-child{border-bottom:none}
+.store-opt:active,.store-opt.hover{background:var(--bg2)}
+.store-opt.selected{color:var(--accent);font-weight:500}
+.store-empty{padding:14px 16px;font-size:14px;color:var(--text3);text-align:center}
 .abar{flex-shrink:0;padding:12px 20px;padding-bottom:calc(12px + var(--sb));border-top:0.5px solid var(--border);background:var(--bg);display:flex;gap:10px;}
 .btn-p{flex:1;background:var(--accent);color:#fff;border:none;border-radius:var(--r);padding:0 22px;font-size:16px;font-weight:500;font-family:'DM Sans',sans-serif;cursor:pointer;min-height:52px;transition:opacity .15s}
 .btn-p:active{opacity:.8}
@@ -180,6 +192,13 @@ textarea{resize:none;line-height:1.5}
       </div>
     </div>
     <!-- LC Waikiki hesap uyarısı -->
+    <div style="margin:0 20px 16px;background:#fff8e6;border:0.5px solid #f5c842;border-radius:12px;padding:12px 14px;display:flex;gap:10px;align-items:flex-start">
+      <div style="font-size:20px;flex-shrink:0">⚠️</div>
+      <div>
+        
+        <div style="font-size:12px;color:#7a5c00;line-height:1.5">Outlook uygulamasında <strong>LC Waikiki kurumsal hesabınızın</strong> seçili olduğundan emin olun. Aksi halde mailiniz iletilemez.</div>
+      </div>
+    </div>
     <div id="ubanner" style="display:none" class="ubanner">
       <div><div class="uname" id="bname"></div><div class="usub">Kayıtlı çalışan</div></div>
       <button class="btn-xs" onclick="clearUser()">Değiştir</button>
@@ -189,10 +208,12 @@ textarea{resize:none;line-height:1.5}
     </div>
     <div class="div"></div>
     <div class="fg"><label class="fl">Mağaza</label>
-      <select id="storeSelect" onchange="onStoreSelect(this.value)" style="width:100%;padding:14px 16px;border:0.5px solid rgba(0,0,0,0.16);border-radius:12px;font-family:DM Sans,sans-serif;font-size:16px;color:#1a1a18;background:#fff;outline:none;-webkit-appearance:none;appearance:none;background-image:url('data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'12\' height=\'7\' viewBox=\'0 0 12 7\'%3E%3Cpath d=\'M1 1l5 4.5L11 1\' stroke=\'%23aeaea9\' stroke-width=\'1.5\' fill=\'none\'/%3E%3C/svg%3E');background-repeat:no-repeat;background-position:right 14px center;padding-right:38px;">
-        <option value="">Mağaza seçiniz...</option>
-      </select>
-    </div>
+      <div class="store-wrap" id="storeWrap">
+        <input type="text" id="storeInput" class="store-input" placeholder="Mağaza ara veya seç..." autocomplete="off"
+          oninput="filterStore(this.value)" onfocus="openStore()" onclick="openStore()" readonly
+          style="cursor:pointer;background-image:url(\'data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'12\' height=\'7\' viewBox=\'0 0 12 7\'%3E%3Cpath d=\'M1 1l5 4.5L11 1\' stroke=\'%23aeaea9\' stroke-width=\'1.5\' fill=\'none\'/%3E%3C/svg%3E\');background-repeat:no-repeat;background-position:right 14px center;padding-right:38px"/>
+        <div class="store-dropdown" id="storeDropdown"></div>
+      </div>
     <div class="fg" id="mwrap" style="display:none"><label class="fl">Mağaza adı</label><input type="text" id="stMan" placeholder="Mağaza adını yazın..."/></div>
     <div class="sl2">Reyon seçiniz</div>
     <div class="rscroll">
@@ -393,9 +414,7 @@ function getUser(){
   return u;
 }
 function getStore(){
-  var sel=document.getElementById('storeSelect');
-  if(!sel) return '';
-  var v=sel.value;
+  var v=document.getElementById('storeInput').dataset.value||'';
   return v==='__m__'?document.getElementById('stMan').value.trim():v;
 }
 
@@ -505,6 +524,7 @@ function goHome(){
   notes=[];reyon='';inlinePhotos=[];editingNoteId=null;lastMAG='';
   document.querySelectorAll('.chip').forEach(c=>c.classList.remove('sel'));
   closeSD();
+  var si=document.getElementById('storeInput');if(si){si.value='';si.dataset.value='';si.readOnly=true;}
   document.getElementById('p2').style.display='none';
   document.getElementById('p3').style.display='none';
   document.getElementById('p1').style.display='block';
@@ -947,7 +967,7 @@ function doInstall(){if(deferredPrompt){deferredPrompt.prompt();deferredPrompt.u
     b.style.cssText='position:fixed;inset:0;background:#fff;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px;text-align:center;font-family:sans-serif';
     var h='<div style="font-size:48px;margin-bottom:16px">&#9888;&#65039;</div>';
     h+='<div style="font-size:20px;font-weight:600;color:#1a1a18;margin-bottom:10px">Safari Desteklenmiyor</div>';
-    h+='<div style="font-size:14px;color:#6b6b67;line-height:1.6;margin-bottom:28px">GembaGPT kullanmak icin Microsoft Edge uygulamasini kullanin. Eğer yüklü ise Microsoft Edge yi kullanınız.</div>';
+    h+='<div style="font-size:14px;color:#6b6b67;line-height:1.6;margin-bottom:28px">GembaGPT kullanmak icin Microsoft Edge uygulamasini kullanin.</div>';
     h+='<a href="https://apps.apple.com/tr/app/microsoft-edge-web-browser/id1288723196" style="background:#1a1a18;color:#fff;text-decoration:none;padding:16px 32px;border-radius:12px;font-size:16px;font-weight:500;margin-bottom:16px;display:block;width:100%;max-width:280px">Edge indir</a>';
     h+='<div style="font-size:12px;color:#aaa;margin-top:12px">Adres: gembaapt.up.railway.app</div>';
     b.innerHTML=h;
@@ -991,7 +1011,8 @@ async function doLogin(){
       document.getElementById('bname').textContent=d.name;
       document.getElementById('ubanner').style.display='flex';
       document.getElementById('uform').style.display='none';
-      // store native select - no reinit needed
+      // store search reinit
+      initStoreSearch();
       renderHistory();
     } else {
       err.textContent=d.error||'Hata.';err.style.display='block';
@@ -1076,6 +1097,78 @@ async function autoLogin(name, pin){
     document.getElementById('loginName').value=name;
   }
 }
+
+
+/* ── Mağaza Arama ── */
+function initStoreSearch(){
+  renderStoreOpts('');
+}
+
+function openStore(){
+  var inp=document.getElementById('storeInput');
+  inp.readOnly=false;
+  inp.select();
+  document.getElementById('storeDropdown').classList.add('open');
+  renderStoreOpts(inp.dataset.value?'':inp.value);
+  setTimeout(function(){
+    document.addEventListener('click',closeStoreOutside);
+  },0);
+}
+
+function closeStoreOutside(e){
+  var wrap=document.getElementById('storeWrap');
+  if(wrap&&!wrap.contains(e.target)) closeStore();
+}
+
+function closeStore(){
+  document.getElementById('storeDropdown').classList.remove('open');
+  var inp=document.getElementById('storeInput');
+  if(!inp.dataset.value){inp.value='';inp.readOnly=true;}
+  else inp.readOnly=true;
+  document.removeEventListener('click',closeStoreOutside);
+}
+
+function filterStore(q){
+  renderStoreOpts(q);
+  document.getElementById('storeDropdown').classList.add('open');
+}
+
+function renderStoreOpts(q){
+  var dropdown=document.getElementById('storeDropdown');
+  if(!dropdown) return;
+  var currentVal=document.getElementById('storeInput').dataset.value||'';
+  var qn=(q||'').toLowerCase();
+  var filtered=storeItems.filter(function(it){
+    if(!q) return true;
+    return it.label.toLowerCase().includes(qn);
+  });
+  if(!filtered.length){
+    dropdown.innerHTML='<div class="store-empty">Sonuç bulunamadı</div>';
+    return;
+  }
+  var html=filtered.slice(0,80).map(function(it){
+    var sel=currentVal===it.value?' selected':'';
+    return '<div class="store-opt'+sel+'" data-val="'+it.value+'" data-lbl="'+it.label+'">'+it.label+'</div>';
+  }).join('');
+  if(filtered.length>80) html+='<div class="store-empty">+'+(filtered.length-80)+' daha — aramayı daralt</div>';
+  dropdown.innerHTML=html;
+  dropdown.querySelectorAll('.store-opt').forEach(function(el){
+    el.addEventListener('mousedown',function(e){e.preventDefault();selectStore(el.dataset.val,el.dataset.lbl);});
+    el.addEventListener('touchend',function(e){e.preventDefault();e.stopPropagation();selectStore(el.dataset.val,el.dataset.lbl);},{passive:false});
+  });
+}
+
+function selectStore(val,lbl){
+  var inp=document.getElementById('storeInput');
+  inp.value=lbl;
+  inp.dataset.value=val;
+  inp.readOnly=true;
+  document.getElementById('mwrap').style.display=val==='__m__'?'block':'none';
+  document.getElementById('storeDropdown').classList.remove('open');
+  document.removeEventListener('click',closeStoreOutside);
+}
+
+function onStoreSelect(){}
 
 </script>
 
