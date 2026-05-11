@@ -64,7 +64,7 @@ textarea{resize:none;line-height:1.5}
 .store-wrap{position:relative}
 .store-input{width:100%;padding:14px 16px;border:0.5px solid var(--border2);border-radius:var(--r);font-family:'DM Sans',sans-serif;font-size:16px;color:var(--text);background:var(--bg);outline:none;cursor:pointer}
 .store-input::placeholder{color:var(--text3)}
-.store-dropdown{position:absolute;top:100%;left:0;right:0;background:var(--bg);border:0.5px solid var(--accent);border-top:none;border-radius:0 0 var(--r) var(--r);max-height:260px;overflow-y:auto;z-index:600;display:none;box-shadow:0 4px 12px rgba(0,0,0,0.1)}
+.store-dropdown{position:absolute;top:100%;left:0;right:0;background:var(--bg);border:0.5px solid var(--accent);border-top:none;border-radius:0 0 var(--r) var(--r);max-height:260px;overflow-y:auto;z-index:550;display:none;box-shadow:0 4px 12px rgba(0,0,0,0.1)}
 .store-dropdown.open{display:block}
 .store-opt{padding:13px 16px;font-size:15px;color:var(--text);cursor:pointer;border-bottom:0.5px solid var(--border)}
 .store-opt:last-child{border-bottom:none}
@@ -107,7 +107,7 @@ textarea{resize:none;line-height:1.5}
 .empty{text-align:center;padding:30px 20px;color:var(--text3)}
 .empty-ico{font-size:36px;margin-bottom:10px}
 .empty-t{font-size:14px;line-height:1.5}
-.overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:200;display:none;align-items:flex-end}
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:800;display:none;align-items:flex-end}
 .overlay.open{display:flex}
 .sheet{width:100%;background:var(--bg);border-radius:20px 20px 0 0;max-height:90vh;overflow-y:auto;-webkit-overflow-scrolling:touch;padding-bottom:calc(20px + var(--sb));animation:su .25s ease}
 @keyframes su{from{transform:translateY(100%)}to{transform:translateY(0)}}
@@ -191,14 +191,6 @@ textarea{resize:none;line-height:1.5}
         <div style="font-size:12px;color:#7a5c00;line-height:1.5">Outlook uygulamasında <strong>LC Waikiki kurumsal hesabınızın</strong> seçili olduğundan emin olun. Aksi halde mailiniz iletilemez.</div>
       </div>
     </div>
-    <!-- LC Waikiki hesap uyarısı -->
-    <div style="margin:0 20px 16px;background:#fff8e6;border:0.5px solid #f5c842;border-radius:12px;padding:12px 14px;display:flex;gap:10px;align-items:flex-start">
-      <div style="font-size:20px;flex-shrink:0">⚠️</div>
-      <div>
-        
-        <div style="font-size:12px;color:#7a5c00;line-height:1.5">Outlook uygulamasında <strong>LC Waikiki kurumsal hesabınızın</strong> seçili olduğundan emin olun. Aksi halde mailiniz iletilemez.</div>
-      </div>
-    </div>
     <div id="ubanner" style="display:none" class="ubanner">
       <div><div class="uname" id="bname"></div><div class="usub">Kayıtlı çalışan</div></div>
       <button class="btn-xs" onclick="clearUser()">Değiştir</button>
@@ -209,10 +201,12 @@ textarea{resize:none;line-height:1.5}
     <div class="div"></div>
     <div class="fg"><label class="fl">Mağaza</label>
       <div class="store-wrap" id="storeWrap">
-        <input type="text" id="storeInput" class="store-input" placeholder="Mağaza ara veya seç..." autocomplete="off"
-          oninput="filterStore(this.value)" onfocus="openStore()" onclick="openStore()" readonly
-          style="cursor:pointer;background-image:url(\'data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'12\' height=\'7\' viewBox=\'0 0 12 7\'%3E%3Cpath d=\'M1 1l5 4.5L11 1\' stroke=\'%23aeaea9\' stroke-width=\'1.5\' fill=\'none\'/%3E%3C/svg%3E\');background-repeat:no-repeat;background-position:right 14px center;padding-right:38px"/>
-        <div class="store-dropdown" id="storeDropdown"></div>
+        <input type="text" id="storeInput" class="store-input"
+        placeholder="Mağaza ara veya seç..."
+        autocomplete="off"
+        oninput="filterStore(this.value)"
+        onfocus="openStore()"
+        style="cursor:text;background-image:url('data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 width=%2712%27 height=%277%27 viewBox=%270 0 12 7%27%3E%3Cpath d=%27M1 1l5 4.5L11 1%27 stroke=%27%23aeaea9%27 stroke-width=%271.5%27 fill=%27none%27/%3E%3C/svg%3E');background-repeat:no-repeat;background-position:right 14px center;padding-right:38px"/>        <div class="store-dropdown" id="storeDropdown"></div>
       </div>
     <div class="fg" id="mwrap" style="display:none"><label class="fl">Mağaza adı</label><input type="text" id="stMan" placeholder="Mağaza adını yazın..."/></div>
     <div class="sl2">Reyon seçiniz</div>
@@ -663,6 +657,7 @@ function renderNotes(){
 }
 
 function openSheet(){
+  closeStore();
   editingNoteId=null;inlinePhotos=[];fillBGs();
   if(reyon==='Erkek'&&lastMAG){
     onMagSelect(lastMAG);
@@ -1104,18 +1099,15 @@ function initStoreSearch(){
   renderStoreOpts('');
 }
 
-function openStore(){
-  var inp=document.getElementById('storeInput');
-  inp.readOnly=false;
-  inp.select();
-  document.getElementById('storeDropdown').classList.add('open');
-  renderStoreOpts(inp.dataset.value?'':inp.value);
-  setTimeout(function(){
-    document.addEventListener('click',closeStoreOutside);
-  },0);
+function closeStore(){
+  document.getElementById('storeDropdown').classList.remove('open');
+  document.removeEventListener('click',closeStoreOutside);
 }
 
 function closeStoreOutside(e){
+  // Overlay açıksa mağaza dropdown'ı kapatma
+  var ov=document.getElementById('ov');
+  if(ov&&ov.classList.contains('open')) return;
   var wrap=document.getElementById('storeWrap');
   if(wrap&&!wrap.contains(e.target)) closeStore();
 }
