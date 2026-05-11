@@ -73,6 +73,23 @@ textarea{resize:vertical;line-height:1.6}
 
 /* KW Editor */
 .kwrule{border-bottom:0.5px solid var(--border);padding:12px}
+
+/* Accordion KW */
+.mag-group{margin-bottom:8px;border:0.5px solid var(--border2);border-radius:12px;overflow:hidden}
+.mag-header{padding:12px 16px;background:var(--bg2);display:flex;align-items:center;justify-content:space-between;cursor:pointer;user-select:none}
+.mag-title{font-size:13px;font-weight:600;color:var(--accent)}
+.mag-count{font-size:11px;color:var(--text3)}
+.mag-arrow{font-size:12px;color:var(--text3);transition:transform .2s}
+.mag-body{display:none;padding:8px}
+.mag-body.open{display:block}
+.bg-group{margin-bottom:6px;border:0.5px solid var(--border);border-radius:8px;overflow:hidden}
+.bg-header{padding:10px 12px;background:var(--bg3);display:flex;align-items:center;justify-content:space-between;cursor:pointer}
+.bg-title{font-size:12px;font-weight:600;color:var(--text)}
+.bg-body{display:none;padding:8px 12px}
+.bg-body.open{display:block}
+.kl-group{margin-bottom:8px;padding:8px;background:var(--bg);border-radius:6px;border:0.5px solid var(--border)}
+.kl-title{font-size:11px;font-weight:600;color:var(--text2);margin-bottom:6px;display:flex;justify-content:space-between;align-items:center}
+
 .kwrule:last-child{border-bottom:none}
 .kwbg{font-size:12px;font-weight:600;color:var(--accent);margin-bottom:8px}
 .kwchips{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px}
@@ -117,21 +134,8 @@ textarea{resize:vertical;line-height:1.6}
   </div>
 
   <div id="pg-analiz-1">
-    <div class="card">
-      <div class="lbl">MAG Seç</div>
-      <select id="magSel">
-        <option value="">MAG seçin...</option>
-        <option>BUC</option><option>BUB</option><option>BUL</option>
-        <option>BUXL</option><option>BUMH</option><option>BUCF</option>
-        <option>BUGA</option><option>BUJD</option><option>BUJW</option>
-        <option>BUK</option><option>BUR</option><option>BUS</option><option>BUSP</option>
-      </select>
-    </div>
-    <div class="card">
-      <div class="lbl">Geri Bildirimler</div>
-      <textarea id="fbInput" rows="8" placeholder="Her satıra bir geri bildirim...&#10;&#10;Örnek:&#10;Dar paça chino lazım&#10;Lacivert sweat isteniyor&#10;Mont çeşidi az"></textarea>
-      <div style="font-size:11px;color:var(--text3);margin-top:6px">Her satır ayrı analiz edilir</div>
-    </div>
+    <div id="magBlockList"></div>
+    <button class="btn btn-s" onclick="addMagBlock()" style="margin-bottom:10px">+ MAG Ekle</button>
     <button class="btn btn-p" onclick="startAnalysis()">🔍 Analiz Et</button>
   </div>
 
@@ -341,13 +345,30 @@ function kwMatch(text, mag){
 
 /* ─────────── ANALYSIS ─────────── */
 function startAnalysis(){
-  var mag=document.getElementById('magSel').value;
-  var raw=document.getElementById('fbInput').value.trim();
-  if(!mag){alert('MAG seçin!');return;}
-  if(!raw){alert('Geri bildirim girin!');return;}
+  // Tüm MAG bloklarını topla
+  var blocks=[];
+  var blockEls=document.querySelectorAll('.mag-block');
+  blockEls.forEach(function(el){
+    var mag=el.querySelector('.mag-block-sel').value;
+    var raw=el.querySelector('.mag-block-txt').value.trim();
+    if(mag && raw){
+      var fbs=raw.split('\n').map(function(l){return l.trim();}).filter(Boolean);
+      if(fbs.length) blocks.push({mag:mag, fbs:fbs});
+    }
+  });
+  if(!blocks.length){alert('En az bir MAG ve geri bildirim girin!');return;}
 
-  currentMAG=mag;
-  var fbs=raw.split('\n').map(function(l){return l.trim();}).filter(Boolean);
+  // Tüm geri bildirimleri düzleştir, MAG bilgisiyle birlikte
+  var allFbs=[];
+  blocks.forEach(function(b){
+    b.fbs.forEach(function(fb){
+      allFbs.push({mag:b.mag, text:fb});
+    });
+  });
+
+  currentMAG = blocks[0].mag; // compat
+  var fbs = allFbs.map(function(f){return f.text;});
+  var mags = allFbs.map(function(f){return f.mag;});
 
   document.getElementById('stp1').className='stp done';
   document.getElementById('stp2').className='stp active';
@@ -364,10 +385,11 @@ function startAnalysis(){
 
   var kwRes=[];
   fbs.forEach(function(fb,i){
-    var r=kwMatch(fb,mag);
+    var r=kwMatch(fb, mags[i]);
     kwRes.push(r);
-    if(r.bg) addLog('✓ ['+(i+1)+'] '+r.src.toUpperCase()+': '+r.bg+(r.kl?' / '+r.kl:'')+(r.modelName?' ('+r.modelName+')':''), '#1a9e6e');
-    else addLog('? ['+(i+1)+'] Eşleşme yok', '#c8900a');
+    var magLabel='['+mags[i]+'] ';
+    if(r.bg) addLog('✓ '+(i+1)+'. '+magLabel+r.src.toUpperCase()+': '+r.bg+(r.kl?' / '+r.kl:'')+(r.modelName?' ('+r.modelName+')':''), '#1a9e6e');
+    else addLog('? '+(i+1)+'. '+magLabel+'Eşleşme yok', '#c8900a');
   });
 
   // Phase 2: AI
@@ -385,7 +407,7 @@ function startAnalysis(){
         var finalKL = ai.kl || kw.kl || null;
         var src = ai.bg ? (kw.src==='model'?'model':'ai') : kw.src;
         if(ai.bg && kw.bg && ai.bg!==kw.bg) addLog('↻ ['+(i+1)+'] AI düzeltti: '+kw.bg+' → '+ai.bg, '#5040a0');
-        results.push({id:i,text:fb,bg:finalBG,kl:finalKL,src:src,reason:ai.reason||'',status:'pending',edit:false});
+        results.push({id:i,text:fb,mag:mags[i],bg:finalBG,kl:finalKL,src:src,reason:ai.reason||'',status:'pending',edit:false});
       });
 
       document.getElementById('phaseBox').innerHTML='<span style="color:#1a9e6e;font-weight:500">✓ Analiz tamamlandı</span>';
@@ -396,7 +418,7 @@ function startAnalysis(){
       addLog('⚠ AI hatası: '+e.message+' — KW kullanılıyor', '#e03e3e');
       fbs.forEach(function(fb,i){
         var kw=kwRes[i];
-        results.push({id:i,text:fb,bg:kw.bg,kl:kw.kl,src:kw.src,reason:'',status:'pending',edit:false});
+        results.push({id:i,text:fb,mag:mags[i],bg:kw.bg,kl:kw.kl,src:kw.src,reason:'',status:'pending',edit:false});
       });
       document.getElementById('phaseBox').innerHTML='<span style="color:#c8900a;font-weight:500">⚠ AI erişilemedi — KW sonuçları</span>';
       renderResults();
@@ -406,7 +428,7 @@ function startAnalysis(){
 }
 
 async function callAI(mag, fbs, kwRes){
-  var body={mag:mag, feedbacks:fbs, kwResults:kwRes};
+  var body={mag:mags[0], feedbacks:fbs, kwResults:kwRes, mags:mags};
   var r=await fetch('/ai/analyze',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
   var d=await r.json();
   if(!d.ok) throw new Error(d.error||'AI hatası');
@@ -414,9 +436,10 @@ async function callAI(mag, fbs, kwRes){
 }
 
 function renderResults(){
-  var magData=erkekMAG[currentMAG]||{};
   var html='';
   results.forEach(function(r){
+  var magData=erkekMAG[r.mag||currentMAG]||{};
+    var magTag=r.mag?'<span class="tag" style="background:var(--bg3);color:var(--text2);border:0.5px solid var(--border2)">'+r.mag+'</span>':'';
     var srcTag=r.src==='model'?'<span class="tag t-model">📦 Model</span>':
                r.src==='ai'?'<span class="tag t-ai">🤖 AI</span>':
                r.src==='kw'?'<span class="tag t-kw">🔑 KW</span>':
@@ -430,7 +453,7 @@ function renderResults(){
 
     html+='<div class="rcard'+cls+'" id="rc'+r.id+'">';
     html+='<div class="rtxt">'+r.text+'</div>';
-    html+='<div class="rtags">'+srcTag+bgTag+klTag+'</div>';
+    html+='<div class="rtags">'+magTag+srcTag+bgTag+klTag+'</div>';
     if(r.reason) html+='<div style="font-size:11px;color:var(--text3);margin-bottom:6px">'+r.reason+'</div>';
 
     if(r.edit){
@@ -457,7 +480,8 @@ function editR(id){results[id].edit=true;renderResults();}
 function cancelEdit(id){results[id].edit=false;renderResults();}
 function updBG(id,val){
   results[id].bg=val||null;results[id].kl=null;
-  var magData=erkekMAG[currentMAG]||{};
+  var mag=results[id].mag||currentMAG;
+  var magData=erkekMAG[mag]||{};
   var klOpts=(val&&magData.kl&&magData.kl[val]?magData.kl[val]:[]).map(function(k){return '<option value="'+k+'">'+k+'</option>';}).join('');
   var sels=document.querySelectorAll('#rc'+id+' select');
   if(sels[1]) sels[1].innerHTML='<option value="">— Boş</option>'+klOpts;
@@ -534,100 +558,139 @@ function restart(){
 }
 
 /* ─────────── KW EDITOR ─────────── */
-function getMagBGOptions(selMag, selBG, selKL){
-  var magOpts = Object.keys(erkekMAG).map(function(m){
-    return '<option value="'+m+'"'+(selMag===m?' selected':'')+'>'+m+'</option>';
-  }).join('');
-  var bgOpts = '<option value="">BG seçin...</option>';
-  if(selMag && erkekMAG[selMag]){
-    bgOpts += erkekMAG[selMag].bg.map(function(b){
-      return '<option value="'+b+'"'+(selBG===b?' selected':'')+'>'+b+'</option>';
-    }).join('');
-  }
-  var klOpts = '<option value="">— KL (isteğe bağlı)</option>';
-  if(selMag && selBG && erkekMAG[selMag] && erkekMAG[selMag].kl && erkekMAG[selMag].kl[selBG]){
-    klOpts += erkekMAG[selMag].kl[selBG].map(function(k){
-      return '<option value="'+k+'"'+(selKL===k?' selected':'')+'>'+k+'</option>';
-    }).join('');
-  }
-  return {magOpts:magOpts, bgOpts:bgOpts, klOpts:klOpts};
-}
-
-function onKWMagChange(ri){
-  var selMag = document.getElementById('kwmag'+ri).value;
-  KW_RULES[ri].mag = selMag;
-  KW_RULES[ri].bg = '';
-  KW_RULES[ri].kl = '';
-  var opts = getMagBGOptions(selMag,'','');
-  document.getElementById('kwbgsel'+ri).innerHTML = opts.bgOpts;
-  document.getElementById('kwklsel'+ri).innerHTML = opts.klOpts;
-}
-
-function onKWBGChange(ri){
-  var selMag = document.getElementById('kwmag'+ri).value;
-  var selBG = document.getElementById('kwbgsel'+ri).value;
-  KW_RULES[ri].bg = selBG;
-  KW_RULES[ri].kl = '';
-  var opts = getMagBGOptions(selMag, selBG, '');
-  document.getElementById('kwklsel'+ri).innerHTML = opts.klOpts;
-}
-
-function onKWKLChange(ri){
-  KW_RULES[ri].kl = document.getElementById('kwklsel'+ri).value;
+function toggleAccordion(id){
+  var el=document.getElementById(id);
+  if(!el)return;
+  el.classList.toggle('open');
+  var arrow=document.getElementById('arr-'+id);
+  if(arrow) arrow.textContent=el.classList.contains('open')?'▲':'▼';
 }
 
 function renderKW(){
-  var html='';
+  // MAG → BG → KL → keywords şeklinde grupla
+  var grouped={};
   KW_RULES.forEach(function(rule,ri){
-    var selMag=rule.mag||'';
-    var selBG=rule.bg||'';
-    var selKL=rule.kl||'';
-    var opts=getMagBGOptions(selMag,selBG,selKL);
-
-    var chips=rule.kw.map(function(kw,ki){
-      return '<div class="kwchip">'+kw+'<button onclick="delKW('+ri+','+ki+')">×</button></div>';
-    }).join('');
-
-    html+='<div class="kwrule">';
-    // Header: sil butonu
-    html+='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">';
-    html+='<div class="kwbg">'+(selMag||'?')+' → '+(selBG||'?')+(selKL?' → '+selKL:'')+'</div>';
-    html+='<button style="background:none;border:none;color:var(--red);font-size:12px;cursor:pointer" onclick="delRule('+ri+')">Sil</button>';
-    html+='</div>';
-    // MAG seç
-    html+='<div style="margin-bottom:6px"><select id="kwmag'+ri+'" onchange="onKWMagChange('+ri+')" style="width:100%;padding:8px 10px;border:0.5px solid var(--border2);border-radius:8px;font-size:13px;background:var(--bg);color:var(--text);font-family:DM Sans,sans-serif;outline:none;-webkit-appearance:none">';
-    html+='<option value="">MAG seçin...</option>'+opts.magOpts+'</select></div>';
-    // BG seç
-    html+='<div style="margin-bottom:6px"><select id="kwbgsel'+ri+'" onchange="onKWBGChange('+ri+')" style="width:100%;padding:8px 10px;border:0.5px solid var(--border2);border-radius:8px;font-size:13px;background:var(--bg);color:var(--text);font-family:DM Sans,sans-serif;outline:none;-webkit-appearance:none">';
-    html+=opts.bgOpts+'</select></div>';
-    // KL seç
-    html+='<div style="margin-bottom:8px"><select id="kwklsel'+ri+'" onchange="onKWKLChange('+ri+')" style="width:100%;padding:8px 10px;border:0.5px solid var(--border2);border-radius:8px;font-size:13px;background:var(--bg);color:var(--text);font-family:DM Sans,sans-serif;outline:none;-webkit-appearance:none">';
-    html+=opts.klOpts+'</select></div>';
-    // Chips
-    html+='<div class="kwchips">'+chips+'</div>';
-    // Kelime ekle
-    html+='<div class="kwadd"><input class="kwinput" id="kwin'+ri+'" placeholder="Anahtar kelime ekle..."><button class="kwbtn" onclick="addKW('+ri+')">Ekle</button></div>';
-    html+='</div>';
+    var mag=rule.mag||'(MAG yok)';
+    var bg=rule.bg||'(BG yok)';
+    var kl=rule.kl||'(KL yok)';
+    if(!grouped[mag]) grouped[mag]={};
+    if(!grouped[mag][bg]) grouped[mag][bg]={};
+    if(!grouped[mag][bg][kl]) grouped[mag][bg][kl]=[];
+    grouped[mag][bg][kl].push({rule:rule, ri:ri});
   });
+
+  var html='';
+  Object.keys(grouped).forEach(function(mag){
+    var bgCount=Object.keys(grouped[mag]).length;
+    var ruleCount=0;
+    Object.keys(grouped[mag]).forEach(function(bg){
+      Object.keys(grouped[mag][bg]).forEach(function(kl){
+        ruleCount+=grouped[mag][bg][kl].length;
+      });
+    });
+    var magId='mag-'+mag.replace(/[^a-zA-Z0-9]/g,'_');
+    html+='<div class="mag-group">';
+    html+='<div class="mag-header" onclick="toggleAccordion(''+magId+'')">';
+    html+='<div class="mag-title">📦 '+mag+'</div>';
+    html+='<div style="display:flex;align-items:center;gap:8px"><span class="mag-count">'+ruleCount+' kural</span><span id="arr-'+magId+'" class="mag-arrow">▼</span></div>';
+    html+='</div>';
+    html+='<div class="mag-body" id="'+magId+'">';
+
+    Object.keys(grouped[mag]).forEach(function(bg){
+      var bgId=magId+'_'+bg.replace(/[^a-zA-Z0-9]/g,'_');
+      var klCount=Object.keys(grouped[mag][bg]).length;
+      html+='<div class="bg-group">';
+      html+='<div class="bg-header" onclick="toggleAccordion(''+bgId+'')">';
+      html+='<span class="bg-title">👔 '+bg+'</span>';
+      html+='<span style="display:flex;align-items:center;gap:6px"><span style="font-size:11px;color:var(--text3)">'+klCount+' klasman</span><span id="arr-'+bgId+'" style="font-size:11px;color:var(--text3)">▼</span></span>';
+      html+='</div>';
+      html+='<div class="bg-body" id="'+bgId+'">';
+
+      Object.keys(grouped[mag][bg]).forEach(function(kl){
+        var entries=grouped[mag][bg][kl];
+        html+='<div class="kl-group">';
+        html+='<div class="kl-title">';
+        html+='<span>🏷 '+kl+'</span>';
+        // Add kw button for this kl
+        var ri=entries[0].ri;
+        html+='<button onclick="addKWToRule('+ri+')" style="background:none;border:0.5px solid var(--border2);border-radius:6px;padding:3px 8px;font-size:11px;color:var(--text2);cursor:pointer">+ Kelime</button>';
+        html+='</div>';
+        entries.forEach(function(e){
+          var ri=e.ri;
+          var chips=e.rule.kw.map(function(kw,ki){
+            return '<div class="kwchip">'+kw+'<button onclick="delKW('+ri+','+ki+')">×</button></div>';
+          }).join('');
+          html+='<div class="kwchips" id="chips-'+ri+'">'+chips+'</div>';
+          html+='<div class="kwadd" id="kwadd-'+ri+'" style="display:none">';
+          html+='<input class="kwinput" id="kwin'+ri+'" placeholder="Kelime...">';
+          html+='<button class="kwbtn" onclick="addKW('+ri+')">Ekle</button>';
+          html+='<button class="kwbtn" onclick="hideKWAdd('+ri+')">İptal</button>';
+          html+='</div>';
+        });
+        html+='</div>';
+      });
+
+      // Yeni KL ekle butonu
+      html+='<div style="padding:6px 4px">';
+      html+='<button onclick="addRuleForBG(''+mag+'',''+bg+'')" style="width:100%;padding:7px;background:none;border:0.5px dashed var(--border2);border-radius:6px;font-size:12px;color:var(--text3);cursor:pointer">+ Bu BG için yeni klasman/kural ekle</button>';
+      html+='</div>';
+      html+='</div></div>';
+    });
+
+    // Yeni BG ekle
+    html+='<div style="padding:6px">';
+    html+='<button onclick="addRuleForMAG(''+mag+'')" style="width:100%;padding:8px;background:none;border:0.5px dashed var(--border2);border-radius:8px;font-size:12px;color:var(--text3);cursor:pointer">+ '+mag+' için yeni BG/kural ekle</button>';
+    html+='</div>';
+    html+='</div></div>';
+  });
+
+  // Yeni MAG ekle
+  html+='<div style="margin-top:8px">';
+  html+='<button onclick="addRule()" style="width:100%;padding:10px;background:none;border:0.5px dashed var(--border2);border-radius:10px;font-size:13px;color:var(--text2);cursor:pointer">+ Yeni MAG Kuralı Ekle</button>';
+  html+='</div>';
+
   document.getElementById('kwList').innerHTML=html;
 }
 
-function addKW(ri){
-  var inp=document.getElementById('kwin'+ri);
-  var v=inp.value.trim().toLowerCase();
-  if(!v)return;
-  if(!KW_RULES[ri].kw.includes(v)) KW_RULES[ri].kw.push(v);
-  inp.value='';
+function addKWToRule(ri){
+  var el=document.getElementById('kwadd-'+ri);
+  if(el){el.style.display='flex';document.getElementById('kwin'+ri).focus();}
+}
+function hideKWAdd(ri){
+  var el=document.getElementById('kwadd-'+ri);
+  if(el) el.style.display='none';
+}
+
+function addRuleForBG(mag, bg){
+  var kl=prompt('Klasman adı (boş bırakabilirsiniz):');
+  KW_RULES.push({mag:mag, bg:bg, kl:kl||'', kw:[]});
   renderKW();
 }
-function delKW(ri,ki){KW_RULES[ri].kw.splice(ki,1);renderKW();}
-function delRule(ri){if(!confirm('Sil?'))return;KW_RULES.splice(ri,1);renderKW();}
-function addRule(){
-  KW_RULES.push({mag:'',bg:'',kl:'',kw:[]});
+
+function addRuleForMAG(mag){
+  var magData=erkekMAG[mag];
+  if(!magData){alert('MAG bulunamadı');return;}
+  var bgSel='<select id="newBGSel" style="width:100%;padding:8px;margin:8px 0;border:0.5px solid var(--border2);border-radius:8px;font-size:14px">';
+  bgSel+=magData.bg.map(function(b){return '<option>'+b+'</option>';}).join('');
+  bgSel+='</select>';
+  var div=document.createElement('div');
+  div.innerHTML='<p style="font-size:14px;margin-bottom:6px">Buyer Grup seç:</p>'+bgSel;
+  var bg=prompt(mag+' için BG seçin:
+'+magData.bg.join(', '));
+  if(!bg) return;
+  bg=bg.toUpperCase().trim();
+  if(!magData.bg.includes(bg)){alert('Geçersiz BG');return;}
+  var kl=prompt('Klasman (boş bırakabilirsiniz):');
+  KW_RULES.push({mag:mag, bg:bg, kl:kl||'', kw:[]});
   renderKW();
-  // Scroll to last rule
-  var list=document.getElementById('kwList');
-  if(list) list.lastElementChild.scrollIntoView({behavior:'smooth'});
+}
+
+function addRule(){
+  var mag=prompt('MAG seçin:\n'+Object.keys(erkekMAG).join(', '));
+  if(!mag) return;
+  mag=mag.toUpperCase().trim();
+  if(!erkekMAG[mag]){alert('Geçersiz MAG');return;}
+  addRuleForMAG(mag);
 }
 function saveKW(){
   localStorage.setItem('gemba_kw',JSON.stringify(KW_RULES));
@@ -701,6 +764,66 @@ function clearModels(){
   document.getElementById('modelStats').style.display='none';
   toast('Temizlendi');
 }
+/* ── Multi-MAG blocks ── */
+var magBlockCount = 0;
+var MAG_LIST = ['BUC','BUB','BUL','BUXL','BUMH','BUCF','BUGA','BUJD','BUJW','BUK','BUR','BUS','BUSP'];
+
+function addMagBlock(){
+  magBlockCount++;
+  var id = 'mb'+magBlockCount;
+  var n = magBlockCount;
+
+  var wrapper = document.createElement('div');
+  wrapper.className = 'card mag-block';
+  wrapper.id = id;
+
+  // Header
+  var hdr = document.createElement('div');
+  hdr.style.cssText = 'display:flex;justify-content:space-between;align-items:center;margin-bottom:10px';
+  var title = document.createElement('div');
+  title.className = 'lbl';
+  title.style.margin = '0';
+  title.textContent = 'MAG ' + n;
+  hdr.appendChild(title);
+  if(n > 1){
+    var rmBtn = document.createElement('button');
+    rmBtn.textContent = 'Kaldır';
+    rmBtn.style.cssText = 'background:none;border:none;color:var(--red);font-size:13px;cursor:pointer';
+    rmBtn.onclick = function(){ wrapper.remove(); };
+    hdr.appendChild(rmBtn);
+  }
+  wrapper.appendChild(hdr);
+
+  // MAG select
+  var sel = document.createElement('select');
+  sel.className = 'mag-block-sel';
+  sel.style.cssText = 'width:100%;padding:12px 14px;border:0.5px solid var(--border2);border-radius:var(--r);font-family:DM Sans,sans-serif;font-size:15px;color:var(--text);background:var(--bg);outline:none;-webkit-appearance:none;margin-bottom:10px';
+  sel.innerHTML = '<option value="">MAG seçin...</option>' + MAG_LIST.map(function(m){return '<option>'+m+'</option>';}).join('');
+  wrapper.appendChild(sel);
+
+  // Textarea
+  var ta = document.createElement('textarea');
+  ta.className = 'mag-block-txt';
+  ta.rows = 5;
+  ta.placeholder = 'Her satıra bir geri bildirim...
+
+Örnek:
+Dar paça chino lazım
+Lacivert sweat isteniyor';
+  ta.style.cssText = 'width:100%;padding:12px 14px;border:0.5px solid var(--border2);border-radius:var(--r);font-family:DM Sans,sans-serif;font-size:15px;color:var(--text);background:var(--bg);outline:none;resize:vertical;line-height:1.6';
+  wrapper.appendChild(ta);
+
+  var hint = document.createElement('div');
+  hint.style.cssText = 'font-size:11px;color:var(--text3);margin-top:6px';
+  hint.textContent = 'Her satır ayrı analiz edilir';
+  wrapper.appendChild(hint);
+
+  document.getElementById('magBlockList').appendChild(wrapper);
+}
+
+// Init: ilk MAG bloğunu ekle
+addMagBlock();
+
 </script>
 </body>
 </html>
