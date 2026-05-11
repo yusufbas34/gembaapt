@@ -39,6 +39,18 @@ textarea{resize:vertical;line-height:1.6}
 .tkw{background:#e8f0fe;color:#1a56b0;border:0.5px solid #b0c8f8}
 .tbg{background:#e1f5ee;color:#085041;border:0.5px solid #99d4c0}
 .tkl{background:#fef3cd;color:#7a5200;border:0.5px solid #e8d080}
+
+/* Editable tags */
+.etag{display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:600;padding:3px 8px 3px 10px;border-radius:100px;cursor:pointer;transition:opacity .15s;user-select:none;-webkit-user-select:none}
+.etag:active{opacity:.7}
+.etag-bg{background:#e1f5ee;color:#085041;border:0.5px solid #99d4c0}
+.etag-kl{background:#fef3cd;color:#7a5200;border:0.5px solid #e8d080}
+.etag-empty{background:var(--bg3);color:var(--text3);border:0.5px dashed var(--bd2)}
+.etag-x{font-size:14px;line-height:1;color:inherit;opacity:.6;margin-left:2px;font-weight:400}
+.etag-x:hover{opacity:1}
+.epanel{background:var(--bg2);border-radius:var(--r);padding:12px;margin-top:8px}
+.epanel select{margin-bottom:8px}
+.epanel-btns{display:flex;gap:8px}
 .rbtns{display:flex;gap:8px;flex-wrap:wrap}
 .rbtn{padding:7px 14px;border-radius:8px;font-size:13px;border:0.5px solid var(--bd2);background:none;color:var(--text2);cursor:pointer;font-family:'DM Sans',sans-serif}
 .rbtn.ok{border-color:var(--green);color:var(--green)}
@@ -2891,37 +2903,28 @@ function renderRes(){
                  r.src==='ai'?'<span class="tag tai">🤖 AI</span>':
                  r.src==='kw'?'<span class="tag tkw">🔑 KW</span>':
                  '<span class="tag tm">— Boş</span>';
-    var bgTag = r.bg?'<span class="tag tbg">'+r.bg+'</span>':'<span class="tag tm">BG ?</span>';
-    var klTag = r.kl?'<span class="tag tkl">'+r.kl+'</span>':'';
     var cls = r.status==='confirmed'?' ok':r.status==='rejected'?' skip':'';
 
-    var bgOpts = (md.bg||[]).map(function(b){
-      return '<option value="'+b+'"'+(r.bg===b?' selected':'')+'>'+b+'</option>';
-    }).join('');
-    var klOpts = (r.bg&&md.kl&&md.kl[r.bg]?md.kl[r.bg]:[]).map(function(k){
-      return '<option value="'+k+'"'+(r.kl===k?' selected':'')+'>'+k+'</option>';
-    }).join('');
+    // Tıklanabilir tag'ler - üstünde × var, silince ? gösterir
+    var bgTag = r.bg
+      ? '<span class="etag etag-bg" onclick="editTagBG('+r.id+')" title="BG değiştir">'+r.bg+'<span class="etag-x" onclick="event.stopPropagation();delTagBG('+r.id+')">×</span></span>'
+      : '<span class="etag etag-empty" onclick="editTagBG('+r.id+')" title="BG ekle">Buyer Grup ?</span>';
+    var klTag = r.kl
+      ? '<span class="etag etag-kl" onclick="editTagKL('+r.id+')" title="KL değiştir">'+r.kl+'<span class="etag-x" onclick="event.stopPropagation();delTagKL('+r.id+')">×</span></span>'
+      : (r.bg ? '<span class="etag etag-empty" onclick="editTagKL('+r.id+')" title="KL ekle">Klasman ?</span>' : '');
 
     html += '<div class="rcard'+cls+'" id="rc'+r.id+'">';
     html += '<div class="rtxt">'+r.text+'</div>';
-    html += '<div class="tags">'+magTag+srcTag+bgTag+klTag+'</div>';
+    html += '<div class="tags" id="tags'+r.id+'">'+magTag+srcTag+bgTag+klTag+'</div>';
     if(r.reason) html += '<div style="font-size:11px;color:var(--text3);margin-bottom:6px">'+r.reason+'</div>';
 
-    if(r.edit){
-      html += '<div class="redit">';
-      html += '<div class="rlab">Buyer Grup</div>';
-      html += '<select style="margin-bottom:8px" onchange="chBG('+r.id+',this.value)"><option value="">— Boş</option>'+bgOpts+'</select>';
-      html += '<div class="rlab">Klasman</div>';
-      html += '<select onchange="chKL('+r.id+',this.value)"><option value="">— Boş</option>'+klOpts+'</select>';
-      html += '<div class="rbtns" style="margin-top:10px">';
-      html += '<button class="rbtn ok" onclick="cnf('+r.id+')">✓ Onayla</button>';
-      html += '<button class="rbtn" onclick="cancelEdit('+r.id+')">İptal</button>';
-      html += '</div></div>';
-    } else if(r.status==='pending'){
+    // Inline edit paneller
+    html += '<div id="ep'+r.id+'" style="display:none"></div>';
+
+    if(r.status==='pending'){
       html += '<div class="rbtns">';
       html += '<button class="rbtn ok" onclick="cnf('+r.id+')">✓ Onayla</button>';
-      html += '<button class="rbtn" onclick="editR('+r.id+')">✏ Düzenle</button>';
-      html += '<button class="rbtn sk" onclick="skp('+r.id+')">✕ Boş</button>';
+      html += '<button class="rbtn sk" onclick="skp('+r.id+')">✕ Boş bırak</button>';
       html += '</div>';
     } else if(r.status==='confirmed'){
       html += '<div style="font-size:12px;color:var(--green)">✓ Onaylandı</div>';
@@ -2931,12 +2934,16 @@ function renderRes(){
     html += '</div>';
   });
   document.getElementById('rlist').innerHTML = html;
+  // Tags render
+  RES.forEach(function(r){
+    var el=document.getElementById('tags'+r.id);
+    if(el) el.innerHTML=buildTagsHTML(r);
+  });
 }
 
 function cnf(id){ RES[id].status='confirmed'; RES[id].edit=false; renderRes(); checkDone(); }
 function skp(id){ RES[id].status='rejected'; RES[id].bg=null; RES[id].kl=null; RES[id].edit=false; renderRes(); checkDone(); }
-function editR(id){ RES[id].edit=true; renderRes(); }
-function cancelEdit(id){ RES[id].edit=false; renderRes(); }
+function editR(id){} function cancelEdit(id){}
 
 function chBG(id, val){
   RES[id].bg=val||null; RES[id].kl=null;
@@ -3024,12 +3031,25 @@ function restart(){
 }
 
 // ═══ KW EDITOR ═══
+var ACC_STATE={};
 function togAcc(id){
   var el=document.getElementById(id);
   if(!el) return;
   el.classList.toggle('open');
+  ACC_STATE[id]=el.classList.contains('open');
   var arr=document.getElementById('arr'+id);
-  if(arr) arr.textContent=el.classList.contains('open')?'▲':'▼';
+  if(arr) arr.textContent=ACC_STATE[id]?'▲':'▼';
+}
+
+function restoreAcc(){
+  Object.keys(ACC_STATE).forEach(function(id){
+    if(ACC_STATE[id]){
+      var el=document.getElementById(id);
+      if(el){ el.classList.add('open'); }
+      var arr=document.getElementById('arr'+id);
+      if(arr) arr.textContent='▲';
+    }
+  });
 }
 
 function renderKW(){
@@ -3107,6 +3127,7 @@ function renderKW(){
   html+='</div>';
 
   document.getElementById('kwlist').innerHTML=html;
+  restoreAcc();
 }
 
 function showKAdd(ri){ document.getElementById('kadd'+ri).style.display='flex'; document.getElementById('kin'+ri).focus(); }
@@ -3248,6 +3269,104 @@ async function clearMDB(){
   localStorage.removeItem('gemba_mdb2');
   document.getElementById('mstats').style.display='none';
   toast('Temizlendi');
+}
+
+/* ── Tag edit ── */
+function delTagBG(id){
+  RES[id].bg=null; RES[id].kl=null;
+  refreshTags(id);
+}
+function delTagKL(id){
+  RES[id].kl=null;
+  refreshTags(id);
+}
+
+function refreshTags(id){
+  var r=RES[id];
+  var tagsEl=document.getElementById('tags'+id);
+  if(!tagsEl) return;
+  tagsEl.innerHTML=buildTagsHTML(r);
+}
+
+function buildTagsHTML(r){
+  var id=r.id;
+  var magTag=r.mag?'<span class="tag tm">'+r.mag+'</span>':'';
+  var srcTag=r.src==='model'?'<span class="tag tmodel">&#128230; Model</span>':
+             r.src==='ai'?'<span class="tag tai">&#129302; AI</span>':
+             r.src==='kw'?'<span class="tag tkw">&#128273; KW</span>':
+             '<span class="tag tm">&#8212; Bos</span>';
+  var bgTag=r.bg
+    ?('<span class="etag etag-bg" onclick="editTagBG('+id+')">'+r.bg+'<span class="etag-x" onclick="event.stopPropagation();delTagBG('+id+')">x</span></span>')
+    :'<span class="etag etag-empty" onclick="editTagBG('+id+')">Buyer Grup ?</span>';
+  var klTag=r.kl
+    ?('<span class="etag etag-kl" onclick="editTagKL('+id+')">'+r.kl+'<span class="etag-x" onclick="event.stopPropagation();delTagKL('+id+')">x</span></span>')
+    :(r.bg?'<span class="etag etag-empty" onclick="editTagKL('+id+')">Klasman ?</span>':'');
+  return magTag+srcTag+bgTag+klTag;
+}
+
+function showPanel(id, html){
+  var panel=document.getElementById('ep'+id);
+  if(!panel) return;
+  if(panel.style.display==='block'&&panel.dataset.last===html){
+    panel.style.display='none';
+    return;
+  }
+  panel.innerHTML=html;
+  panel.dataset.last=html;
+  panel.style.display='block';
+}
+
+function closePanel(id){
+  var panel=document.getElementById('ep'+id);
+  if(panel) panel.style.display='none';
+}
+
+function editTagBG(id){
+  var r=RES[id];
+  var md=ERKEK[r.mag]||{};
+  var bgOpts='<option value="">-- Bos</option>';
+  (md.bg||[]).forEach(function(b){
+    bgOpts+='<option value="'+b+'"'+(r.bg===b?' selected':'')+'>'+b+'</option>';
+  });
+  var html='<div class="epanel">'
+    +'<div class="rlab">Buyer Grup</div>'
+    +'<select onchange="chBGp('+id+',this.value)" style="margin-bottom:8px">'+bgOpts+'</select>'
+    +'<div class="epanel-btns">'
+    +'<button class="rbtn ok" onclick="cnf('+id+');closePanel('+id+')">Onayla</button>'
+    +'<button class="rbtn" onclick="closePanel('+id+')">Kapat</button>'
+    +'</div></div>';
+  showPanel(id, html);
+}
+
+function editTagKL(id){
+  var r=RES[id];
+  var md=ERKEK[r.mag]||{};
+  if(!r.bg){ editTagBG(id); return; }
+  var klOpts='<option value="">-- Bos</option>';
+  ((md.kl&&md.kl[r.bg])||[]).forEach(function(k){
+    klOpts+='<option value="'+k+'"'+(r.kl===k?' selected':'')+'>'+k+'</option>';
+  });
+  var html='<div class="epanel">'
+    +'<div class="rlab">Klasman</div>'
+    +'<select onchange="chKLp('+id+',this.value)" style="margin-bottom:8px">'+klOpts+'</select>'
+    +'<div class="epanel-btns">'
+    +'<button class="rbtn ok" onclick="cnf('+id+');closePanel('+id+')">Onayla</button>'
+    +'<button class="rbtn" onclick="closePanel('+id+')">Kapat</button>'
+    +'</div></div>';
+  showPanel(id, html);
+}
+
+function chBGp(id, val){
+  RES[id].bg=val||null;
+  RES[id].kl=null;
+  refreshTags(id);
+  // KL panelini guncelle
+  editTagKL(id);
+}
+
+function chKLp(id, val){
+  RES[id].kl=val||null;
+  refreshTags(id);
 }
 </script>
 </body>
