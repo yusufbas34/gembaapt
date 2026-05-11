@@ -201,12 +201,11 @@ textarea{resize:none;line-height:1.5}
     <div class="div"></div>
     <div class="fg"><label class="fl">Mağaza</label>
       <div class="store-wrap" id="storeWrap">
-        <input type="text" id="storeInput" class="store-input"
-        placeholder="Mağaza ara veya seç..."
-        autocomplete="off"
-        oninput="filterStore(this.value)"
-        onfocus="openStore()"
-        style="cursor:text;background-image:url('data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 width=%2712%27 height=%277%27 viewBox=%270 0 12 7%27%3E%3Cpath d=%27M1 1l5 4.5L11 1%27 stroke=%27%23aeaea9%27 stroke-width=%271.5%27 fill=%27none%27/%3E%3C/svg%3E');background-repeat:no-repeat;background-position:right 14px center;padding-right:38px"/>        <div class="store-dropdown" id="storeDropdown"></div>
+      <input type="text" id="storeInput" class="store-input"
+  placeholder="Mağaza ara veya seç..."
+  autocomplete="off"
+  onfocus="openStore()"
+  oninput="filterStore(this.value)">
       </div>
     <div class="fg" id="mwrap" style="display:none"><label class="fl">Mağaza adı</label><input type="text" id="stMan" placeholder="Mağaza adını yazın..."/></div>
     <div class="sl2">Reyon seçiniz</div>
@@ -842,7 +841,16 @@ function openMailFallback(){
     window.location.href='mailto:'+encodeURIComponent(to)+'?cc='+encodeURIComponent(cc)+'&subject='+encodeURIComponent(subj)+'&body='+safeMailEncode(body);
   }
 }
+function openStore() {
+  const dropdown = document.getElementById('storeDropdown');
+  dropdown.style.display = 'block';   // Listeyi göster
+  renderStoreOpts(document.getElementById('storeInput').value);
 
+  setTimeout(() => {
+    document.addEventListener('click', closeStoreOutside);
+  }, 0);
+}
+  
 function copyAll(){navigator.clipboard.writeText('Konu: '+(window._ms||'')+'\n\n'+(window._mb||'')).then(()=>{const t=document.createElement('div');t.textContent='Kopyalandı!';t.style.cssText='position:fixed;bottom:90px;left:50%;transform:translateX(-50%);background:#1a1a18;color:#fff;padding:10px 22px;border-radius:100px;font-size:14px;font-family:DM Sans,sans-serif;z-index:999;pointer-events:none';document.body.appendChild(t);setTimeout(()=>t.remove(),2200);});}
 
 showAB(1);loadUser();
@@ -1099,11 +1107,11 @@ function initStoreSearch(){
   renderStoreOpts('');
 }
 
-function closeStore(){
-  document.getElementById('storeDropdown').classList.remove('open');
-  document.removeEventListener('click',closeStoreOutside);
+function closeStore() {
+  const dropdown = document.getElementById('storeDropdown');
+  dropdown.style.display = 'none';   // Listeyi gizle
+  document.removeEventListener('click', closeStoreOutside);
 }
-
 function closeStoreOutside(e){
   // Overlay açıksa mağaza dropdown'ı kapatma
   var ov=document.getElementById('ov');
@@ -1120,9 +1128,8 @@ function closeStore(){
   document.removeEventListener('click',closeStoreOutside);
 }
 
-function filterStore(q){
-  renderStoreOpts(q);
-  document.getElementById('storeDropdown').classList.add('open');
+function filterStore(value) {
+  renderStoreOpts(value);
 }
 
 function renderStoreOpts(q){
