@@ -132,6 +132,86 @@ app.post('/notify-user', (req, res) => {
 });
 
 
+
+// ── AI Analiz endpoint ──────────────────────────────────────────────────────
+app.post('/ai/analyze', async (req, res) => {
+  const {mag, feedbacks, kwResults} = req.body||{};
+  if(!mag||!feedbacks) return res.json({ok:false, error:'Eksik bilgi'});
+
+  const ANTHROPIC_KEY = process.env.ANTHROPIC_API_KEY;
+  if(!ANTHROPIC_KEY) return res.json({ok:false, error:'API key yok'});
+
+  // MAG veri yapısı
+  const erkekMAG = {
+    "BUC":{bg:["CHINO DUVARI","DIŞ GİYİM","DOKUMA ÜST","ÖRME","ÖRME BASIC","TRİKO"],kl:{"CHINO DUVARI":["BASİC DOKUMA CHİNO PANTOLON İNCE","BASIC DOKUMA CHINO PANTOLON ORTA","CL BASIC DOKUMA PANTOLON KALIN","CLASSIC DOKUMA ROLLER","CLASSIC DOKUMA ŞORT"],"DIŞ GİYİM":["İNCE MONT","İNCE PUFFER MONT","MONT/KABAN KALIN","PARKA","PU MONT İNCE","PU MONT KALIN","YELEK"],"DOKUMA ÜST":["KEY DOKUMA GOMLEK K.KOL","KEY DOKUMA GOMLEK U.KOL","KEY EKOSELİ DOKUMA GOMLEK K.KOL","KEY EKOSELİ DOKUMA GOMLEK U.KOL"],"ÖRME":["BASIC ORME BİSİKLET YAKA T-SHIRT K.KOL","BASIC ORME POLO YAKA T-SHIRT K.KOL","BASIC ORME V YAKA T-SHIRT K.KOL","KEY BASKILI ORME T-SHIRT K.KOL","KEY ORME T-SHIRT K.KOL"],"ÖRME BASIC":["BASIC KEY BASKILI ORME SWEAT","CL BASIC ORME HIRKA","CL BASIC ORME PANTOLON","CL BASIC ORME ROLLER","CL BASIC ORME SORT / BERMUDA","CL BASIC ORME SWEAT","CL BASIC ORME T-SHIRT U.KOL","ÖRME ATLET"],"TRİKO":["KEY ÇİZGİLİ TRIKO KAZAK","KEY TRIKO HIRKA","KEY TRIKO HIRKA MONT","KEY TRIKO KAZAK","KEY TRIKO YELEK"]}},
+    "BUB":{bg:["BLAZER CEKET","DENİM","DIŞ GİYİM","DOKUMA ALT","DOKUMA SET","DOKUMA ÜST","ÖRME","TRİKO"],kl:{"BLAZER CEKET":["BLAZER CEKET"],"DENİM":["KEY DOKUMA JEAN PANTOLON"],"DIŞ GİYİM":["İNCE MONT","MONT/KABAN KALIN","NAYLON PUFFER MONT/KABAN","PARKA","PU MONT İNCE","PU MONT KALIN","YAGMURLUK","YELEK"],"DOKUMA ALT":["KEY DOKUMA PANTOLON ORTA","KEY DOKUMA ŞORT/BERMUDA"],"DOKUMA SET":["BLAZER CEKET SET","DOKUMA SHACKET SET","İNCE MONT SET"],"DOKUMA ÜST":["DOKUMA SHACKET","KEY BASKILI DOKUMA GOMLEK K.KOL","KEY DOKUMA GOMLEK K.KOL","KEY DOKUMA GOMLEK U.KOL"],"ÖRME":["KEY BASKILI ORME T-SHIRT K.KOL","KEY ORME HIRKA","KEY ORME PANTOLON","KEY ORME SORT / BERMUDA","KEY ORME SWEAT","KEY ORME T-SHIRT K.KOL"],"TRİKO":["KEY TRIKO HIRKA","KEY TRIKO KAZAK","KEY TRIKO KAZAK K.KOL","KEY TRIKO SUVETER","KEY TRIKO YELEK"]}},
+    "BUL":{bg:["BLAZER CEKET","DIŞ GİYİM","DOKUMA ALT","DOKUMA ÜST","ÖRME","TRİKO"],kl:{"BLAZER CEKET":["BLAZER CEKET"],"DIŞ GİYİM":["İNCE MONT","MONT/KABAN KALIN","NAYLON PUFFER MONT/KABAN","PARKA","PU MONT İNCE","PU MONT KALIN","YAGMURLUK","YELEK"],"DOKUMA ALT":["KEY DOKUMA PANTOLON ORTA","KEY DOKUMA ŞORT/BERMUDA"],"DOKUMA ÜST":["DOKUMA SHACKET","KEY BASKILI DOKUMA GOMLEK K.KOL","KEY DOKUMA GOMLEK K.KOL","KEY DOKUMA GOMLEK U.KOL"],"ÖRME":["KEY BASKILI ORME T-SHIRT K.KOL","KEY ÇİZGİLİ ORME T-SHIRT K.KOL","KEY ÖRME ATLET","KEY ORME HIRKA","KEY ORME PANTOLON","KEY ORME SORT / BERMUDA","KEY ORME SWEAT","KEY ORME T-SHIRT K.KOL"],"TRİKO":["KEY TRIKO HIRKA","KEY TRIKO HIRKA MONT","KEY TRIKO KAZAK","KEY TRIKO KAZAK K.KOL","KEY TRIKO SUVETER"]}},
+    "BUXL":{bg:["DENİM","DIŞ GİYİM","DOKUMA ALT","DOKUMA ÜST","ÖRME","TRİKO"],kl:{"DENİM":["KEY DOKUMA JEAN BERMUDA","KEY DOKUMA JEAN GOMLEK K.KOL","KEY DOKUMA JEAN GOMLEK U.KOL","KEY DOKUMA JEAN MONT","KEY DOKUMA JEAN PANTOLON"],"DIŞ GİYİM":["İNCE MONT","İNCE PUFFER MONT","MONT/KABAN KALIN","NAYLON PUFFER MONT/KABAN","PARKA","PU MONT İNCE","PU MONT KALIN","YAGMURLUK","YELEK"],"DOKUMA ALT":["KEY DOKUMA PANTOLON KARGO","KEY DOKUMA PANTOLON ORTA","KEY DOKUMA ŞORT/BERMUDA"],"DOKUMA ÜST":["DOKUMA SHACKET","KEY DOKUMA GOMLEK K.KOL","KEY DOKUMA GOMLEK U.KOL"],"ÖRME":["BASIC ORME T-SHIRT K.KOL","KEY BASKILI ORME T-SHIRT K.KOL","KEY ÖRME ATLET","KEY ORME HIRKA","KEY ORME PANTOLON","KEY ORME POLO YAKA T-SHIRT K.KOL","KEY ORME SORT / BERMUDA","KEY ORME SWEAT"],"TRİKO":["KEY ÇİZGİLİ TRIKO KAZAK","KEY TRIKO HIRKA","KEY TRIKO KAZAK","KEY TRIKO KAZAK K.KOL","KEY TRIKO KAZAK Z4"]}},
+    "BUMH":{bg:["DOKUMA ÜST","ÖRME","YÜZME GİYİM"],kl:{"DOKUMA ÜST":["KEY DOKUMA GOMLEK K.KOL"],"ÖRME":["BASIC ORME POLO YAKA T-SHIRT K.KOL","KEY ÖRME ATLET","KEY ORME T-SHIRT K.KOL"],"YÜZME GİYİM":["BASIC DOKUMA YUZME ŞORT","DOKUMA YUZME UZUN ŞORT","KEY DOKUMA YUZME ŞORT"]}},
+    "BUCF":{bg:["BLAZER CEKET","DOKUMA ALT","DOKUMA ÜST","KRAVAT/PAPYON"],kl:{"BLAZER CEKET":["BLAZER CEKET"],"DOKUMA ALT":["KEY DOKUMA PANTOLON"],"DOKUMA ÜST":["BASIC DOKUMA GOMLEK U.KOL","KEY DOKUMA GOMLEK K.KOL","KEY DOKUMA GOMLEK U.KOL"],"KRAVAT/PAPYON":["KEY AKSESUAR KRAVAT/PAPYON SMART"]}},
+    "BUGA":{bg:["AKTİF SPOR","DIŞ GİYİM","DOKUMA ALT"],kl:{"AKTİF SPOR":["BASIC ORME T-SHIRT K.KOL AKTİF SPOR","KEY ORME ATLET AKTİF SPOR","KEY ORME HIRKA AKTİF SPOR","KEY ORME PANTOLON AKTİF SPOR","KEY ORME SORT/TAYTLI SORT AKTİF SPOR","KEY ORME SWEAT AKTİF SPOR","KEY ORME T-SHIRT U.KOL AKTİF SPOR"],"DIŞ GİYİM":["MONT/KABAN KALIN"],"DOKUMA ALT":["KEY DOKUMA PANTOLON"]}},
+    "BUJD":{bg:["DENİM"],kl:{"DENİM":["BASIC DOKUMA JEAN BERMUDA","BASIC DOKUMA JEAN PANTOLON"]}},
+    "BUJW":{bg:["DENİM","DENIM DUVARI"],kl:{"DENİM":["KEY DOKUMA JEAN GOMLEK K.KOL","KEY DOKUMA JEAN GOMLEK U.KOL","KEY DOKUMA JEAN MONT"],"DENIM DUVARI":["BASIC DENIM DUVAR DOKUMA JEAN PANTOLON","BASIC DENIM DUVAR DOKUMA JEAN SORT /BERMUDA"]}},
+    "BUK":{bg:["DERİ AKSESUAR","DOKUMA AKSESUAR","STANDART DIŞI","TRİKO ÖRME AKSESUAR"],kl:{"DERİ AKSESUAR":["KEY AKSESUAR CANTA BUYUK","KEY AKSESUAR CANTA KUCUK","KEY AKSESUAR CUZDAN","KEY AKSESUAR KEMER"],"DOKUMA AKSESUAR":["KEY AKSESUAR ATKI","KEY AKSESUAR DOKUMA ŞAPKA","KEY AKSESUAR ELDIVEN"],"STANDART DIŞI":["KEY AKSESUAR TAKI"],"TRİKO ÖRME AKSESUAR":["KEY AKSESUAR HAVLU","KEY ORME AKSESUAR BERE","KEY TRIKO AKSESUAR BERE","KEY TRIKO AKSESUAR ELDIVEN","KEY TRIKO AKSESUAR KAŞKOL"]}},
+    "BUR":{bg:["ÇORAP"],kl:{"ÇORAP":["KEY AKSESUAR ÇORAP BABET","KEY AKSESUAR CORAP EV","KEY AKSESUAR CORAP PATIK","KEY AKSESUAR CORAP SNEAKER","KEY AKSESUAR CORAP SOKET"]}},
+    "BUS":{bg:["BOXER","İÇ GİYİM"],kl:{"BOXER":["İÇGYM BASIC BOXER","İÇGYM KEY BOXER","İÇGYM SLİP"],"İÇ GİYİM":["İÇGYM KEY ÖRME FANİLA K.KOL","İÇGYM ORME ATLET","İÇGYM ORME FANILA U.KOL"]}},
+    "BUSP":{bg:["PİJAMA"],kl:{"PİJAMA":["İÇGYM ÖRME PİJAMA TAKIM K.KOL-K.PAÇA","İÇGYM ÖRME PİJAMA TAKIM K.KOL-U.PAÇA","İÇGYM ÖRME PİJAMA TAKIM U.KOL-U.PAÇA","İÇGYM ÖRME PİJAMA TEK ALT KISA","İÇGYM ÖRME PİJAMA TEK ALT UZUN","İÇGYM ÖRME PİJAMA TEK ÜST","İÇGYM TERMAL ÜST","PİJAMA TERMAL ALT"]}}
+  };
+
+  const magData = erkekMAG[mag];
+  if(!magData) return res.json({ok:false, error:'Geçersiz MAG'});
+
+  const bgList = magData.bg.join(', ');
+  let klSummary = '';
+  Object.keys(magData.kl||{}).forEach(bg => {
+    klSummary += bg + ': [' + magData.kl[bg].join(', ') + ']\n';
+  });
+
+  const feedbacksWithKW = feedbacks.map((f,i) => {
+    const kw = kwResults[i]||{};
+    return (i+1)+'. "'+f+'" → KW önerisi: BG='+(kw.bg||'?')+', KL='+(kw.kl||'?');
+  }).join('\n');
+
+  const prompt = `LC Waikiki erkek reyonu mağaza ziyaret sistemi için geri bildirim analizi.
+
+MAG: ${mag}
+Buyer Gruplar: ${bgList}
+Klasmanlar:
+${klSummary}
+
+Geri bildirimler (anahtar kelime analizi önerileriyle):
+${feedbacksWithKW}
+
+Her geri bildirim için en uygun BG ve KL belirle. Sadece listede olan değerleri kullan. Emin değilsen null bırak.
+
+Sadece JSON döndür:
+[{"index":0,"bg":"BG_ADI_VEYA_NULL","kl":"KL_ADI_VEYA_NULL","confidence":"high/medium/low","reason":"kisa aciklama türkçe"}]`;
+
+  try {
+    const response = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': ANTHROPIC_KEY,
+        'anthropic-version': '2023-06-01'
+      },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 1000,
+        messages: [{role:'user', content: prompt}]
+      })
+    });
+
+    const data = await response.json();
+    const text = data.content&&data.content[0] ? data.content[0].text : '';
+    const clean = text.replace(/```json|```/g,'').trim();
+    const results = JSON.parse(clean);
+    res.json({ok:true, results});
+  } catch(e) {
+    res.json({ok:false, error: e.message});
+  }
+});
+
 // ── Backup / Restore ─────────────────────────────────────────────────────────
 const BACKUP_KEY = process.env.BACKUP_KEY || 'gemba2024';
 
