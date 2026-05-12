@@ -9,25 +9,31 @@
 :root{--bg:#fff;--bg2:#f6f5f2;--bg3:#eeedea;--text:#1a1a18;--text2:#6b6b67;--text3:#aeaea9;--bd:rgba(0,0,0,0.09);--bd2:rgba(0,0,0,0.16);--acc:#1a1a18;--green:#1a9e6e;--red:#e03e3e;--yellow:#c8900a;--r:12px;}
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;padding:0 0 80px}
-.hdr{text-align:center;padding:24px 20px 16px}
-.hdr h1{font-size:22px;font-weight:600;letter-spacing:-.4px}
-.hdr h1 span{color:var(--text2);font-weight:400}
-.badge{display:inline-block;background:var(--bg2);border:0.5px solid var(--bd2);border-radius:100px;padding:4px 12px;font-size:11px;color:var(--text2);margin-top:6px}
+.hdr{text-align:center;padding:28px 20px 18px;background:linear-gradient(135deg,#1a1a18 0%,#2d2d2a 100%);color:#fff;margin-bottom:0}
+.hdr-logo{display:flex;align-items:center;justify-content:center;gap:10px;margin-bottom:6px}
+.hdr-icon{width:40px;height:40px;background:linear-gradient(135deg,#f0c040,#e08020);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0}
+.hdr h1{font-size:22px;font-weight:700;letter-spacing:-.4px;color:#fff}
+.hdr h1 span{color:rgba(255,255,255,.5);font-weight:400}
+.badge{display:inline-block;background:rgba(255,255,255,.1);border:0.5px solid rgba(255,255,255,.2);border-radius:100px;padding:4px 14px;font-size:11px;color:rgba(255,255,255,.7);margin-top:4px;letter-spacing:.05em}
+.tabs{background:#fff;border-bottom:0.5px solid var(--bd);margin-bottom:0;padding:0 16px;display:flex;gap:0}
+.tab{flex:1;padding:12px 4px;text-align:center;font-size:13px;font-weight:500;color:var(--text3);cursor:pointer;border-radius:0;background:none;border-bottom:2px solid transparent;transition:all .15s;margin-bottom:-0.5px}
+.tab.on{color:var(--acc);border-bottom-color:var(--acc);background:none}
+.pg{padding:16px}
 .tabs{display:flex;padding:0 16px;gap:6px;margin-bottom:14px}
 .tab{flex:1;padding:10px 4px;text-align:center;font-size:13px;font-weight:500;color:var(--text3);cursor:pointer;border-radius:10px;background:var(--bg2);transition:all .15s}
 .tab.on{background:var(--acc);color:#fff}
 .pg{display:none;padding:0 16px}
 .pg.on{display:block}
-.card{background:var(--bg2);border-radius:14px;padding:16px;margin-bottom:12px}
-.lbl{font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.08em;margin-bottom:10px}
+.card{background:var(--bg2);border-radius:14px;padding:16px;margin-bottom:12px;border:0.5px solid var(--bd)}
+.lbl{font-size:11px;font-weight:700;color:var(--acc);text-transform:uppercase;letter-spacing:.1em;margin-bottom:10px}
 select,textarea,input[type=text]{width:100%;padding:12px 14px;border:0.5px solid var(--bd2);border-radius:var(--r);font-family:'DM Sans',sans-serif;font-size:15px;color:var(--text);background:var(--bg);outline:none;-webkit-appearance:none}
 textarea{resize:vertical;line-height:1.6}
 .btn{width:100%;padding:14px;border:none;border-radius:var(--r);font-family:'DM Sans',sans-serif;font-size:15px;font-weight:500;cursor:pointer;margin-bottom:10px}
-.bp{background:var(--acc);color:#fff}
+.bp{background:linear-gradient(135deg,#1a1a18,#2d2d2a);color:#fff;box-shadow:0 2px 8px rgba(0,0,0,.15)}
 .bs{background:var(--bg2);color:var(--text);border:0.5px solid var(--bd2)}
 .btn:disabled{opacity:.4}
-.steps{display:flex;gap:6px;margin-bottom:14px}
-.stp{flex:1;height:3px;border-radius:2px;background:var(--bg3)}
+.steps{display:flex;gap:6px;margin-bottom:16px;padding:0 4px}
+.stp{flex:1;height:4px;border-radius:2px;background:var(--bg3);transition:background .3s}
 .stp.done{background:var(--green)}.stp.act{background:var(--acc)}
 /* Store search */
 .swrap{position:relative}
@@ -68,7 +74,7 @@ textarea{resize:vertical;line-height:1.6}
 .rbtn.ok{border-color:var(--green);color:var(--green)}
 .rbtn.sk{border-color:var(--red);color:var(--red)}
 .rbtns{display:flex;gap:8px;margin-top:8px}
-.log{background:var(--bg3);border-radius:var(--r);padding:12px;font-size:12px;color:var(--text2);max-height:150px;overflow-y:auto;line-height:1.8;margin-bottom:12px;font-family:monospace}
+.log{background:#1a1a18;border-radius:var(--r);padding:12px;font-size:11px;color:#9a9990;max-height:150px;overflow-y:auto;line-height:1.8;margin-bottom:12px;font-family:monospace;border:0.5px solid #333}
 /* KW accordion */
 .acc-mag{margin-bottom:8px;border:0.5px solid var(--bd2);border-radius:12px;overflow:hidden}
 .acc-mhdr{padding:12px 16px;background:var(--bg2);display:flex;align-items:center;justify-content:space-between;cursor:pointer}
@@ -108,13 +114,16 @@ textarea{resize:vertical;line-height:1.6}
 </head>
 <body>
 <div class="hdr">
-  <h1>Gemba<span>GPT</span></h1>
-  <div class="badge">AI Analiz — Test Modu</div>
+  <div class="hdr-logo">
+    <div class="hdr-icon">🗺️</div>
+    <h1>Gemba<span>GPT</span></h1>
+  </div>
+  <div class="badge">✦ AI Analiz Motoru</div>
 </div>
 <div class="tabs">
   <div class="tab on" id="tab-a" onclick="goTab('a')">Analiz</div>
   <div class="tab" id="tab-k" onclick="goTab('k')">Kelimeler</div>
-  <div class="tab" id="tab-m" onclick="goTab('m')">Modeller</div>
+  <div class="tab" id="tab-m" onclick="checkModelAuth()">Modeller</div>
 </div>
 
 <!-- ANALİZ -->
@@ -191,10 +200,13 @@ textarea{resize:vertical;line-height:1.6}
     <input type="file" id="csvf" accept=".csv,.txt" style="display:none" onchange="loadCSV(this)"/>
   </div>
   <div id="mstats" style="display:none">
-    <div class="mstats"><div class="mstat"><div class="mstn" id="sm">0</div><div class="mstl">Model</div></div></div>
+    <div class="mstats">
+      <div class="mstat"><div class="mstn" id="sm">0</div><div class="mstl">Model</div></div>
+      <div class="mstat"><div class="mstn" id="smatch" style="color:var(--green)">0</div><div class="mstl">Eşleşti</div></div>
+    </div>
     <input class="msrch" id="msrch" placeholder="Model ara..." oninput="renderMtbl()"/>
     <div style="overflow:auto;max-height:350px;border-radius:var(--r);border:0.5px solid var(--bd)">
-      <table class="mtbl"><thead><tr><th>Model</th><th>Normalized</th></tr></thead>
+      <table class="mtbl"><thead><tr><th>Model</th><th>BG / Klasman</th></tr></thead>
       <tbody id="mbody"></tbody></table>
     </div>
     <div style="display:flex;gap:8px;margin-top:12px">
@@ -2682,6 +2694,29 @@ var DEFAULT_KW = [
   }
 ];
 
+
+/* ═══ MODEL AUTH ═══ */
+var MODEL_UNLOCKED = false;
+var MODEL_ADMIN_PIN = '1923'; // PIN ile koruma - Railway variable ile değiştirilebilir
+
+function checkModelAuth(){
+  if(MODEL_UNLOCKED){ goTab('m'); return; }
+  var pin=prompt('Model sayfası için PIN:');
+  if(!pin) return;
+  // Check against server
+  fetch('/models/auth',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({pin:pin})})
+    .then(function(r){return r.json();})
+    .then(function(d){
+      if(d.ok){ MODEL_UNLOCKED=true; goTab('m'); toast('Model sayfası açıldı'); }
+      else { toast('Yanlış PIN'); }
+    })
+    .catch(function(){
+      // Fallback: client-side check
+      if(pin===MODEL_ADMIN_PIN){ MODEL_UNLOCKED=true; goTab('m'); toast('Model sayfası açıldı'); }
+      else { toast('Yanlış PIN'); }
+    });
+}
+
 /* ═══ STATE ═══ */
 var KW = [];
 var MDB = []; // [{model, normalized}]
@@ -2877,16 +2912,22 @@ function kwScore(text, mag, reyonName){
   var md = reyonName==='Erkek' ? erkekMAG[mag] : (RD[reyonName]||null);
   if(!md) return {bg:null,kl:null,src:'empty',score:0};
 
-  // 1. Model DB - exact name match
+  // 1. Model DB - smart match with score
+  var bestModel=null, bestModelScore=0;
   for(var i=0;i<MDB.length;i++){
     var m=MDB[i];
     var parts=m.normalized.split(' ').filter(function(p){return p.length>1;});
     if(!parts.length) continue;
-    var hits=0;
-    parts.forEach(function(p){if(n.includes(p))hits++;});
-    if(hits>0 && hits>=Math.ceil(parts.length*0.6)){
-      return {bg:m.bg||null, kl:m.kl||null, src:'model', model:m.model, score:100};
-    }
+    var hits=0,total=parts.length;
+    parts.forEach(function(p){
+      if(n===p) hits+=2;
+      else if(n.includes(p)||p.includes(n.replace(/[^a-z]/g,'').trim())) hits+=1;
+    });
+    var ratio=hits/total;
+    if(ratio>=0.5 && hits>bestModelScore){bestModelScore=hits;bestModel=m;}
+  }
+  if(bestModel){
+    return {bg:bestModel.bg||null, kl:bestModel.kl||null, src:'model', model:bestModel.model, score:100};
   }
 
   // 2. Check if text contains a BG name directly
@@ -2900,22 +2941,32 @@ function kwScore(text, mag, reyonName){
   }
 
   // 3. KW scoring - score ALL rules, pick highest
+  // Priority rules win immediately if matched
   var scores={};
+  var priorityHit=null;
   (KW||[]).forEach(function(rule){
     if(rule.mag && rule.mag!==mag) return;
     if(!bgList.includes(rule.bg)) return;
     var ruleScore=0;
     (rule.kw||[]).forEach(function(kw){
       var kwn=nr(kw);
-      if(n===kwn) ruleScore+=10;           // exact
-      else if(n.includes(kwn)) ruleScore+=5; // contains
-      else if(kwn.includes(n)) ruleScore+=2; // partial
+      if(n===kwn) ruleScore+=10;
+      else if(n.includes(kwn)) ruleScore+=5;
+      else if(kwn.includes(n)) ruleScore+=2;
     });
     if(ruleScore>0){
+      // Priority kuralı: anında döndür
+      if(rule.priority && ruleScore>=5){
+        if(!priorityHit || ruleScore>priorityHit.score){
+          priorityHit={bg:rule.bg,kl:rule.kl||null,score:ruleScore};
+        }
+      }
       var key=rule.bg+'|||'+(rule.kl||'');
       scores[key]=(scores[key]||0)+ruleScore;
     }
   });
+
+  if(priorityHit) return {bg:priorityHit.bg,kl:priorityHit.kl,src:'kw',score:priorityHit.score+50};
 
   // Find best scoring rule
   var bestKey=null, bestScore=0;
@@ -3338,8 +3389,12 @@ function renderKW(){
       html+='<div class="acc-bbody" id="'+bid+'">';
       Object.keys(grouped[mag][bg]).forEach(function(kl){
         var ris=grouped[mag][bg][kl];
-        html+='<div class="kl-box"><div style="font-size:11px;font-weight:600;color:var(--text2);margin-bottom:6px;display:flex;justify-content:space-between">';
-        html+='<span>'+kl+'</span><button class="kbtn" onclick="showKAdd('+ris[0]+')">+ Kelime</button></div>';
+        var isPriority=(KW[ris[0]]&&KW[ris[0]].priority);
+        html+='<div class="kl-box'+(isPriority?' kl-priority':'')+'" style="'+(isPriority?'border-color:#f0c040;background:#fffbee;':'')+'"><div style="font-size:11px;font-weight:600;color:var(--text2);margin-bottom:6px;display:flex;justify-content:space-between;align-items:center">';
+        html+='<span>'+(isPriority?'⭐ ':'')+kl+'</span>';
+        html+='<div style="display:flex;gap:4px">';
+        html+='<button class="kbtn" onclick="togglePriority('+ris[0]+')" style="'+(isPriority?'color:#c8900a;border-color:#c8900a':'')+'">'+( isPriority?'⭐ Öncelikli':'☆ Öncelik')+'</button>';
+        html+='<button class="kbtn" onclick="showKAdd('+ris[0]+')">+ Kelime</button></div></div>';
         ris.forEach(function(ri){
           html+='<div class="kchips" id="kchips'+ri+'">';
           (KW[ri].kw||[]).forEach(function(kw,ki){
@@ -3366,6 +3421,11 @@ function renderKW(){
 
 function showKAdd(ri){document.getElementById('kadd'+ri).style.display='flex';document.getElementById('kin'+ri).focus();}
 function hideKAdd(ri){document.getElementById('kadd'+ri).style.display='none';}
+function togglePriority(ri){
+  if(!KW[ri]) return;
+  KW[ri].priority=!KW[ri].priority;
+  renderKW();
+}
 function addKW(ri){
   var inp=document.getElementById('kin'+ri);
   var v=inp.value.trim().toLowerCase();
@@ -3417,36 +3477,70 @@ function loadCSV(inp){
   r.readAsText(file,'UTF-8');
 }
 
+function autoMatchModel(normalized){
+  // KW kurallarıyla BG/KL bul
+  var best={bg:null,kl:null,score:0};
+  (KW||[]).forEach(function(rule){
+    var s=0;
+    (rule.kw||[]).forEach(function(kw){
+      var kwn=nr(kw);
+      if(normalized===kwn) s+=10;
+      else if(normalized.includes(kwn)||kwn.includes(normalized)) s+=4;
+    });
+    if(s>best.score) best={bg:rule.bg,kl:rule.kl,score:s};
+  });
+  // KL isimlerinde doğrudan ara
+  if(!best.bg){
+    Object.keys(erkekMAG).forEach(function(mag){
+      var md=erkekMAG[mag];
+      Object.keys(md.kl||{}).forEach(function(bg){
+        (md.kl[bg]||[]).forEach(function(kl){
+          var klw=nr(kl).replace(/[.\/]/g,' ').split(' ')
+            .filter(function(w){return w.length>3&&!['key','basic','orme','dokuma','triko','icgym'].includes(w);});
+          var s=0;
+          klw.forEach(function(w){if(normalized.includes(w)||w.includes(normalized))s+=3;});
+          if(s>best.score) best={bg:bg,kl:kl,score:s};
+        });
+      });
+    });
+  }
+  return best;
+}
+
 function parseModels(txt){
   var lines=txt.split(/\r?\n/).filter(function(l){return l.trim();});
-  var added=0,skipped=0;
+  var added=0,matched=0,skipped=0;
   lines.forEach(function(line){
     var model=line.trim().replace(/^["']|["']$/g,'');
     if(!model||model.length<2){skipped++;return;}
-    // Check duplicate
     var dup=MDB.some(function(m){return m.model===model;});
     if(!dup){
-      // Normalize: "pnt,ferjo" -> "pnt ferjo", "Swt.by" -> "swt by"
       var n=model.toLowerCase().replace(/[.,\-\/]/g,' ').replace(/\s+/g,' ').trim();
-      MDB.push({model:model,normalized:n,bg:null,kl:null});
+      var match=autoMatchModel(n);
+      MDB.push({model:model,normalized:n,bg:match.bg,kl:match.kl,score:match.score});
       added++;
+      if(match.bg) matched++;
     } else skipped++;
   });
-  toast(added+' model eklendi'+(skipped?' ('+skipped+' atlandı)':''));
+  toast(added+' model eklendi, '+matched+' eşleşti'+(skipped?' ('+skipped+' atlandı)':''));
   showMStats();
   saveMDB();
 }
 
 function showMStats(){
   document.getElementById('mstats').style.display='block';
+  var matched=MDB.filter(function(m){return m.bg;}).length;
   document.getElementById('sm').textContent=MDB.length;
+  var smatch=document.getElementById('smatch');
+  if(smatch) smatch.textContent=matched;
   renderMtbl();
 }
 function renderMtbl(){
   var q=(document.getElementById('msrch').value||'').toLowerCase();
-  var f=MDB.filter(function(m){return !q||m.model.toLowerCase().includes(q);});
+  var f=MDB.filter(function(m){return !q||m.model.toLowerCase().includes(q)||((m.bg||'').toLowerCase().includes(q));});
   var html=f.slice(0,200).map(function(m){
-    return '<tr><td><strong>'+m.model+'</strong></td><td style="color:var(--text3)">'+m.normalized+'</td></tr>';
+    var bgkl=m.bg?('<span style="color:#085041;font-size:11px">'+m.bg+(m.kl?' / '+m.kl:'')+'</span>'):'<span style="color:var(--text3);font-size:11px">— eşleşmedi</span>';
+    return '<tr><td><strong>'+m.model+'</strong><br><span style="color:var(--text3);font-size:11px">'+m.normalized+'</span></td><td>'+bgkl+'</td></tr>';
   }).join('');
   if(f.length>200) html+='<tr><td colspan="2" style="color:var(--text3);text-align:center">+'+(f.length-200)+' daha</td></tr>';
   document.getElementById('mbody').innerHTML=html;
