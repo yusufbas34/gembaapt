@@ -3084,7 +3084,7 @@ function renderRes(){
     html+='<div class="rcard'+cls+'" id="rc'+r.id+'">';
     html+='<div class="rtxt">'+r.text+'</div>';
     html+='<div class="tags" id="tags'+r.id+'"></div>';
-    if(r.reason) html+='<div style="font-size:11px;color:var(--text3);margin-bottom:6px">'+r.reason+'</div>';
+    // reason hidden
     html+='<div id="ep'+r.id+'" style="display:none"></div>';
     if(r.status==='pending'){
       html+='<div class="rbtns"><button class="rbtn ok" onclick="cnf('+r.id+')">✓ Onayla</button>';
