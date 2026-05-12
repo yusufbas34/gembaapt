@@ -242,6 +242,14 @@ app.get('/kw/load', (req, res) => {
   res.json({ok:true, rules});
 });
 
+
+// Model auth endpoint
+app.post('/models/auth', (req, res) => {
+  const {pin} = req.body||{};
+  const MODEL_PIN = process.env.MODEL_PIN || '1923';
+  res.json({ok: pin === MODEL_PIN});
+});
+
 // ── Model DB ────────────────────────────────────────────────────────────────
 const MODEL_FILE = process.env.DATA_PATH
   ? path.join(path.dirname(process.env.DATA_PATH || '/app/data/data.json'), 'models.json')
