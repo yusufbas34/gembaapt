@@ -169,7 +169,7 @@ app.post('/ai/analyze', async (req, res) => {
 
   const feedbacksWithKW = feedbacks.map((f,i) => {
     const kw = kwResults[i]||{};
-    return (i+1)+'. "'+f+'" → KW önerisi: BG='+(kw.bg||'?')+', KL='+(kw.kl||'?');
+    return 'index='+i+': "'+f+'" → KW: BG='+(kw.bg||'?')+', KL='+(kw.kl||'?');
   }).join('\n');
 
   const prompt = `LC Waikiki erkek reyonu mağaza ziyaret sistemi geri bildirim sınıflandırma.
@@ -192,8 +192,10 @@ KRİTİK KURALLAR:
 Geri bildirimler ve KW önerileri:
 ${feedbacksWithKW}
 
-Sadece JSON döndür, başka hiçbir şey yazma:
-[{"index":0,"bg":"BG_ADI veya null","kl":"KL_ADI veya null","confidence":"high/medium/low","reason":"kisa aciklama"}]`;
+Sadece JSON döndür, başka hiçbir şey yazma.
+index değeri 0'dan başlar ve her geri bildirime karşılık gelir.
+reason: O satırın kendisi için kısa açıklama yaz.
+[{"index":0,"bg":"BG_ADI veya null","kl":"KL_ADI veya null","confidence":"high/medium/low","reason":"bu satir icin aciklama"}]`;
 
   try {
     const response = await fetch('https://api.anthropic.com/v1/messages', {
