@@ -169,7 +169,7 @@ textarea{resize:vertical;line-height:1.6}
     <div id="rlist"></div>
     <div id="a2btns" style="display:none;gap:8px">
       <button class="btn bs" style="width:52px;flex-shrink:0" onclick="backToInput()">←</button>
-      <button class="btn bp" onclick="confirmAll()">Tümünü Onayla</button>
+      <button class="btn bp" onclick="finishAnalysis()">✓ Tamamla</button>
     </div>
   </div>
   <div id="a3" style="display:none">
@@ -3235,14 +3235,7 @@ function renderRes(){
     html+='<div class="tags" id="tags'+r.id+'"></div>';
     // reason hidden
     html+='<div id="ep'+r.id+'" style="display:none"></div>';
-    if(r.status==='pending'){
-      html+='<div class="rbtns"><button class="rbtn ok" onclick="cnf('+r.id+')">✓ Onayla</button>';
-      html+='<button class="rbtn sk" onclick="skp('+r.id+')">✕ Boş</button></div>';
-    } else if(r.status==='confirmed'){
-      html+='<div style="font-size:12px;color:var(--green)">✓ Onaylandı</div>';
-    } else {
-      html+='<div style="font-size:12px;color:var(--text3)">— Boş bırakıldı</div>';
-    }
+    // Onaylama yok - tag düzenleme yeterli
     html+='</div>';
   });
   document.getElementById('rlist').innerHTML=html;
@@ -3310,6 +3303,11 @@ function checkDone(){
 }
 function confirmAll(){
   RES.forEach(function(r){if(r.status==='pending'){r.status='confirmed';r.edit=false;}});
+  showSummary();
+}
+function finishAnalysis(){
+  // Tüm pending'leri confirmed yap
+  RES.forEach(function(r){ r.status='confirmed'; r.edit=false; });
   showSummary();
 }
 
@@ -3952,13 +3950,16 @@ function renderHistCards(){
       ? '<span style="background:#e8f0fe;color:#1a56b0;font-size:10px;font-weight:600;padding:2px 8px;border-radius:100px">📱 Telegram</span>'
       : '<span style="background:var(--bg3);color:var(--text3);font-size:10px;padding:2px 8px;border-radius:100px">📋 Manuel</span>';
     var mags = uniq((v.notes||[]).map(function(n){return n.mag;}).filter(Boolean)).join(', ');
-    return '<div class="card" style="cursor:pointer" onclick="openVisit('+i+')">'
-      +'<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px">'
+    return '<div class="card" style="position:relative">'
+      +'<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px" onclick="openVisit('+i+')" >'
       +'<div style="font-size:14px;font-weight:600">'+v.store+'</div>'
       +srcBadge
       +'</div>'
-      +'<div style="font-size:12px;color:var(--text2);margin-bottom:4px">'+v.date+' · '+v.reyon+(mags?' · '+mags:'')+'</div>'
-      +'<div style="font-size:12px;color:var(--text3)">'+(v.notes||[]).length+' not · '+v.user+'</div>'
+      +'<div style="font-size:12px;color:var(--text2);margin-bottom:4px" onclick="openVisit('+i+')">'+v.date+' · '+v.reyon+(mags?' · '+mags:'')+'</div>'
+      +'<div style="display:flex;justify-content:space-between;align-items:center">'
+      +'<div style="font-size:12px;color:var(--text3)" onclick="openVisit('+i+')">'+(v.notes||[]).length+' not · '+v.user+'</div>'
+      +'<button onclick="deleteVisitAI('+i+')" style="background:none;border:none;color:var(--red);font-size:13px;cursor:pointer;padding:4px 8px">Sil</button>'
+      +'</div>'
       +'</div>';
   }).join('');
   document.getElementById('histCards').innerHTML = html;
@@ -3984,16 +3985,16 @@ function openVisit(idx){
       +(g.kl?'<div style="font-size:12px;color:var(--text2);margin-bottom:8px">'+g.kl+'</div>':'')
       + g.notes.map(function(n,ni){
           var noteIdx = v.notes.indexOf(n);
-          return '<div style="padding:8px;background:var(--bg3);border-radius:8px;margin-bottom:6px">'
-            +'<div style="font-size:13px;margin-bottom:6px">• '+n.tx+'</div>'
-            +'<div style="display:flex;gap:6px;flex-wrap:wrap">'
-            +'<select onchange="editNoteBG('+idx+','+noteIdx+',this.value)" style="font-size:12px;padding:4px 8px;border:0.5px solid var(--bd2);border-radius:6px;background:var(--bg);color:var(--text);font-family:DM Sans,sans-serif;outline:none;-webkit-appearance:none">'
+          var selStyle = 'font-size:13px;padding:6px 10px;border:0.5px solid var(--bd2);border-radius:8px;background:var(--bg);color:var(--text);font-family:DM Sans,sans-serif;outline:none;-webkit-appearance:none;width:100%;margin-bottom:6px';
+          return '<div style="padding:10px;background:var(--bg3);border-radius:10px;margin-bottom:8px">'
+            +'<div style="font-size:13px;margin-bottom:8px;color:var(--text)">• '+n.tx+'</div>'
+            +'<select onchange="editNoteBG('+idx+','+noteIdx+',this.value)" style="'+selStyle+'">'
             + buildBGOptions(n.mag, v.reyon, n.bg)
             +'</select>'
-            +'<select id="klsel-'+noteIdx+'" onchange="editNoteKL('+idx+','+noteIdx+',this.value)" style="font-size:12px;padding:4px 8px;border:0.5px solid var(--bd2);border-radius:6px;background:var(--bg);color:var(--text);font-family:DM Sans,sans-serif;outline:none;-webkit-appearance:none">'
+            +'<select id="klsel-'+noteIdx+'" onchange="editNoteKL('+idx+','+noteIdx+',this.value)" style="'+selStyle+'">'
             + buildKLOptions(n.mag, v.reyon, n.bg, n.kl)
             +'</select>'
-            +'</div></div>';
+            +'</div>';
         }).join('')
       +'</div>';
   }).join('');
@@ -4031,9 +4032,26 @@ function editNoteKL(visitIdx, noteIdx, val){
   VISITS[visitIdx].notes[noteIdx].kl = val;
 }
 
-function closeVisit(){
+async function closeVisit(){
+  // Değişiklikleri kaydet
+  if(CURRENT_VISIT){
+    var auth = null;
+    try{ auth = JSON.parse(localStorage.getItem('gemba_auth')||'null'); }catch(e){}
+    if(auth){
+      try{
+        var visitIdx = VISITS.indexOf(CURRENT_VISIT);
+        if(visitIdx >= 0) VISITS[visitIdx] = CURRENT_VISIT;
+        await fetch('/visits/save',{
+          method:'POST',
+          headers:{'Content-Type':'application/json'},
+          body:JSON.stringify({name:auth.name, pin:auth.pin, visit:CURRENT_VISIT})
+        });
+      }catch(e){}
+    }
+  }
   document.getElementById('visitOverlay').style.display='none';
   CURRENT_VISIT = null;
+  renderHistCards();
 }
 
 function sendVisitMail(){
@@ -4085,6 +4103,29 @@ function sendVisitMail(){
   } else {
     window.location.href='mailto:'+encodeURIComponent(to)+'?cc='+encodeURIComponent(cc)+'&subject='+encodeURIComponent(subj)+'&body='+encode(body);
   }
+}
+
+
+async function deleteVisitAI(idx){
+  if(!confirm('Bu ziyaret silinsin mi?')) return;
+  var v = VISITS[idx];
+  var auth = null;
+  try{ auth = JSON.parse(localStorage.getItem('gemba_auth')||'null'); }catch(e){}
+  if(!auth) return;
+
+  try{
+    var r = await fetch('/visits/delete',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({name:auth.name, pin:auth.pin, visitId:v.id})
+    });
+    var d = await r.json();
+    if(d.ok){
+      VISITS.splice(idx,1);
+      renderHistCards();
+      toast('Ziyaret silindi');
+    }
+  }catch(e){ toast('Hata: '+e.message); }
 }
 
 </script>
