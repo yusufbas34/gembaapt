@@ -141,7 +141,7 @@ textarea{resize:vertical;line-height:1.6}
     <div class="card">
       <div class="lbl">Mağaza</div>
       <div class="swrap" id="storeWrapAI">
-        <input type="text" id="storeInputAI" class="sinput" placeholder="Mağaza ara..." autocomplete="off"
+        <input type="text" id="storeInputAI" class="sinput" placeholder="Mağaza ara..." autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" name="store-search-x"
           oninput="filterStoreAI(this.value)" onfocus="openStoreAI()" readonly
           style="background-image:url('data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2212%22 height=%227%22 viewBox=%220 0 12 7%22%3E%3Cpath d=%22M1 1l5 4.5L11 1%22 stroke=%22%23aeaea9%22 stroke-width=%221.5%22 fill=%22none%22/%3E%3C/svg%3E');background-repeat:no-repeat;background-position:right 12px center;cursor:pointer"/>
         <div class="sdrop" id="storeDropAI"></div>
@@ -3861,8 +3861,16 @@ function startTGPolling(token, name){
 function showTGLinked(name, tgName){
   document.getElementById('tgLoginForm').style.display='none';
   document.getElementById('tgQRSection').style.display='none';
+  document.getElementById('tgAutoConnect').style.display='none';
   document.getElementById('tgLinked').style.display='block';
   document.getElementById('tgLinkedName').textContent = name + (tgName ? ' → @'+tgName : '');
+  // Bot linkini server'dan al
+  var botLink = document.getElementById('tgBotLink');
+  fetch('/telegram/bot-info').then(function(r){return r.json();}).then(function(d){
+    if(botLink && d.username) botLink.href = 'https://t.me/'+d.username;
+  }).catch(function(){
+    if(botLink) botLink.href = 'https://t.me/GembaGPTBot';
+  });
 }
 
 function resetTGForm(){
@@ -4152,7 +4160,8 @@ function sendVisitMail(){
       <div style="text-align:center;padding:20px 0">
         <div style="font-size:40px;margin-bottom:10px">✅</div>
         <div style="font-size:16px;font-weight:600;color:var(--green);margin-bottom:6px">Telegram Bağlandı!</div>
-        <div style="font-size:13px;color:var(--text2)" id="tgLinkedName"></div>
+        <div style="font-size:13px;color:var(--text2);margin-bottom:16px" id="tgLinkedName"></div>
+        <a id="tgBotLink" href="#" target="_blank" style="display:block;background:#1a56b0;color:#fff;border-radius:var(--r);padding:14px;font-size:15px;font-weight:500;text-decoration:none;text-align:center;margin-bottom:10px">📱 Telegram Bota Git →</a>
       </div>
       <button class="btn bs" onclick="resetTGForm()">Farklı hesap bağla</button>
     </div>
