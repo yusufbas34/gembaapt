@@ -2931,24 +2931,38 @@ function kwScore(text, mag, reyonName){
   var md = reyonName==='Erkek' ? erkekMAG[mag] : (RD[reyonName]||null);
   if(!md) return {bg:null,kl:null,src:'empty',score:0};
 
-  // 1. Model DB - her kelime parçasını ayrı ara
+  // 1. Model DB - sadece anlamlı model adı eşleşmesi
   var bestModel=null, bestModelScore=0;
-  // Metindeki kelimeleri de parçala
   var textWords = n.split(/[\s,.\/\-]+/).filter(function(p){return p.length>1;});
+  
+  // Model adlarındaki genel/anlamsız kelimeler - bunlar tek başına eşleşme sayılmaz
+  var MODEL_STOP = ['pantolon','gomlek','tisort','tshirt','sweat','hirka','kazak',
+    'mont','sort','bermuda','atlet','pijama','jean','denim','orme','dokuma',
+    'basic','klasman','urun','model','kol','kisa','uzun','ince','kalin'];
+
   for(var i=0;i<MDB.length;i++){
     var m=MDB[i];
-    var mParts=m.normalized.split(/[\s,.\/\-]+/).filter(function(p){return p.length>1;});
+    // Model adının ÖZGÜN parçalarını bul (stop word olmayan)
+    var mParts=m.normalized.split(/[\s,.\/\-]+/).filter(function(p){
+      return p.length>2 && !MODEL_STOP.includes(p);
+    });
+    // Özgün parça yoksa bu model çok genel — atla
     if(!mParts.length) continue;
+    
     var score=0;
-    // Model parçaları metinde geçiyor mu?
+    var matchedParts=0;
     mParts.forEach(function(mp){
-      if(n.includes(mp)) score+=mp.length; // uzun kelimeye daha fazla puan
+      if(n.includes(mp)){
+        score+=mp.length*2; // özgün kelimeye yüksek puan
+        matchedParts++;
+      }
     });
-    // Metin kelimeleri model adında geçiyor mu?
-    textWords.forEach(function(tw){
-      if(tw.length>2 && m.normalized.includes(tw)) score+=tw.length;
-    });
-    if(score>2 && score>bestModelScore){bestModelScore=score;bestModel=m;}
+    
+    // En az bir özgün parça eşleşmeli VE minimum 4 karakter skor
+    if(matchedParts>=1 && score>=4 && score>bestModelScore){
+      bestModelScore=score;
+      bestModel=m;
+    }
   }
   if(bestModel){
     return {bg:bestModel.bg||null, kl:bestModel.kl||null, src:'model', model:bestModel.model, score:100};
