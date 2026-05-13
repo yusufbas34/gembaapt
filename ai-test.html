@@ -9,15 +9,15 @@
 :root{--bg:#fff;--bg2:#f6f5f2;--bg3:#eeedea;--text:#1a1a18;--text2:#6b6b67;--text3:#aeaea9;--bd:rgba(0,0,0,0.09);--bd2:rgba(0,0,0,0.16);--acc:#1a1a18;--green:#1a9e6e;--red:#e03e3e;--yellow:#c8900a;--r:12px;}
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;padding:0 0 80px}
-.hdr{text-align:center;padding:28px 20px 18px;background:linear-gradient(135deg,#1a1a18 0%,#2d2d2a 100%);color:#fff;margin-bottom:0}
-.hdr-logo{display:flex;align-items:center;justify-content:center;gap:10px;margin-bottom:6px}
-.hdr-icon{width:40px;height:40px;background:linear-gradient(135deg,#f0c040,#e08020);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0}
-.hdr h1{font-size:22px;font-weight:700;letter-spacing:-.4px;color:#fff}
-.hdr h1 span{color:rgba(255,255,255,.5);font-weight:400}
-.badge{display:inline-block;background:rgba(255,255,255,.1);border:0.5px solid rgba(255,255,255,.2);border-radius:100px;padding:4px 14px;font-size:11px;color:rgba(255,255,255,.7);margin-top:4px;letter-spacing:.05em}
-.tabs{background:#fff;border-bottom:0.5px solid var(--bd);margin-bottom:0;padding:0 16px;display:flex;gap:0}
-.tab{flex:1;padding:12px 4px;text-align:center;font-size:13px;font-weight:500;color:var(--text3);cursor:pointer;border-radius:0;background:none;border-bottom:2px solid transparent;transition:all .15s;margin-bottom:-0.5px}
-.tab.on{color:var(--acc);border-bottom-color:var(--acc);background:none}
+.hdr{text-align:center;padding:20px 20px 0;background:#fff;border-bottom:0.5px solid var(--bd)}
+.hdr-logo{display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:4px}
+.hdr-icon{width:32px;height:32px;background:#1a1a18;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0}
+.hdr h1{font-size:20px;font-weight:700;letter-spacing:-.5px;color:#1a1a18}
+.hdr h1 span{color:var(--text3);font-weight:400}
+.badge{display:inline-block;background:var(--bg2);border:0.5px solid var(--bd2);border-radius:100px;padding:3px 12px;font-size:10px;color:var(--text3);margin-bottom:12px;letter-spacing:.04em}
+.tabs{background:#fff;border-bottom:0.5px solid var(--bd);padding:0 16px;display:flex;gap:0}
+.tab{flex:1;padding:11px 4px;text-align:center;font-size:13px;font-weight:500;color:var(--text3);cursor:pointer;border-radius:0;background:none;border-bottom:2px solid transparent;transition:all .15s}
+.tab.on{color:#1a1a18;border-bottom-color:#1a1a18;font-weight:600}
 .pg{padding:16px}
 .tabs{display:flex;padding:0 16px;gap:6px;margin-bottom:14px}
 .tab{flex:1;padding:10px 4px;text-align:center;font-size:13px;font-weight:500;color:var(--text3);cursor:pointer;border-radius:10px;background:var(--bg2);transition:all .15s}
@@ -25,11 +25,11 @@ body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;pad
 .pg{display:none;padding:0 16px}
 .pg.on{display:block}
 .card{background:var(--bg2);border-radius:14px;padding:16px;margin-bottom:12px;border:0.5px solid var(--bd)}
-.lbl{font-size:11px;font-weight:700;color:var(--acc);text-transform:uppercase;letter-spacing:.1em;margin-bottom:10px}
+.lbl{font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.08em;margin-bottom:10px}
 select,textarea,input[type=text]{width:100%;padding:12px 14px;border:0.5px solid var(--bd2);border-radius:var(--r);font-family:'DM Sans',sans-serif;font-size:15px;color:var(--text);background:var(--bg);outline:none;-webkit-appearance:none}
 textarea{resize:vertical;line-height:1.6}
 .btn{width:100%;padding:14px;border:none;border-radius:var(--r);font-family:'DM Sans',sans-serif;font-size:15px;font-weight:500;cursor:pointer;margin-bottom:10px}
-.bp{background:linear-gradient(135deg,#1a1a18,#2d2d2a);color:#fff;box-shadow:0 2px 8px rgba(0,0,0,.15)}
+.bp{background:#1a1a18;color:#fff}
 .bs{background:var(--bg2);color:var(--text);border:0.5px solid var(--bd2)}
 .btn:disabled{opacity:.4}
 .steps{display:flex;gap:6px;margin-bottom:16px;padding:0 4px}
@@ -115,10 +115,10 @@ textarea{resize:vertical;line-height:1.6}
 <body>
 <div class="hdr">
   <div class="hdr-logo">
-    <div class="hdr-icon">🗺️</div>
+    <div class="hdr-icon">📍</div>
     <h1>Gemba<span>GPT</span></h1>
   </div>
-  <div class="badge">✦ AI Analiz Motoru</div>
+  <div class="badge">AI Analiz Motoru</div>
 </div>
 <div class="tabs">
   <div class="tab on" id="tab-a" onclick="goTab('a')">Analiz</div>
@@ -2912,19 +2912,24 @@ function kwScore(text, mag, reyonName){
   var md = reyonName==='Erkek' ? erkekMAG[mag] : (RD[reyonName]||null);
   if(!md) return {bg:null,kl:null,src:'empty',score:0};
 
-  // 1. Model DB - smart match with score
+  // 1. Model DB - her kelime parçasını ayrı ara
   var bestModel=null, bestModelScore=0;
+  // Metindeki kelimeleri de parçala
+  var textWords = n.split(/[\s,.\/\-]+/).filter(function(p){return p.length>1;});
   for(var i=0;i<MDB.length;i++){
     var m=MDB[i];
-    var parts=m.normalized.split(' ').filter(function(p){return p.length>1;});
-    if(!parts.length) continue;
-    var hits=0,total=parts.length;
-    parts.forEach(function(p){
-      if(n===p) hits+=2;
-      else if(n.includes(p)||p.includes(n.replace(/[^a-z]/g,'').trim())) hits+=1;
+    var mParts=m.normalized.split(/[\s,.\/\-]+/).filter(function(p){return p.length>1;});
+    if(!mParts.length) continue;
+    var score=0;
+    // Model parçaları metinde geçiyor mu?
+    mParts.forEach(function(mp){
+      if(n.includes(mp)) score+=mp.length; // uzun kelimeye daha fazla puan
     });
-    var ratio=hits/total;
-    if(ratio>=0.5 && hits>bestModelScore){bestModelScore=hits;bestModel=m;}
+    // Metin kelimeleri model adında geçiyor mu?
+    textWords.forEach(function(tw){
+      if(tw.length>2 && m.normalized.includes(tw)) score+=tw.length;
+    });
+    if(score>2 && score>bestModelScore){bestModelScore=score;bestModel=m;}
   }
   if(bestModel){
     return {bg:bestModel.bg||null, kl:bestModel.kl||null, src:'model', model:bestModel.model, score:100};
@@ -2943,30 +2948,33 @@ function kwScore(text, mag, reyonName){
   // 3. KW scoring - score ALL rules, pick highest
   // Priority rules win immediately if matched
   var scores={};
-  var priorityHit=null;
   (KW||[]).forEach(function(rule){
     if(rule.mag && rule.mag!==mag) return;
     if(!bgList.includes(rule.bg)) return;
     var ruleScore=0;
     (rule.kw||[]).forEach(function(kw){
-      var kwn=nr(kw);
-      if(n===kwn) ruleScore+=10;
-      else if(n.includes(kwn)) ruleScore+=5;
-      else if(kwn.includes(n)) ruleScore+=2;
-    });
-    if(ruleScore>0){
-      // Priority kuralı: anında döndür
-      if(rule.priority && ruleScore>=5){
-        if(!priorityHit || ruleScore>priorityHit.score){
-          priorityHit={bg:rule.bg,kl:rule.kl||null,score:ruleScore};
+      // kw format: "kelime" veya "!kelime" (öncelikli)
+      var isPriority = typeof kw==='object' ? kw.p : (kw.charAt(0)==='!');
+      var kwStr = typeof kw==='object' ? kw.w : (isPriority ? kw.slice(1) : kw);
+      var kwn=nr(kwStr);
+      var matchScore=0;
+      if(n===kwn) matchScore=10;
+      else if(n.includes(kwn)) matchScore=5;
+      else if(kwn.includes(n)) matchScore=2;
+      if(matchScore>0){
+        // Öncelikli kelime eşleşti - bu klasmana 100 bonus ver
+        if(isPriority && matchScore>=5){
+          ruleScore+=matchScore+100;
+        } else {
+          ruleScore+=matchScore;
         }
       }
+    });
+    if(ruleScore>0){
       var key=rule.bg+'|||'+(rule.kl||'');
       scores[key]=(scores[key]||0)+ruleScore;
     }
   });
-
-  if(priorityHit) return {bg:priorityHit.bg,kl:priorityHit.kl,src:'kw',score:priorityHit.score+50};
 
   // Find best scoring rule
   var bestKey=null, bestScore=0;
@@ -2979,21 +2987,43 @@ function kwScore(text, mag, reyonName){
     return {bg:parts2[0], kl:parts2[1]||null, src:'kw', score:bestScore};
   }
 
-  // 4. KL name direct match - scan all KLs
+  // 4. KL puanlama sistemi - tüm KL'lere puan ver
   var klData=md.kl||{};
-  var bestKLScore=0, bestBG=null, bestKL=null;
+  var klScores=[];
+  var STOP_WORDS=['key','basic','cl','orme','dokuma','triko','icgym','aksesuar','classic','sort','takim','gomlek'];
+
   Object.keys(klData).forEach(function(bg){
     (klData[bg]||[]).forEach(function(kl){
-      var klWords=nr(kl).replace(/\//g,' ').replace(/\./g,' ').split(' ')
-        .filter(function(w){return w.length>3 && !['basic','orme','dokuma','triko','icgym','aksesuar','key'].includes(w);});
-      var s=0;
-      klWords.forEach(function(w){if(n.includes(w))s+=3;});
-      if(s>bestKLScore){bestKLScore=s;bestBG=bg;bestKL=kl;}
+      var klNorm=nr(kl).replace(/[.\/\-]/g,' ');
+      var klWords=klNorm.split(' ').filter(function(w){
+        return w.length>2 && !STOP_WORDS.includes(w);
+      });
+      var score=0;
+
+      // Her KL kelimesini metinde ara
+      klWords.forEach(function(w){
+        if(n===w) score+=w.length*3;          // tam eşleşme
+        else if(n.includes(w)) score+=w.length*2; // metin içinde
+        else if(w.includes(n) && n.length>2) score+=n.length; // kısmi
+      });
+
+      // Metin kelimelerini KL'de ara
+      textWords.forEach(function(tw){
+        if(tw.length>2 && klNorm.includes(tw)) score+=tw.length;
+      });
+
+      if(score>0) klScores.push({bg:bg,kl:kl,score:score});
     });
   });
 
-  if(bestBG && bestKLScore>0){
-    return {bg:bestBG, kl:bestKL, src:'kw', score:bestKLScore};
+  // En yüksek puanlı KL'yi seç
+  if(klScores.length>0){
+    klScores.sort(function(a,b){return b.score-a.score;});
+    var winner=klScores[0];
+    // Minimum eşik: skor anlamlı olmalı
+    if(winner.score>=4){
+      return {bg:winner.bg, kl:winner.kl, src:'kw', score:winner.score};
+    }
   }
 
   return {bg:null,kl:null,src:'empty',score:0};
@@ -3398,11 +3428,17 @@ function renderKW(){
         ris.forEach(function(ri){
           html+='<div class="kchips" id="kchips'+ri+'">';
           (KW[ri].kw||[]).forEach(function(kw,ki){
-            html+='<div class="kchip">'+kw+'<button onclick="delKW('+ri+','+ki+')">×</button></div>';
+            var isPrio = typeof kw==='object' ? kw.p : (typeof kw==='string' && kw.charAt(0)==='!');
+            var kwLabel = typeof kw==='object' ? kw.w : (isPrio ? kw.slice(1) : kw);
+            var style = isPrio ? 'background:#fff8e0;border-color:#f0c040;color:#7a5200' : '';
+            html+='<div class="kchip" style="'+style+'">';
+            html+=(isPrio?'⭐ ':'')+kwLabel;
+            html+='<button onclick="toggleKWPriority('+ri+','+ki+')" style="color:'+(isPrio?'#c8900a':'var(--text3)')+'">★</button>';
+            html+='<button onclick="delKW('+ri+','+ki+')">×</button></div>';
           });
           html+='</div>';
           html+='<div class="kadd" id="kadd'+ri+'" style="display:none">';
-          html+='<input class="kinput" id="kin'+ri+'" placeholder="Kelime...">';
+          html+='<input class="kinput" id="kin'+ri+'" placeholder="Kelime... (!kelime = öncelikli)">';
           html+='<button class="kbtn" onclick="addKW('+ri+')">Ekle</button>';
           html+='<button class="kbtn" onclick="hideKAdd('+ri+')">İptal</button></div>';
         });
@@ -3426,12 +3462,35 @@ function togglePriority(ri){
   KW[ri].priority=!KW[ri].priority;
   renderKW();
 }
+function toggleKWPriority(ri, ki){
+  if(!KW[ri]||!KW[ri].kw) return;
+  var kw = KW[ri].kw[ki];
+  // Normalize to object format
+  if(typeof kw === 'string'){
+    var isPrio = kw.charAt(0)==='!';
+    var word = isPrio ? kw.slice(1) : kw;
+    // Toggle: if not priority, make priority; if priority, remove
+    KW[ri].kw[ki] = isPrio ? word : '!'+word;
+  } else if(typeof kw === 'object'){
+    KW[ri].kw[ki] = {w: kw.w, p: !kw.p};
+  }
+  renderKW();
+}
 function addKW(ri){
   var inp=document.getElementById('kin'+ri);
-  var v=inp.value.trim().toLowerCase();
+  var raw=inp.value.trim();
+  if(!raw) return;
+  // ! ile başlıyorsa öncelikli kelime
+  var isPrio = raw.charAt(0)==='!';
+  var v = (isPrio ? raw.slice(1) : raw).toLowerCase();
   if(!v) return;
   if(!KW[ri].kw) KW[ri].kw=[];
-  if(!KW[ri].kw.includes(v)) KW[ri].kw.push(v);
+  var word = isPrio ? '!'+v : v;
+  // Check duplicate (both forms)
+  var exists = KW[ri].kw.some(function(k){
+    return (typeof k==='string'?(k.replace(/^!/,'')):(k.w||''))===v;
+  });
+  if(!exists) KW[ri].kw.push(word);
   inp.value='';
   renderKW();
 }
