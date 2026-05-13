@@ -305,6 +305,13 @@ ${feedbacks.map((f,i)=>`${i}. "${f}"`).join('\n')}`;
 const TG_USERS_FILE = path.join(path.dirname(DATA_FILE), 'tg_users.json');
 const TG_TOKENS_FILE = path.join(path.dirname(DATA_FILE), 'tg_tokens.json');
 
+// In-memory session storage
+const tgSessions = {}; // {tgId: {store, mag, feedbacks, lastMsgAt, timeout}}
+
+function getSession(tgId){ return tgSessions[tgId]||null; }
+function setSession(tgId, data){ tgSessions[tgId] = {...data, lastMsgAt: Date.now()}; }
+function clearSession(tgId){ delete tgSessions[tgId]; }
+
 function loadTGUsers(){ try{ return JSON.parse(fs.readFileSync(TG_USERS_FILE,'utf8')); }catch(e){ return {}; } }
 function saveTGUsers(d){ fs.writeFileSync(TG_USERS_FILE, JSON.stringify(d,null,2)); }
 function loadTGTokens(){ try{ return JSON.parse(fs.readFileSync(TG_TOKENS_FILE,'utf8')); }catch(e){ return {}; } }
@@ -387,7 +394,7 @@ app.post('/telegram/webhook', async (req, res) => {
   if(text.startsWith('/start')){
     const token = text.split(' ')[1];
     if(!token){
-      sendTGMsg(chatId, '👋 Merhaba! GembaGPT'e bağlanmak için uygulamadan QR kodu okutun.');
+      sendTGMsg(chatId, '👋 Merhaba! GembaGPT uygulamasindan QR kodu okutun.');
       return;
     }
     const tokens = loadTGTokens();
@@ -416,25 +423,82 @@ app.post('/telegram/webhook', async (req, res) => {
     return;
   }
 
-  // Geri bildirim parse et
+  // Özel komutları kontrol et
+  const lowerText = text.toLowerCase().trim();
+  
+  // İPTAL
+  if(lowerText==='iptal' || lowerText==='cancel' || lowerText==='sil'){
+    const sess = getSession(tgId);
+    if(sess){
+      clearSession(tgId);
+      sendTGMsg(chatId, '🗑 Oturum iptal edildi. Yeni geri bildirim için mağaza adıyla başlayın.');
+    } else {
+      sendTGMsg(chatId, 'Aktif oturum yok.');
+    }
+    return;
+  }
+
+  // GÖNDER / TAMAM - mevcut oturumu analiz et
+  if(lowerText==='gönder'||lowerText==='gonder'||lowerText==='tamam'||lowerText==='ok'||lowerText==='✓'){
+    const sess = getSession(tgId);
+    if(!sess||!sess.feedbacks||!sess.feedbacks.length){
+      sendTGMsg(chatId, '❌ Gönderilecek geri bildirim yok. Önce mağaza ve geri bildirimleri yazın.');
+      return;
+    }
+    clearSession(tgId);
+    await processAnalysis(chatId, user, sess.store, sess.mag, sess.feedbacks);
+    return;
+  }
+
+  // Mevcut oturum var mı?
+  const existingSession = getSession(tgId);
   const lines = text.split('\n').map(l=>l.trim()).filter(Boolean);
+
+  if(existingSession){
+    // Oturuma ek geri bildirimler ekle
+    const newFeedbacks = lines.map(l=>l.replace(/^[-•*\d.)]\s*/,'')).filter(function(l){return l.length>2;});
+    if(newFeedbacks.length){
+      existingSession.feedbacks.push(...newFeedbacks);
+      setSession(tgId, existingSession);
+      sendTGMsg(chatId, `➕ ${newFeedbacks.length} geri bildirim eklendi. Toplam: <b>${existingSession.feedbacks.length}</b>\n\nDevam etmek için daha fazla yazın veya <b>tamam</b> yazarak analiz edin.\n<b>iptal</b> yazarak oturumu silebilirsiniz.`);
+    } else {
+      sendTGMsg(chatId, '❓ Geri bildirim anlaşılamadı. Her satıra - ile başlayan geri bildirim yazın veya <b>tamam</b> yazın.');
+    }
+    return;
+  }
+
+  // Yeni oturum başlat
   if(lines.length < 2){
-    sendTGMsg(chatId, `👋 Merhaba <b>${user.name}</b>!\n\nGeri bildirim formatı:\n<b>MAĞAZA ADI</b>\n<b>MAG</b>\n- Geri bildirim 1\n- Geri bildirim 2`);
+    sendTGMsg(chatId, `👋 Merhaba <b>${user.name}</b>!\n\nFormat:\n<code>MAĞAZA ADI\nMAG\n- Geri bildirim 1\n- Geri bildirim 2</code>`);
     return;
   }
 
   const store = lines[0];
   const mag = lines[1].toUpperCase().trim();
-  const feedbacks = lines.slice(2).map(l=>l.replace(/^[-•*]\s*/,'')).filter(Boolean);
-  
+  const feedbacks = lines.slice(2).map(l=>l.replace(/^[-•*\d.)]\s*/,'')).filter(function(l){return l.length>2;});
+
   if(!feedbacks.length){
-    sendTGMsg(chatId, '❌ Geri bildirim bulunamadı. Her satıra - ile başlayan geri bildirim yazın.');
+    // Mağaza ve MAG alındı ama geri bildirim yok - oturum aç ve bekle
+    setSession(tgId, {store, mag, feedbacks:[]});
+    sendTGMsg(chatId, `📋 <b>${store}</b> / <b>${mag}</b> oturumu başlatıldı.\n\nGeri bildirimlerinizi yazın (- ile başlayarak). Bitince <b>tamam</b> yazın.`);
     return;
   }
 
-  sendTGMsg(chatId, `⏳ <b>${store}</b> / <b>${mag}</b> için ${feedbacks.length} geri bildirim analiz ediliyor...`);
+  // Hem mağaza hem geri bildirimler var - oturuma kaydet ve kullanıcıya sor
+  setSession(tgId, {store, mag, feedbacks});
+  sendTGMsg(chatId, `📋 <b>${store}</b> / <b>${mag}</b>\n${feedbacks.length} geri bildirim alındı:\n\n${feedbacks.map(f=>'• '+f).join('\n')}\n\n<b>tamam</b> - analiz et\n<b>iptal</b> - sil\nYa da daha fazla geri bildirim ekleyin`);
+  return;
 
-  // AI analiz
+  // Bu noktaya gelmez ama store/mag/feedbacks tanımlı olsun
+  const store2 = store, mag2 = mag;
+  sendTGMsg(chatId, `⏳ <b>${store2}</b> / <b>${mag2}</b> için ${feedbacks.length} geri bildirim analiz ediliyor...`);
+
+  // Bu noktaya artık gelmiyor - processAnalysis fonksiyonu kullanılıyor
+});
+
+async function processAnalysis(chatId, user, store, mag, feedbacks){
+  sendTGMsg(chatId, `⏳ <b>${store}</b> / <b>${mag}</b> için ${feedbacks.length} geri bildirim analiz ediliyor...`);
+  
   const ANTHROPIC_KEY = process.env.ANTHROPIC_API_KEY;
   if(!ANTHROPIC_KEY){ sendTGMsg(chatId, '❌ AI servisi yapılandırılmamış.'); return; }
 
@@ -442,8 +506,7 @@ app.post('/telegram/webhook', async (req, res) => {
     const prompt = `LC Waikiki mağaza ziyaret geri bildirimlerini sınıflandır.
 MAG: ${mag}
 
-Her geri bildirim için en uygun Buyer Grup belirle.
-Emin değilsen GENEL yaz.
+Her geri bildirim için en uygun Buyer Grup belirle. Emin değilsen GENEL yaz.
 
 Geri bildirimler:
 ${feedbacks.map((f,i)=>`${i}. "${f}"`).join('\n')}
@@ -454,30 +517,35 @@ JSON döndür:
     const aiResp = await fetch('https://api.anthropic.com/v1/messages',{
       method:'POST',
       headers:{'Content-Type':'application/json','x-api-key':ANTHROPIC_KEY,'anthropic-version':'2023-06-01'},
-      body: JSON.stringify({model:'claude-haiku-4-5-20251001', max_tokens:500, messages:[{role:'user',content:prompt}]})
+      body: JSON.stringify({model:'claude-haiku-4-5-20251001', max_tokens:800, messages:[{role:'user',content:prompt}]})
     });
     const aiData = await aiResp.json();
     const aiText = aiData.content&&aiData.content[0] ? aiData.content[0].text : '[]';
     const aiResults = JSON.parse(aiText.replace(/```json|```/g,'').trim());
 
-    // Özet oluştur
-    let summary = `✅ <b>${store}</b> - <b>${mag}</b>\n<i>${user.name} tarafından</i>\n\n`;
+    // Özet oluştur - BG'ye göre grupla
+    const groups = {};
     feedbacks.forEach((f,i)=>{
-      const r = aiResults.find(a=>a.index===i)||{};
-      summary += `• ${f}\n`;
-      if(r.bg) summary += `  📦 ${r.bg}${r.kl?' / '+r.kl:''}\n`;
+      const r = aiResults.find(a=>a.index===i)||{bg:'GENEL'};
+      const key = r.bg||'GENEL';
+      if(!groups[key]) groups[key]=[];
+      groups[key].push(f);
+    });
+
+    let summary = '✅ <b>'+store+'</b> — <b>'+mag+'</b>\n<i>'+user.name+'</i>\n\n';
+    Object.keys(groups).forEach(function(bg){
+      summary += '👔 <b>'+bg+'</b>\n';
+      groups[bg].forEach(function(f){ summary += '  • '+f+'\n'; });
       summary += '\n';
     });
 
-    // Admin'e gönder
     if(TG_CHAT) sendTGMsg(TG_CHAT, summary);
-    // Çalışana da gönder
-    sendTGMsg(chatId, summary + '\n✅ Geri bildirimler kaydedildi!');
+    sendTGMsg(chatId, summary+'✅ Kaydedildi! Yeni ziyaret için mağaza adıyla başlayın.');
 
   }catch(e){
-    sendTGMsg(chatId, '❌ Analiz sırasında hata: '+e.message);
+    sendTGMsg(chatId, '❌ Analiz hatası: '+e.message);
   }
-});
+}
 
 // Webhook ayarla
 app.get('/telegram/set-webhook', (req, res) => {
