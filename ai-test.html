@@ -3176,6 +3176,8 @@ function buildResults(all,kwRes,aiRes){
       finalSrc=kw.src;
       if(kw.bg) addLog('→ '+(i+1)+'. KW kullanıldı: '+kw.bg,'#6b6b67');
     }
+    // Hiçbir şey bulunamadıysa GENEL'e at
+    if(!finalBG){ finalBG='GENEL'; finalKL='GENEL'; finalSrc='genel'; }
     RES.push({id:i,text:item.text,mag:item.mag,reyon:item.reyon,bg:finalBG,kl:finalKL,src:finalSrc,reason:ai.reason||'',kwScore:kw.score||0,aiConf:ai.confidence||'',model:kw.model||'',status:'pending',edit:false});
   });
   document.getElementById('phase').innerHTML='<span style="color:#1a9e6e;font-weight:500">✓ Tamamlandı</span>';
