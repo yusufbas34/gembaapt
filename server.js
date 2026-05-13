@@ -172,30 +172,35 @@ app.post('/ai/analyze', async (req, res) => {
     return 'index='+i+': "'+f+'" → KW: BG='+(kw.bg||'?')+', KL='+(kw.kl||'?');
   }).join('\n');
 
-  const prompt = `LC Waikiki erkek reyonu mağaza ziyaret sistemi geri bildirim sınıflandırma.
+  const prompt = `LC Waikiki mağaza ziyaret geri bildirim sınıflandırma sistemi.
 
 MAG: ${mag}
-Geçerli Buyer Gruplar: ${bgList}
-Geçerli Klasmanlar (BG -> KL eşlemesi):
+Buyer Gruplar: ${bgList}
+Klasmanlar:
 ${klSummary}
 
-GÖREV: Her geri bildirim için doğru BG ve KL belirle.
+GÖREV: Her geri bildirimi ürün kategorisine göre sınıflandır.
 
-KRİTİK KURALLAR:
-1. SADECE yukarıda listelenen BG ve KL değerlerini kullan. Listede olmayan değer yazma.
-2. Anahtar kelime analizi (KW) zaten bir öneri sunmuş. KW önerisini YALNIZCA açıkça yanlışsa değiştir.
-3. KW önerisi mantıklıysa aynen kabul et, "high" confidence ver.
-4. Emin değilsen KW önerisini koru, değiştirme.
-5. Hiçbir BG veya KL bulamıyorsan null yaz.
-6. Uydurma, tahmin etme — sadece metinde açıkça geçen ürün/kategori bilgisine dayan.
+TEMEL MANTIK — önce ürün tipini anla:
+- "üst / tişört / gömlek / sweat / kazak / hirka / atlet / bluz" → üst giyim klasmanı
+- "pantolon / chino / jean / şort / bermuda / alt" → alt giyim klasmanı  
+- "mont / kaban / parka / yelek / ceket" → dış giyim klasmanı
+- "v yaka / bisiklet yaka / polo yaka" → o yaka tipinin tişörtü
+- "ince / kalın / orta" → ürün kalınlığı/ağırlığı — ürün tipini değiştirmez!
+- Model adı (örn: Dubar, Scup, Zero, Ferjo) → o modelin ait olduğu kategori
 
-Geri bildirimler ve KW önerileri:
+KURALLAR:
+1. Sadece yukarıdaki listede olan BG ve KL değerlerini kullan.
+2. KW önerisi verilmiş ama sen BAĞIMSIZ düşün — geri bildirimin ürün tipine bak.
+3. KW açıkça yanlışsa (üst ürün → pantolon klasmanı gibi) DÜZELt, high confidence ver.
+4. KW mantıklıysa aynen kabul et.
+5. Emin değilsen null bırak, uydurma.
+
+Geri bildirimler (KW önerisiyle):
 ${feedbacksWithKW}
 
-Sadece JSON döndür, başka hiçbir şey yazma.
-index değeri 0'dan başlar ve her geri bildirime karşılık gelir.
-reason: O satırın kendisi için kısa açıklama yaz.
-[{"index":0,"bg":"BG_ADI veya null","kl":"KL_ADI veya null","confidence":"high/medium/low","reason":"bu satir icin aciklama"}]`;
+JSON döndür:
+[{"index":0,"bg":"BG_ADI","kl":"KL_ADI_veya_null","confidence":"high/medium/low","reason":"1 satir aciklama"}]`;
 
   try {
     const response = await fetch('https://api.anthropic.com/v1/messages', {
