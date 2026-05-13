@@ -300,6 +300,204 @@ ${feedbacks.map((f,i)=>`${i}. "${f}"`).join('\n')}`;
   }
 });
 
+
+// ── Telegram Bot Entegrasyonu ────────────────────────────────────────────────
+const TG_USERS_FILE = path.join(path.dirname(DATA_FILE), 'tg_users.json');
+const TG_TOKENS_FILE = path.join(path.dirname(DATA_FILE), 'tg_tokens.json');
+
+function loadTGUsers(){ try{ return JSON.parse(fs.readFileSync(TG_USERS_FILE,'utf8')); }catch(e){ return {}; } }
+function saveTGUsers(d){ fs.writeFileSync(TG_USERS_FILE, JSON.stringify(d,null,2)); }
+function loadTGTokens(){ try{ return JSON.parse(fs.readFileSync(TG_TOKENS_FILE,'utf8')); }catch(e){ return {}; } }
+function saveTGTokens(d){ fs.writeFileSync(TG_TOKENS_FILE, JSON.stringify(d,null,2)); }
+
+function sendTGMsg(chatId, text){
+  if(!TG_TOKEN) return;
+  const body = JSON.stringify({chat_id:chatId, text, parse_mode:'HTML'});
+  const req = https.request({
+    hostname:'api.telegram.org',
+    path:`/bot${TG_TOKEN}/sendMessage`,
+    method:'POST',
+    headers:{'Content-Type':'application/json','Content-Length':Buffer.byteLength(body)}
+  }, (res)=>{ res.on('data',()=>{}); });
+  req.on('error',()=>{});
+  req.write(body); req.end();
+}
+
+// Token üret - ai-test'ten çağrılır
+app.post('/telegram/create-token', (req, res) => {
+  const {name, pin} = req.body||{};
+  if(!name||!pin) return res.json({ok:false, error:'Ad ve PIN gerekli'});
+  
+  // Kullanıcıyı doğrula
+  const data = loadData();
+  const userKey = Object.keys(data.users||{}).find(k => {
+    const u = data.users[k];
+    return u.name === name && u.pin === pin;
+  });
+  if(!userKey) return res.json({ok:false, error:'Kullanıcı bulunamadı'});
+  
+  // Token üret
+  const token = Math.random().toString(36).slice(2) + Math.random().toString(36).slice(2);
+  const tokens = loadTGTokens();
+  tokens[token] = {name, createdAt: Date.now(), expires: Date.now() + 10*60*1000}; // 10 dakika
+  saveTGTokens(tokens);
+  
+  const botUsername = process.env.TELEGRAM_BOT_USERNAME || 'GembaGPTBot';
+  res.json({ok:true, token, botUrl:`https://t.me/${botUsername}?start=${token}`});
+});
+
+// Token durumu kontrol
+app.get('/telegram/check-token/:token', (req, res) => {
+  const tokens = loadTGTokens();
+  const t = tokens[req.params.token];
+  if(!t) return res.json({ok:false, status:'invalid'});
+  if(t.linkedTgId) return res.json({ok:true, status:'linked', name:t.name});
+  if(Date.now() > t.expires) return res.json({ok:false, status:'expired'});
+  res.json({ok:true, status:'pending'});
+});
+
+// Bağlı Telegram hesabını getir
+app.post('/telegram/get-link', (req, res) => {
+  const {name, pin} = req.body||{};
+  if(!name||!pin) return res.json({ok:false});
+  const data = loadData();
+  const userKey = Object.keys(data.users||{}).find(k => {
+    const u = data.users[k];
+    return u.name === name && u.pin === pin;
+  });
+  if(!userKey) return res.json({ok:false});
+  const tgUsers = loadTGUsers();
+  const linked = Object.values(tgUsers).find(u => u.name === name);
+  res.json({ok:true, linked: !!linked, tgName: linked ? linked.tgName : null});
+});
+
+// Telegram Webhook - bottan gelen mesajlar
+app.post('/telegram/webhook', async (req, res) => {
+  res.json({ok:true}); // Telegram'a hemen 200 ver
+  const update = req.body;
+  if(!update.message) return;
+  
+  const msg = update.message;
+  const chatId = msg.chat.id;
+  const tgId = msg.from.id.toString();
+  const text = (msg.text||'').trim();
+  const tgName = [msg.from.first_name, msg.from.last_name].filter(Boolean).join(' ');
+
+  // /start token ile gelen bağlantı
+  if(text.startsWith('/start')){
+    const token = text.split(' ')[1];
+    if(!token){
+      sendTGMsg(chatId, '👋 Merhaba! GembaGPT'e bağlanmak için uygulamadan QR kodu okutun.');
+      return;
+    }
+    const tokens = loadTGTokens();
+    const t = tokens[token];
+    if(!t){ sendTGMsg(chatId, '❌ Geçersiz veya süresi dolmuş bağlantı. Uygulamadan yeni QR kod alın.'); return; }
+    if(Date.now() > t.expires){ sendTGMsg(chatId, '⏰ QR kodun süresi dolmuş. Uygulamadan yeni QR kod alın.'); return; }
+    
+    // Bağla
+    const tgUsers = loadTGUsers();
+    tgUsers[tgId] = {name: t.name, tgName, tgId, linkedAt: Date.now()};
+    saveTGUsers(tgUsers);
+    
+    t.linkedTgId = tgId;
+    tokens[token] = t;
+    saveTGTokens(tokens);
+    
+    sendTGMsg(chatId, `✅ Merhaba <b>${t.name}</b>! Telegram hesabın GembaGPT'e bağlandı.\n\nArtık geri bildirim gönderebilirsin. Format:\n\n<b>MAĞAZA ADI</b>\n<b>MAG</b> (örn: BUC)\n- Geri bildirim 1\n- Geri bildirim 2`);
+    return;
+  }
+
+  // Kullanıcı tanımlı mı?
+  const tgUsers = loadTGUsers();
+  const user = tgUsers[tgId];
+  if(!user){
+    sendTGMsg(chatId, '❌ Henüz bağlantı kurulmadı. GembaGPT uygulamasından QR kodu okutun.');
+    return;
+  }
+
+  // Geri bildirim parse et
+  const lines = text.split('\n').map(l=>l.trim()).filter(Boolean);
+  if(lines.length < 2){
+    sendTGMsg(chatId, `👋 Merhaba <b>${user.name}</b>!\n\nGeri bildirim formatı:\n<b>MAĞAZA ADI</b>\n<b>MAG</b>\n- Geri bildirim 1\n- Geri bildirim 2`);
+    return;
+  }
+
+  const store = lines[0];
+  const mag = lines[1].toUpperCase().trim();
+  const feedbacks = lines.slice(2).map(l=>l.replace(/^[-•*]\s*/,'')).filter(Boolean);
+  
+  if(!feedbacks.length){
+    sendTGMsg(chatId, '❌ Geri bildirim bulunamadı. Her satıra - ile başlayan geri bildirim yazın.');
+    return;
+  }
+
+  sendTGMsg(chatId, `⏳ <b>${store}</b> / <b>${mag}</b> için ${feedbacks.length} geri bildirim analiz ediliyor...`);
+
+  // AI analiz
+  const ANTHROPIC_KEY = process.env.ANTHROPIC_API_KEY;
+  if(!ANTHROPIC_KEY){ sendTGMsg(chatId, '❌ AI servisi yapılandırılmamış.'); return; }
+
+  try{
+    const prompt = `LC Waikiki mağaza ziyaret geri bildirimlerini sınıflandır.
+MAG: ${mag}
+
+Her geri bildirim için en uygun Buyer Grup belirle.
+Emin değilsen GENEL yaz.
+
+Geri bildirimler:
+${feedbacks.map((f,i)=>`${i}. "${f}"`).join('\n')}
+
+JSON döndür:
+[{"index":0,"bg":"BG_ADI","kl":"KL_veya_null"}]`;
+
+    const aiResp = await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','x-api-key':ANTHROPIC_KEY,'anthropic-version':'2023-06-01'},
+      body: JSON.stringify({model:'claude-haiku-4-5-20251001', max_tokens:500, messages:[{role:'user',content:prompt}]})
+    });
+    const aiData = await aiResp.json();
+    const aiText = aiData.content&&aiData.content[0] ? aiData.content[0].text : '[]';
+    const aiResults = JSON.parse(aiText.replace(/```json|```/g,'').trim());
+
+    // Özet oluştur
+    let summary = `✅ <b>${store}</b> - <b>${mag}</b>\n<i>${user.name} tarafından</i>\n\n`;
+    feedbacks.forEach((f,i)=>{
+      const r = aiResults.find(a=>a.index===i)||{};
+      summary += `• ${f}\n`;
+      if(r.bg) summary += `  📦 ${r.bg}${r.kl?' / '+r.kl:''}\n`;
+      summary += '\n';
+    });
+
+    // Admin'e gönder
+    if(TG_CHAT) sendTGMsg(TG_CHAT, summary);
+    // Çalışana da gönder
+    sendTGMsg(chatId, summary + '\n✅ Geri bildirimler kaydedildi!');
+
+  }catch(e){
+    sendTGMsg(chatId, '❌ Analiz sırasında hata: '+e.message);
+  }
+});
+
+// Webhook ayarla
+app.get('/telegram/set-webhook', (req, res) => {
+  if(!TG_TOKEN) return res.json({ok:false, error:'Token yok'});
+  const webhookUrl = `${process.env.RAILWAY_PUBLIC_DOMAIN ? 'https://'+process.env.RAILWAY_PUBLIC_DOMAIN : 'https://gembaapt.up.railway.app'}/telegram/webhook`;
+  const body = JSON.stringify({url: webhookUrl});
+  const apiReq = https.request({
+    hostname:'api.telegram.org',
+    path:`/bot${TG_TOKEN}/setWebhook`,
+    method:'POST',
+    headers:{'Content-Type':'application/json','Content-Length':Buffer.byteLength(body)}
+  },(apiRes)=>{
+    let data='';
+    apiRes.on('data',d=>data+=d);
+    apiRes.on('end',()=>res.json(JSON.parse(data)));
+  });
+  apiReq.on('error',e=>res.json({ok:false,error:e.message}));
+  apiReq.write(body); apiReq.end();
+});
+
 // ── Model DB ────────────────────────────────────────────────────────────────
 const MODEL_FILE = process.env.DATA_PATH
   ? path.join(path.dirname(process.env.DATA_PATH || '/app/data/data.json'), 'models.json')
