@@ -3747,16 +3747,39 @@ function goTab(t){
 }
 
 function checkTGStatus(){
-  var name = localStorage.getItem('gemba_tg_name');
-  var pin = localStorage.getItem('gemba_tg_pin');
-  if(!name||!pin) return;
+  // Önce gemba_auth'dan al (index.html ile ortak)
+  var auth = null;
+  try{ auth = JSON.parse(localStorage.getItem('gemba_auth')||'null'); }catch(e){}
+  
+  var name = (auth&&auth.name) || localStorage.getItem('gemba_tg_name');
+  var pin  = (auth&&auth.pin)  || localStorage.getItem('gemba_tg_pin');
+  
+  if(!name||!pin){
+    // Form göster
+    document.getElementById('tgLoginForm').style.display='block';
+    return;
+  }
+  
+  // Bilgileri forma doldur (gizli tut)
+  document.getElementById('tgName').value = name;
+  document.getElementById('tgPin').value = pin;
+  
+  // Bağlı mı kontrol et
   fetch('/telegram/get-link',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name,pin})})
     .then(function(r){return r.json();})
     .then(function(d){
       if(d.ok && d.linked){
         showTGLinked(name, d.tgName);
+      } else {
+        // Bağlı değil - formu gizle, direkt QR butonu göster
+        document.getElementById('tgLoginForm').style.display='none';
+        var nm=document.getElementById('tgAutoName');
+        if(nm&&name) nm.textContent=name;
+        document.getElementById('tgAutoConnect').style.display='block';
       }
-    }).catch(function(){});
+    }).catch(function(){
+      document.getElementById('tgLoginForm').style.display='block';
+    });
 }
 
 async function generateQR(){
@@ -3852,6 +3875,29 @@ async function setWebhook(){
   }
 }
 
+
+function generateQRauto(){
+  // gemba_auth'dan bilgileri al
+  var auth = null;
+  try{ auth = JSON.parse(localStorage.getItem('gemba_auth')||'null'); }catch(e){}
+  if(auth && auth.name && auth.pin){
+    document.getElementById('tgName').value = auth.name;
+    document.getElementById('tgPin').value = auth.pin;
+    // tgAutoName göster
+    var nm = document.getElementById('tgAutoName');
+    if(nm) nm.textContent = auth.name;
+  }
+  generateQR();
+}
+
+function showManualForm(){
+  document.getElementById('tgAutoConnect').style.display='none';
+  document.getElementById('tgLoginForm').style.display='block';
+}
+
+// checkTGStatus'ta tgAutoName'i doldur
+var _origCheckTG = checkTGStatus;
+
 </script>
 <!-- TELEGRAM -->
 <div id="pg-t" class="pg">
@@ -3861,17 +3907,25 @@ async function setWebhook(){
       Telegram botunu hesabınıza bağlayın. Çalışanlar bota mesaj atarak geri bildirim gönderebilir.
     </div>
 
-    <!-- Giriş formu -->
-    <div id="tgLoginForm">
+    <!-- Giriş formu (manuel) -->
+    <div id="tgLoginForm" style="display:none">
       <div style="margin-bottom:10px">
         <label style="font-size:12px;color:var(--text3);display:block;margin-bottom:5px">Ad Soyad</label>
-        <input type="text" id="tgName" placeholder="GembaGPT'teki adınız..." autocomplete="off"/>
+        <input type="text" id="tgName" placeholder="GembaGPT adınız..." autocomplete="off"/>
       </div>
       <div style="margin-bottom:14px">
         <label style="font-size:12px;color:var(--text3);display:block;margin-bottom:5px">PIN</label>
         <input type="password" id="tgPin" placeholder="4 haneli PIN" maxlength="4" inputmode="numeric"/>
       </div>
       <button class="btn bp" onclick="generateQR()">QR Kod Oluştur</button>
+    </div>
+    <!-- Otomatik bağlantı (gemba_auth varsa) -->
+    <div id="tgAutoConnect" style="display:none;text-align:center;padding:10px 0">
+      <div style="font-size:40px;margin-bottom:10px">📱</div>
+      <div style="font-size:15px;font-weight:500;margin-bottom:6px" id="tgAutoName"></div>
+      <div style="font-size:13px;color:var(--text2);margin-bottom:20px">Telegram hesabınızı bağlamak için QR kod oluşturun</div>
+      <button class="btn bp" onclick="generateQRauto()">QR Kod Oluştur</button>
+      <button class="btn bs" style="margin-top:0" onclick="showManualForm()">Farklı hesap</button>
     </div>
 
     <!-- QR Kod -->
