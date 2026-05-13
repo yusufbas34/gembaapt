@@ -3592,20 +3592,62 @@ function autoMatchModel(normalized){
 
 function parseModels(txt){
   var lines=txt.split(/\r?\n/).filter(function(l){return l.trim();});
-  var added=0,matched=0,skipped=0;
+  var added=0,skipped=0;
+
+  // Ayraç tespit et - ilk satıra bak
+  var sep='\t';
+  var first=lines[0]||'';
+  if(first.split(';').length>=4) sep=';';
+  else if(first.split('|').length>=4) sep='|';
+  else if(first.split(',').length>=4) sep=',';
+
+  var isMulti = first.split(sep).length>=4;
+
   lines.forEach(function(line){
-    var model=line.trim().replace(/^["']|["']$/g,'');
-    if(!model||model.length<2){skipped++;return;}
-    var dup=MDB.some(function(m){return m.model===model;});
-    if(!dup){
-      var n=model.toLowerCase().replace(/[.,\-\/]/g,' ').replace(/\s+/g,' ').trim();
+    line=line.trim();
+    if(!line) return;
+
+    var mag='',bg='',kl='',modelName='';
+
+    if(isMulti){
+      var parts=line.split(sep).map(function(p){return p.trim().replace(/^["']|["']$/g,'');});
+      if(parts.length<4) return;
+
+      // Başlık satırını atla
+      var p0=parts[0].toLowerCase().replace(/[^a-z]/g,'');
+      if(p0==='merchaltyrup'||p0==='merchaltyrup'||p0==='mag'||p0==='a'||
+         parts[0].toLowerCase().includes('merch')||parts[0].toLowerCase().includes('buyer')) return;
+
+      mag=parts[0].toUpperCase().trim();
+      bg=parts[1].toUpperCase().trim();
+      kl=parts[2].toUpperCase().trim();
+      modelName=parts[3].trim();
+    } else {
+      // Tek sütun - sadece model adı
+      modelName=line.replace(/^["']|["']$/g,'');
+      if(!modelName||modelName.length<2) return;
+    }
+
+    if(!modelName||modelName.length<1){skipped++;return;}
+
+    // Duplicate check
+    var dup=MDB.some(function(m){return m.model===modelName&&m.mag===mag;});
+    if(dup){skipped++;return;}
+
+    var n=modelName.toLowerCase().replace(/[.,\-\/]/g,' ').replace(/\s+/g,' ').trim();
+
+    if(isMulti && bg){
+      // MAG/BG/KL direkt verilmiş - kullan
+      MDB.push({model:modelName,normalized:n,mag:mag,bg:bg,kl:kl});
+    } else {
+      // Otomatik eşleştir
       var match=autoMatchModel(n);
-      MDB.push({model:model,normalized:n,bg:match.bg,kl:match.kl,score:match.score});
-      added++;
-      if(match.bg) matched++;
-    } else skipped++;
+      MDB.push({model:modelName,normalized:n,mag:mag||'',bg:match.bg,kl:match.kl,score:match.score});
+    }
+    added++;
   });
-  toast(added+' model eklendi, '+matched+' eşleşti'+(skipped?' ('+skipped+' atlandı)':''));
+
+  toast(added+' model eklendi'+(skipped?' ('+skipped+' atlandı)':''));
   showMStats();
   saveMDB();
 }
