@@ -473,7 +473,7 @@ var DEFAULT_KW = [
     "kl": "BASIC ORME BİSİKLET YAKA T-SHIRT K.KOL",
     "kw": [
       "bisiklet",
-      "bisiklet yaka",
+      "!bisiklet yaka",
       "k.kol",
       "kisa kol",
       "kkol",
@@ -512,7 +512,10 @@ var DEFAULT_KW = [
       "t-shirt",
       "tisort",
       "tshirt",
-      "v yaka"
+      "!v yaka",
+      "!v-yaka",
+      "v yaka tisort",
+      "v yaka tshirt"
     ]
   },
   {
@@ -2692,6 +2695,18 @@ var DEFAULT_KW = [
       "thermal"
     ]
   }
+,
+  {
+    "mag": "BUC",
+    "bg": "ÖRME",
+    "kl": "KEY ORME T-SHIRT K.KOL",
+    "kw": [
+      "!ust tisort",
+      "!kisa kol ust",
+      "ust giyim orme",
+      "tisort ust"
+    ]
+  }
 ];
 
 
@@ -2990,7 +3005,7 @@ function kwScore(text, mag, reyonName){
   // 4. KL puanlama sistemi - tüm KL'lere puan ver
   var klData=md.kl||{};
   var klScores=[];
-  var STOP_WORDS=['key','basic','cl','orme','dokuma','triko','icgym','aksesuar','classic','sort','takim','gomlek'];
+  var STOP_WORDS=['key','basic','cl','orme','dokuma','triko','icgym','aksesuar','classic','sort','takim','gomlek','ince','kalin','orta','uzun','kisa','alt','ust','pant'];
 
   Object.keys(klData).forEach(function(bg){
     (klData[bg]||[]).forEach(function(kl){
@@ -3105,18 +3120,27 @@ function buildResults(all,kwRes,aiRes){
     var kw=kwRes[i];
     var finalBG,finalKL,finalSrc;
     if(kw.src==='model'){
-      finalBG=kw.bg;finalKL=kw.kl;finalSrc='model';
-      if(ai.bg&&ai.bg!==kw.bg) addLog('⚠ '+(i+1)+'. Model korundu (AI: '+ai.bg+')','#c8900a');
-    } else if(ai.bg&&ai.confidence==='high'){
-      finalBG=ai.bg;finalKL=ai.kl||kw.kl||null;finalSrc='ai';
-      if(kw.bg&&ai.bg!==kw.bg) addLog('↻ '+(i+1)+'. AI: '+kw.bg+' → '+ai.bg,'#5040a0');
-    } else if(ai.bg&&kw.bg&&ai.bg!==kw.bg){
-      finalBG=kw.bg;finalKL=kw.kl||null;finalSrc='kw';
-      addLog('? '+(i+1)+'. KW korundu (AI '+ai.confidence+': '+ai.bg+')','#c8900a');
+      // Model DB eşleşmesi — AI sadece high confidence ile ezebilir
+      if(ai.bg && ai.confidence==='high' && ai.bg!==kw.bg){
+        finalBG=ai.bg;finalKL=ai.kl||null;finalSrc='ai';
+        addLog('↻ '+(i+1)+'. AI model düzeltti: '+kw.bg+' → '+ai.bg,'#5040a0');
+      } else {
+        finalBG=kw.bg;finalKL=kw.kl;finalSrc='model';
+      }
+    } else if(ai.bg){
+      // AI her zaman kazanır — doğru düşünmesi için prompt güçlendirildi
+      if(ai.bg!==kw.bg && kw.bg){
+        addLog('↻ '+(i+1)+'. AI: '+kw.bg+' → '+ai.bg+' ('+ai.confidence+')','#5040a0');
+      }
+      finalBG=ai.bg;
+      finalKL=ai.kl||null;
+      finalSrc=ai.confidence==='high'?'ai':'ai';
     } else {
-      finalBG=ai.bg||kw.bg||null;
-      finalKL=ai.kl||kw.kl||null;
-      finalSrc=ai.bg?'ai':kw.src;
+      // AI boş bıraktı — KW kullan
+      finalBG=kw.bg||null;
+      finalKL=kw.kl||null;
+      finalSrc=kw.src;
+      if(kw.bg) addLog('→ '+(i+1)+'. KW kullanıldı: '+kw.bg,'#6b6b67');
     }
     RES.push({id:i,text:item.text,mag:item.mag,reyon:item.reyon,bg:finalBG,kl:finalKL,src:finalSrc,reason:ai.reason||'',status:'pending',edit:false});
   });
