@@ -468,35 +468,50 @@ app.post('/telegram/webhook', async (req, res) => {
   }
 
   // Yeni oturum başlat
+  // Format: MAĞAZA\nREYON\nMAG\n- fb1\n- fb2
   if(lines.length < 2){
-    sendTGMsg(chatId, `👋 Merhaba <b>${user.name}</b>!\n\nFormat:\n<code>MAĞAZA ADI\nMAG\n- Geri bildirim 1\n- Geri bildirim 2</code>`);
+    sendTGMsg(chatId, '👋 Merhaba <b>'+user.name+'</b>!\n\nFormat:\n<code>MAĞAZA ADI\nReyon (Erkek/Kadın vb)\nMAG (örn: BUC)\n- Geri bildirim 1\n- Geri bildirim 2</code>');
     return;
   }
 
   const store = lines[0];
-  const mag = lines[1].toUpperCase().trim();
-  const feedbacks = lines.slice(2).map(l=>l.replace(/^[-•*\d.)]\s*/,'')).filter(function(l){return l.length>2;});
+  // 2. satır reyon mu MAG mı?
+  const REYONLAR = ['erkek','kadin','kadın','cocuk','çocuk','home','bebek'];
+  let reyon = 'Erkek', mag = '', fbStart = 1;
+  
+  if(REYONLAR.includes(lines[1].toLowerCase().trim())){
+    reyon = lines[1].trim();
+    reyon = reyon.charAt(0).toUpperCase() + reyon.slice(1).toLowerCase();
+    mag = lines[2] ? lines[2].toUpperCase().trim() : '';
+    fbStart = 3;
+  } else {
+    mag = lines[1].toUpperCase().trim();
+    fbStart = 2;
+  }
+
+  const feedbacks = lines.slice(fbStart).map(l=>l.replace(/^[-•*\d.)]\s*/,'')).filter(function(l){return l.length>2;});
 
   if(!feedbacks.length){
-    // Mağaza ve MAG alındı ama geri bildirim yok - oturum aç ve bekle
-    setSession(tgId, {store, mag, feedbacks:[]});
-    sendTGMsg(chatId, `📋 <b>${store}</b> / <b>${mag}</b> oturumu başlatıldı.\n\nGeri bildirimlerinizi yazın (- ile başlayarak). Bitince <b>tamam</b> yazın.`);
+    setSession(tgId, {store, reyon, mag, feedbacks:[]});
+    sendTGMsg(chatId, '📋 <b>'+store+'</b> / '+reyon+' / <b>'+mag+'</b> oturumu başlatıldı.\n\nGeri bildirimlerinizi yazın. Bitince <b>tamam</b> yazın.');
     return;
   }
 
-  // Hem mağaza hem geri bildirimler var - oturuma kaydet ve kullanıcıya sor
-  setSession(tgId, {store, mag, feedbacks});
-  sendTGMsg(chatId, `📋 <b>${store}</b> / <b>${mag}</b>\n${feedbacks.length} geri bildirim alındı:\n\n${feedbacks.map(f=>'• '+f).join('\n')}\n\n<b>tamam</b> - analiz et\n<b>iptal</b> - sil\nYa da daha fazla geri bildirim ekleyin`);
+  setSession(tgId, {store, reyon, mag, feedbacks});
+  sendTGMsg(chatId, '📋 <b>'+store+'</b> — '+reyon+' — <b>'+mag+'</b>\n'+feedbacks.length+' geri bildirim alındı:\n\n'+feedbacks.map(function(f){return '• '+f;}).join('\n')+'\n\n<b>tamam</b> → analiz et\n<b>iptal</b> → sil\nYa da devam edin');
   return;
-
-  // Bu noktaya gelmez ama store/mag/feedbacks tanımlı olsun
-  const store2 = store, mag2 = mag;
-  sendTGMsg(chatId, `⏳ <b>${store2}</b> / <b>${mag2}</b> için ${feedbacks.length} geri bildirim analiz ediliyor...`);
 
   // Bu noktaya artık gelmiyor - processAnalysis fonksiyonu kullanılıyor
 });
 
-async function processAnalysis(chatId, user, store, mag, feedbacks){
+
+function getWeekNumber(d){
+  const dd=new Date(Date.UTC(d.getFullYear(),d.getMonth(),d.getDate()));
+  dd.setUTCDate(dd.getUTCDate()+4-(dd.getUTCDay()||7));
+  return Math.ceil((((dd-new Date(Date.UTC(dd.getUTCFullYear(),0,1)))/86400000)+1)/7);
+}
+
+async function processAnalysis(chatId, user, store, mag, feedbacks, reyon){
   sendTGMsg(chatId, `⏳ <b>${store}</b> / <b>${mag}</b> için ${feedbacks.length} geri bildirim analiz ediliyor...`);
   
   const ANTHROPIC_KEY = process.env.ANTHROPIC_API_KEY;
@@ -540,10 +555,35 @@ JSON döndür:
     });
 
     if(TG_CHAT) sendTGMsg(TG_CHAT, summary);
-    sendTGMsg(chatId, summary+'✅ Kaydedildi! Yeni ziyaret için mağaza adıyla başlayın.');
+    sendTGMsg(chatId, summary+'✅ Kaydedildi! Yeni ziyaret icin magaza adiyla baslayin.');
+
+    // Ziyareti kaydet
+    try{
+      const wn = getWeekNumber(new Date());
+      const visitNotes = feedbacks.map(function(f,i){
+        const r = aiResults.find(function(a){return a.index===i;})||{};
+        return {id:Date.now()+i, reyon:reyon||'Erkek', mag:mag, bg:r.bg||'GENEL', kl:r.kl||'', tx:f, photos:[]};
+      });
+      const visit = {
+        id:Date.now(), store, reyon:reyon||'Erkek', week:wn,
+        date:new Date().toLocaleDateString('tr-TR'), user:user.name,
+        notes:visitNotes,
+        subject:wn+'. Hafta '+store+' '+(reyon||'Erkek')+' Reyonu',
+        body:summary, source:'telegram'
+      };
+      const data = loadData();
+      const userKey = Object.keys(data.users||{}).find(k=>data.users[k].name===user.name);
+      if(userKey){
+        if(!data.users[userKey].visits) data.users[userKey].visits=[];
+        data.users[userKey].visits.unshift(visit);
+        if(data.users[userKey].visits.length>100) data.users[userKey].visits.splice(100);
+        saveData(data);
+        console.log('Visit saved:', store, 'for', user.name);
+      }
+    }catch(saveErr){ console.log('Visit save err:', saveErr.message); }
 
   }catch(e){
-    sendTGMsg(chatId, '❌ Analiz hatası: '+e.message);
+    sendTGMsg(chatId, '❌ Analiz hatasi: '+e.message);
   }
 }
 
