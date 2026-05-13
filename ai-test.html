@@ -67,6 +67,10 @@ textarea{resize:vertical;line-height:1.6}
 .etag-kl{background:#fef3cd;color:#7a5200;border:0.5px solid #e8d080}
 .etag-empty{background:var(--bg3);color:var(--text3);border:0.5px dashed var(--bd2)}
 .etag-x{font-size:13px;opacity:.6;font-weight:400}
+/* Tooltip */
+[title]{position:relative;cursor:help}
+[title]:hover::after{content:attr(title);position:absolute;bottom:calc(100% + 6px);left:50%;transform:translateX(-50%);background:#1a1a18;color:#fff;padding:6px 10px;border-radius:8px;font-size:11px;white-space:nowrap;z-index:999;pointer-events:none;font-weight:400;max-width:260px;white-space:normal;line-height:1.4}
+[title]:hover::before{content:'';position:absolute;bottom:calc(100% + 2px);left:50%;transform:translateX(-50%);border:4px solid transparent;border-top-color:#1a1a18;z-index:999;pointer-events:none}
 .epanel{background:var(--bg);border-radius:var(--r);padding:12px;margin-top:8px;border:0.5px solid var(--bd2)}
 .epanel select{margin-bottom:8px}
 .epbtns{display:flex;gap:8px}
@@ -3120,12 +3124,10 @@ function buildResults(all,kwRes,aiRes){
     var kw=kwRes[i];
     var finalBG,finalKL,finalSrc;
     if(kw.src==='model'){
-      // Model DB eşleşmesi — AI sadece high confidence ile ezebilir
-      if(ai.bg && ai.confidence==='high' && ai.bg!==kw.bg){
-        finalBG=ai.bg;finalKL=ai.kl||null;finalSrc='ai';
-        addLog('↻ '+(i+1)+'. AI model düzeltti: '+kw.bg+' → '+ai.bg,'#5040a0');
-      } else {
-        finalBG=kw.bg;finalKL=kw.kl;finalSrc='model';
+      // Model DB eşleşmesi — KİLİTLİ, AI ezemez
+      finalBG=kw.bg;finalKL=kw.kl;finalSrc='model';
+      if(ai.bg && ai.bg!==kw.bg){
+        addLog('⚠ '+(i+1)+'. Model DB korundu: '+kw.bg+' (AI önerisi: '+ai.bg+' görmezden gelindi)','#c8900a');
       }
     } else if(ai.bg){
       // AI her zaman kazanır — doğru düşünmesi için prompt güçlendirildi
@@ -3142,7 +3144,7 @@ function buildResults(all,kwRes,aiRes){
       finalSrc=kw.src;
       if(kw.bg) addLog('→ '+(i+1)+'. KW kullanıldı: '+kw.bg,'#6b6b67');
     }
-    RES.push({id:i,text:item.text,mag:item.mag,reyon:item.reyon,bg:finalBG,kl:finalKL,src:finalSrc,reason:ai.reason||'',status:'pending',edit:false});
+    RES.push({id:i,text:item.text,mag:item.mag,reyon:item.reyon,bg:finalBG,kl:finalKL,src:finalSrc,reason:ai.reason||'',kwScore:kw.score||0,aiConf:ai.confidence||'',model:kw.model||'',status:'pending',edit:false});
   });
   document.getElementById('phase').innerHTML='<span style="color:#1a9e6e;font-weight:500">✓ Tamamlandı</span>';
   renderRes();
@@ -3164,15 +3166,23 @@ async function callAI(mag,fbs,kwRes,mags,reyon){
 function buildTagsHTML(r){
   var id=r.id;
   var magTag=r.mag?'<span class="tag tm">'+r.mag+'</span>':'';
-  var srcTag=r.src==='model'?'<span class="tag tmodel">📦 Model</span>':
-             r.src==='ai'?'<span class="tag tai">🤖 AI</span>':
-             r.src==='kw'?'<span class="tag tkw">🔑 KW</span>':
+  // Tooltip bilgisi
+  var srcInfo = r.src==='model' ? ('Model: '+r.model+' | Puan: 100 (kilitli)')
+              : r.src==='ai' ? ('AI | Güven: '+(r.aiConf||'?'))
+              : r.src==='kw' ? ('KW eşleşme puanı: '+(r.kwScore||0))
+              : 'Kaynak yok';
+  var bgInfo = 'BG: '+(r.bg||'?')+' | '+srcInfo;
+  var klInfo = 'KL: '+(r.kl||'?')+' | '+srcInfo;
+
+  var srcTag=r.src==='model'?'<span class="tag tmodel" title="'+srcInfo+'">📦 Model</span>':
+             r.src==='ai'?'<span class="tag tai" title="'+srcInfo+'">🤖 AI</span>':
+             r.src==='kw'?'<span class="tag tkw" title="'+srcInfo+'">🔑 KW</span>':
              '<span class="tag tm">— Boş</span>';
   var bgTag=r.bg
-    ?'<span class="etag etag-bg" onclick="editTagBG('+id+')">'+r.bg+'<span class="etag-x" onclick="event.stopPropagation();delTagBG('+id+')"> ×</span></span>'
+    ?'<span class="etag etag-bg" onclick="editTagBG('+id+')" title="'+bgInfo+'">'+r.bg+'<span class="etag-x" onclick="event.stopPropagation();delTagBG('+id+')"> ×</span></span>'
     :'<span class="etag etag-empty" onclick="editTagBG('+id+')">Buyer Grup ?</span>';
   var klTag=r.kl
-    ?'<span class="etag etag-kl" onclick="editTagKL('+id+')">'+r.kl+'<span class="etag-x" onclick="event.stopPropagation();delTagKL('+id+')"> ×</span></span>'
+    ?'<span class="etag etag-kl" onclick="editTagKL('+id+')" title="'+klInfo+'">'+r.kl+'<span class="etag-x" onclick="event.stopPropagation();delTagKL('+id+')"> ×</span></span>'
     :(r.bg?'<span class="etag etag-empty" onclick="editTagKL('+id+')">Klasman ?</span>':'');
   return magTag+srcTag+bgTag+klTag;
 }
