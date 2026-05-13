@@ -587,6 +587,13 @@ JSON döndür:
   }
 }
 
+
+// Bot username döndür
+app.get('/telegram/bot-info', (req, res) => {
+  const botUsername = process.env.TELEGRAM_BOT_USERNAME || 'GembaGPTBot';
+  res.json({ok:true, username: botUsername});
+});
+
 // Webhook ayarla
 app.get('/telegram/set-webhook', (req, res) => {
   if(!TG_TOKEN) return res.json({ok:false, error:'Token yok'});
