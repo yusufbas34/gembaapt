@@ -127,6 +127,7 @@ textarea{resize:vertical;line-height:1.6}
 </div>
 <div class="tabs">
   <div class="tab on" id="tab-a" onclick="goTab('a')">Analiz</div>
+  <div class="tab" id="tab-h" onclick="goTab('h')">Geçmiş</div>
   <div class="tab" id="tab-k" onclick="goTab('k')">Kelimeler</div>
   <div class="tab" id="tab-m" onclick="checkModelAuth()">Modeller</div>
   <div class="tab" id="tab-t" onclick="goTab('t')">Telegram</div>
@@ -2728,15 +2729,18 @@ function checkModelAuth(){
   fetch('/models/auth',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({pin:pin})})
     .then(function(r){return r.json();})
     .then(function(d){
-      if(d.ok){ MODEL_UNLOCKED=true; goTab('m'); toast('Model sayfası açıldı'); }
+      if(d.ok){ MODEL_UNLOCKED=true; goTab('m'); toast('Model sayfası açıldı'); var wc=document.getElementById('webhookCard'); if(wc) wc.style.display='block'; }
       else { toast('Yanlış PIN'); }
     })
     .catch(function(){
       // Fallback: client-side check
-      if(pin===MODEL_ADMIN_PIN){ MODEL_UNLOCKED=true; goTab('m'); toast('Model sayfası açıldı'); }
+      if(pin===MODEL_ADMIN_PIN){ MODEL_UNLOCKED=true; goTab('m'); toast('Model sayfası açıldı'); var wc=document.getElementById('webhookCard'); if(wc) wc.style.display='block'; }
       else { toast('Yanlış PIN'); }
     });
 }
+
+
+function uniq(arr){ var s={}; return arr.filter(function(x){ if(s[x]) return false; s[x]=true; return true; }); }
 
 /* ═══ STATE ═══ */
 var KW = [];
@@ -3389,10 +3393,10 @@ function buildMailPreview(groups){
 }
 
 function getMailTo(){
-  var mags=[...new Set(Object.values(window._aiMagMap||{}).map(function(m){return m.mag;}).filter(Boolean))];
+  var mags=uniq(Object.values(window._aiMagMap||{}).map(function(m){return m.mag;}).filter(Boolean));
   var toSet=new Set();
   mags.forEach(function(m){if(magMailMap[m])toSet.add(magMailMap[m]);});
-  return [...toSet].filter(Boolean).join(';');
+  return Array.from(toSet).filter(Boolean).join(';');
 }
 
 function sendMail(){
@@ -3736,7 +3740,7 @@ var TG_TOKEN_CURRENT = null;
 var TG_POLL_INTERVAL = null;
 
 function goTab(t){
-  ['a','k','m','t'].forEach(function(id){
+  ['a','h','k','m','t'].forEach(function(id){
     var tab = document.getElementById('tab-'+id);
     var pg = document.getElementById('pg-'+id);
     if(tab) tab.className='tab'+(id===t?' on':'');
@@ -3744,6 +3748,7 @@ function goTab(t){
   });
   if(t==='k') renderKW();
   if(t==='t') checkTGStatus();
+  if(t==='h') loadVisits();
 }
 
 function checkTGStatus(){
@@ -3813,9 +3818,14 @@ async function generateQR(){
     if(window.QRCode){
       new QRCode(qrDiv, {text: d.botUrl, width:200, height:200, correctLevel:QRCode.CorrectLevel.M});
     } else {
-      // Fallback: link göster
       qrDiv.innerHTML = '<a href="'+d.botUrl+'" style="font-size:13px;color:var(--acc)">'+d.botUrl+'</a>';
     }
+
+    // Direkt link ekle
+    var linkBtn = document.getElementById('tgLinkBtn');
+    var linkDiv = document.getElementById('tgDirectLink');
+    if(linkBtn){ linkBtn.href = d.botUrl; }
+    if(linkDiv){ linkDiv.style.display = 'block'; }
 
     // Polling başlat - bağlantı kuruldu mu?
     startTGPolling(d.token, name);
@@ -3898,7 +3908,212 @@ function showManualForm(){
 // checkTGStatus'ta tgAutoName'i doldur
 var _origCheckTG = checkTGStatus;
 
+
+/* ═══ GEÇMİŞ ZİYARETLER ═══ */
+var VISITS = [];
+var CURRENT_VISIT = null;
+
+function loadVisits(){
+  var auth = null;
+  try{ auth = JSON.parse(localStorage.getItem('gemba_auth')||'null'); }catch(e){}
+  if(!auth||!auth.name||!auth.pin){
+    document.getElementById('histLoading').style.display='none';
+    document.getElementById('histEmpty').style.display='block';
+    return;
+  }
+  fetch('/auth/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:auth.name,pin:auth.pin})})
+    .then(function(r){return r.json();})
+    .then(function(d){
+      document.getElementById('histLoading').style.display='none';
+      if(d.ok && d.visits && d.visits.length){
+        VISITS = d.visits;
+        renderHistCards();
+      } else {
+        document.getElementById('histEmpty').style.display='block';
+      }
+    }).catch(function(){
+      document.getElementById('histLoading').style.display='none';
+      document.getElementById('histEmpty').style.display='block';
+    });
+}
+
+function renderHistCards(){
+  if(!VISITS.length){ document.getElementById('histEmpty').style.display='block'; return; }
+  var html = VISITS.map(function(v,i){
+    var srcBadge = v.source==='telegram'
+      ? '<span style="background:#e8f0fe;color:#1a56b0;font-size:10px;font-weight:600;padding:2px 8px;border-radius:100px">📱 Telegram</span>'
+      : '<span style="background:var(--bg3);color:var(--text3);font-size:10px;padding:2px 8px;border-radius:100px">📋 Manuel</span>';
+    var mags = uniq((v.notes||[]).map(function(n){return n.mag;}).filter(Boolean)).join(', ');
+    return '<div class="card" style="cursor:pointer" onclick="openVisit('+i+')">'
+      +'<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px">'
+      +'<div style="font-size:14px;font-weight:600">'+v.store+'</div>'
+      +srcBadge
+      +'</div>'
+      +'<div style="font-size:12px;color:var(--text2);margin-bottom:4px">'+v.date+' · '+v.reyon+(mags?' · '+mags:'')+'</div>'
+      +'<div style="font-size:12px;color:var(--text3)">'+(v.notes||[]).length+' not · '+v.user+'</div>'
+      +'</div>';
+  }).join('');
+  document.getElementById('histCards').innerHTML = html;
+}
+
+function openVisit(idx){
+  CURRENT_VISIT = VISITS[idx];
+  var v = CURRENT_VISIT;
+  document.getElementById('visitTitle').textContent = v.store + ' · ' + v.reyon;
+
+  // Group notes by BG
+  var groups = {};
+  (v.notes||[]).forEach(function(n){
+    var key = (n.mag||'') + '|' + (n.bg||'GENEL');
+    if(!groups[key]) groups[key] = {mag:n.mag, bg:n.bg, kl:n.kl, notes:[]};
+    groups[key].notes.push(n);
+  });
+
+  var html = Object.values(groups).map(function(g){
+    return '<div class="card">'
+      +(g.mag?'<div style="font-size:11px;color:var(--text3)">'+g.mag+'</div>':'')
+      +'<div style="font-size:14px;font-weight:600;margin-bottom:4px">'+( g.bg||'GENEL')+'</div>'
+      +(g.kl?'<div style="font-size:12px;color:var(--text2);margin-bottom:8px">'+g.kl+'</div>':'')
+      + g.notes.map(function(n,ni){
+          var noteIdx = v.notes.indexOf(n);
+          return '<div style="padding:8px;background:var(--bg3);border-radius:8px;margin-bottom:6px">'
+            +'<div style="font-size:13px;margin-bottom:6px">• '+n.tx+'</div>'
+            +'<div style="display:flex;gap:6px;flex-wrap:wrap">'
+            +'<select onchange="editNoteBG('+idx+','+noteIdx+',this.value)" style="font-size:12px;padding:4px 8px;border:0.5px solid var(--bd2);border-radius:6px;background:var(--bg);color:var(--text);font-family:DM Sans,sans-serif;outline:none;-webkit-appearance:none">'
+            + buildBGOptions(n.mag||v.reyon, n.bg)
+            +'</select>'
+            +'<select id="klsel-'+noteIdx+'" onchange="editNoteKL('+idx+','+noteIdx+',this.value)" style="font-size:12px;padding:4px 8px;border:0.5px solid var(--bd2);border-radius:6px;background:var(--bg);color:var(--text);font-family:DM Sans,sans-serif;outline:none;-webkit-appearance:none">'
+            + buildKLOptions(n.mag||v.reyon, n.bg, n.kl)
+            +'</select>'
+            +'</div></div>';
+        }).join('')
+      +'</div>';
+  }).join('');
+
+  document.getElementById('visitNotes').innerHTML = html;
+  document.getElementById('visitOverlay').style.display='block';
+}
+
+function buildBGOptions(magOrReyon, selectedBG){
+  var md = erkekMAG[magOrReyon] || RD[magOrReyon] || {};
+  var bgs = (md.bg||['GENEL']);
+  return '<option value="">BG seç</option>' + bgs.map(function(b){
+    return '<option value="'+b+'"'+(b===selectedBG?' selected':'')+'>'+b+'</option>';
+  }).join('');
+}
+
+function buildKLOptions(magOrReyon, bg, selectedKL){
+  var md = erkekMAG[magOrReyon] || RD[magOrReyon] || {};
+  var kls = ((md.kl||{})[bg])||[];
+  return '<option value="">KL seç</option>' + kls.map(function(k){
+    return '<option value="'+k+'"'+(k===selectedKL?' selected':'')+'>'+k+'</option>';
+  }).join('');
+}
+
+function editNoteBG(visitIdx, noteIdx, val){
+  VISITS[visitIdx].notes[noteIdx].bg = val;
+  // KL seçeneklerini güncelle
+  var n = VISITS[visitIdx].notes[noteIdx];
+  var klSel = document.getElementById('klsel-'+noteIdx);
+  if(klSel) klSel.innerHTML = buildKLOptions(n.mag||VISITS[visitIdx].reyon, val, '');
+}
+
+function editNoteKL(visitIdx, noteIdx, val){
+  VISITS[visitIdx].notes[noteIdx].kl = val;
+}
+
+function closeVisit(){
+  document.getElementById('visitOverlay').style.display='none';
+  CURRENT_VISIT = null;
+}
+
+function sendVisitMail(){
+  if(!CURRENT_VISIT) return;
+  var v = CURRENT_VISIT;
+  var wl_fn = typeof wl==='function' ? wl() : '';
+  var store = v.store, reyon = v.reyon;
+  
+  // Build mail body
+  var groups = {};
+  (v.notes||[]).forEach(function(n){
+    var mk = (n.mag||'__');
+    if(!groups[mk]) groups[mk]={mag:n.mag, bgs:{}};
+    var bgk = n.bg||'GENEL';
+    if(!groups[mk].bgs[bgk]) groups[mk].bgs[bgk]={bg:bgk,kls:{}};
+    var klk = n.kl||'__';
+    if(!groups[mk].bgs[bgk].kls[klk]) groups[mk].bgs[bgk].kls[klk]={kl:n.kl,items:[]};
+    groups[mk].bgs[bgk].kls[klk].items.push(n.tx);
+  });
+
+  var body = 'Merhabalar,
+
+'+v.week+'. Hafta '+store+' mağazası '+reyon+' reyonu ziyaret notları.
+
+';
+  Object.values(groups).forEach(function(m){
+    if(m.mag) body += 'MAG: '+m.mag+'
+
+';
+    Object.values(m.bgs).forEach(function(g){
+      body += '  '+g.bg+'
+';
+      Object.values(g.kls).forEach(function(k){
+        if(k.kl) body += '  '+k.kl+'
+';
+        k.items.forEach(function(i){ body += '    • '+i+'
+'; });
+      });
+      body += '
+';
+    });
+  });
+  body += 'İyi çalışmalar dilerim,
+LC Waikiki';
+
+  // Get mail recipients
+  var mags = uniq((v.notes||[]).map(function(n){return n.mag;}).filter(Boolean));
+  var toSet = new Set();
+  if(typeof magMailMap !== 'undefined'){
+    mags.forEach(function(m){ if(magMailMap[m]) toSet.add(magMailMap[m]); });
+  }
+  var to = Array.from(toSet).join(';');
+  var subj = v.week+'. Hafta '+store+' '+reyon+' Reyonu Mağaza Ziyaret Notları';
+
+  var isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
+  var encode = function(s){ return s.replace(/&/g,'%26').replace(/[?]/g,'%3F').replace(/=/g,'%3D').replace(/#/g,'%23').replace(/[+]/g,'%2B').replace(/[\r\n]/g,'%0A'); };
+  
+  if(isIOS){
+    window.location.href='ms-outlook://compose?to='+encodeURIComponent(to)+'&cc='+encodeURIComponent(GEMBA_CC)+'&subject='+encodeURIComponent(subj)+'&body='+encodeURIComponent(body);
+    setTimeout(function(){ window.location.href='mailto:'+encodeURIComponent(to)+'?cc='+encodeURIComponent(GEMBA_CC)+'&subject='+encodeURIComponent(subj)+'&body='+encode(body); },1500);
+  } else {
+    window.location.href='mailto:'+encodeURIComponent(to)+'?cc='+encodeURIComponent(GEMBA_CC)+'&subject='+encodeURIComponent(subj)+'&body='+encode(body);
+  }
+}
+
 </script>
+<!-- GEÇMİŞ ZİYARETLER -->
+<div id="pg-h" class="pg">
+  <div id="histLoading" style="text-align:center;padding:30px;color:var(--text3)">Yükleniyor...</div>
+  <div id="histEmpty" style="display:none;text-align:center;padding:30px;color:var(--text3)">
+    <div style="font-size:32px;margin-bottom:10px">📭</div>
+    <div>Henüz geçmiş ziyaret yok.</div>
+  </div>
+  <div id="histCards"></div>
+
+  <!-- Ziyaret detay overlay -->
+  <div id="visitOverlay" style="display:none;position:fixed;inset:0;background:var(--bg);z-index:500;overflow-y:auto;padding:16px">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px">
+      <button class="btn bs" style="width:44px;flex-shrink:0" onclick="closeVisit()">←</button>
+      <div style="font-size:15px;font-weight:600" id="visitTitle"></div>
+    </div>
+    <div id="visitNotes"></div>
+    <div style="margin-top:12px">
+      <button class="btn bp" onclick="sendVisitMail()">✉ Mail Gönder</button>
+      <button class="btn bs" onclick="closeVisit()">Kapat</button>
+    </div>
+  </div>
+</div>
+
 <!-- TELEGRAM -->
 <div id="pg-t" class="pg">
   <div class="card">
@@ -3934,7 +4149,12 @@ var _origCheckTG = checkTGStatus;
         Telefonunuzla QR kodu okutun → Telegram açılır → Bota /start mesajı gider → Bağlantı kurulur
       </div>
       <div id="tgQRCode" style="display:inline-block;padding:12px;background:#fff;border-radius:12px;border:0.5px solid var(--bd2);margin-bottom:14px"></div>
-      <div style="font-size:12px;color:var(--text3);margin-bottom:16px">QR kod 10 dakika geçerlidir</div>
+      <div style="font-size:12px;color:var(--text3);margin-bottom:12px">QR kod 10 dakika geçerlidir</div>
+      <!-- Direkt link - telefonda QR okutamayanlara -->
+      <div id="tgDirectLink" style="margin-bottom:16px;display:none">
+        <div style="font-size:12px;color:var(--text3);margin-bottom:8px">📱 Telefondaysanız butona tıklayın:</div>
+        <a id="tgLinkBtn" href="#" target="_blank" style="display:block;background:#1a56b0;color:#fff;border-radius:var(--r);padding:14px;font-size:15px;font-weight:500;text-decoration:none;text-align:center">Telegram'da Aç →</a>
+      </div>
       <div id="tgStatus" style="font-size:14px;color:var(--text2);margin-bottom:14px">⏳ Bağlantı bekleniyor...</div>
       <button class="btn bs" onclick="resetTGForm()">← Geri</button>
     </div>
@@ -3967,8 +4187,8 @@ var _origCheckTG = checkTGStatus;
     </div>
   </div>
 
-  <!-- Webhook kurulum -->
-  <div class="card">
+  <!-- Webhook kurulum - sadece admin -->
+  <div id="webhookCard" style="display:none" class="card">
     <div class="lbl">Webhook Kurulumu</div>
     <div style="font-size:12px;color:var(--text3);margin-bottom:10px">Botu ilk kez kuruyorsanız webhook'u aktifleştirin.</div>
     <button class="btn bs" onclick="setWebhook()">Webhook Aktifleştir</button>
