@@ -3988,10 +3988,10 @@ function openVisit(idx){
             +'<div style="font-size:13px;margin-bottom:6px">• '+n.tx+'</div>'
             +'<div style="display:flex;gap:6px;flex-wrap:wrap">'
             +'<select onchange="editNoteBG('+idx+','+noteIdx+',this.value)" style="font-size:12px;padding:4px 8px;border:0.5px solid var(--bd2);border-radius:6px;background:var(--bg);color:var(--text);font-family:DM Sans,sans-serif;outline:none;-webkit-appearance:none">'
-            + buildBGOptions(n.mag||v.reyon, n.bg)
+            + buildBGOptions(n.mag, v.reyon, n.bg)
             +'</select>'
             +'<select id="klsel-'+noteIdx+'" onchange="editNoteKL('+idx+','+noteIdx+',this.value)" style="font-size:12px;padding:4px 8px;border:0.5px solid var(--bd2);border-radius:6px;background:var(--bg);color:var(--text);font-family:DM Sans,sans-serif;outline:none;-webkit-appearance:none">'
-            + buildKLOptions(n.mag||v.reyon, n.bg, n.kl)
+            + buildKLOptions(n.mag, v.reyon, n.bg, n.kl)
             +'</select>'
             +'</div></div>';
         }).join('')
@@ -4002,16 +4002,17 @@ function openVisit(idx){
   document.getElementById('visitOverlay').style.display='block';
 }
 
-function buildBGOptions(magOrReyon, selectedBG){
-  var md = erkekMAG[magOrReyon] || RD[magOrReyon] || {};
+function buildBGOptions(mag, reyon, selectedBG){
+  // Erkek için MAG kodu kullan, diğerleri için reyon
+  var md = erkekMAG[mag] || RD[reyon] || {};
   var bgs = (md.bg||['GENEL']);
   return '<option value="">BG seç</option>' + bgs.map(function(b){
     return '<option value="'+b+'"'+(b===selectedBG?' selected':'')+'>'+b+'</option>';
   }).join('');
 }
 
-function buildKLOptions(magOrReyon, bg, selectedKL){
-  var md = erkekMAG[magOrReyon] || RD[magOrReyon] || {};
+function buildKLOptions(mag, reyon, bg, selectedKL){
+  var md = erkekMAG[mag] || RD[reyon] || {};
   var kls = ((md.kl||{})[bg])||[];
   return '<option value="">KL seç</option>' + kls.map(function(k){
     return '<option value="'+k+'"'+(k===selectedKL?' selected':'')+'>'+k+'</option>';
@@ -4020,10 +4021,10 @@ function buildKLOptions(magOrReyon, bg, selectedKL){
 
 function editNoteBG(visitIdx, noteIdx, val){
   VISITS[visitIdx].notes[noteIdx].bg = val;
-  // KL seçeneklerini güncelle
   var n = VISITS[visitIdx].notes[noteIdx];
+  var v = VISITS[visitIdx];
   var klSel = document.getElementById('klsel-'+noteIdx);
-  if(klSel) klSel.innerHTML = buildKLOptions(n.mag||VISITS[visitIdx].reyon, val, '');
+  if(klSel) klSel.innerHTML = buildKLOptions(n.mag, v.reyon, val, '');
 }
 
 function editNoteKL(visitIdx, noteIdx, val){
