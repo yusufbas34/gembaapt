@@ -4030,10 +4030,8 @@ function closeVisit(){
 function sendVisitMail(){
   if(!CURRENT_VISIT) return;
   var v = CURRENT_VISIT;
-  var wl_fn = typeof wl==='function' ? wl() : '';
   var store = v.store, reyon = v.reyon;
-  
-  // Build mail body
+
   var groups = {};
   (v.notes||[]).forEach(function(n){
     var mk = (n.mag||'__');
@@ -4045,48 +4043,38 @@ function sendVisitMail(){
     groups[mk].bgs[bgk].kls[klk].items.push(n.tx);
   });
 
-  var body = 'Merhabalar,
-
-'+v.week+'. Hafta '+store+' mağazası '+reyon+' reyonu ziyaret notları.
-
-';
+  var body = 'Merhabalar,\n\n'+(v.week||'')+'. Hafta '+store+' magazasi '+reyon+' reyonu ziyaret notlari.\n\n';
   Object.values(groups).forEach(function(m){
-    if(m.mag) body += 'MAG: '+m.mag+'
-
-';
+    if(m.mag) body += 'MAG: '+m.mag+'\n\n';
     Object.values(m.bgs).forEach(function(g){
-      body += '  '+g.bg+'
-';
+      body += '  '+g.bg+'\n';
       Object.values(g.kls).forEach(function(k){
-        if(k.kl) body += '  '+k.kl+'
-';
-        k.items.forEach(function(i){ body += '    • '+i+'
-'; });
+        if(k.kl) body += '  '+k.kl+'\n';
+        k.items.forEach(function(item){ body += '    - '+item+'\n'; });
       });
-      body += '
-';
+      body += '\n';
     });
+    body += '---\n\n';
   });
-  body += 'İyi çalışmalar dilerim,
-LC Waikiki';
+  body += 'Iyi calismalar dilerim,\nLC Waikiki';
 
-  // Get mail recipients
   var mags = uniq((v.notes||[]).map(function(n){return n.mag;}).filter(Boolean));
-  var toSet = new Set();
+  var toSet = [];
   if(typeof magMailMap !== 'undefined'){
-    mags.forEach(function(m){ if(magMailMap[m]) toSet.add(magMailMap[m]); });
+    mags.forEach(function(m){ if(magMailMap[m] && toSet.indexOf(magMailMap[m])<0) toSet.push(magMailMap[m]); });
   }
-  var to = Array.from(toSet).join(';');
-  var subj = v.week+'. Hafta '+store+' '+reyon+' Reyonu Mağaza Ziyaret Notları';
+  var to = toSet.join(';');
+  var cc = typeof GEMBA_CC !== 'undefined' ? GEMBA_CC : '';
+  var subj = (v.week||'')+'. Hafta '+store+' '+reyon+' Reyonu Magaza Ziyaret Notlari';
 
   var isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
   var encode = function(s){ return s.replace(/&/g,'%26').replace(/[?]/g,'%3F').replace(/=/g,'%3D').replace(/#/g,'%23').replace(/[+]/g,'%2B').replace(/[\r\n]/g,'%0A'); };
-  
+
   if(isIOS){
-    window.location.href='ms-outlook://compose?to='+encodeURIComponent(to)+'&cc='+encodeURIComponent(GEMBA_CC)+'&subject='+encodeURIComponent(subj)+'&body='+encodeURIComponent(body);
-    setTimeout(function(){ window.location.href='mailto:'+encodeURIComponent(to)+'?cc='+encodeURIComponent(GEMBA_CC)+'&subject='+encodeURIComponent(subj)+'&body='+encode(body); },1500);
+    window.location.href='ms-outlook://compose?to='+encodeURIComponent(to)+'&cc='+encodeURIComponent(cc)+'&subject='+encodeURIComponent(subj)+'&body='+encodeURIComponent(body);
+    setTimeout(function(){ window.location.href='mailto:'+encodeURIComponent(to)+'?cc='+encodeURIComponent(cc)+'&subject='+encodeURIComponent(subj)+'&body='+encode(body); },1500);
   } else {
-    window.location.href='mailto:'+encodeURIComponent(to)+'?cc='+encodeURIComponent(GEMBA_CC)+'&subject='+encodeURIComponent(subj)+'&body='+encode(body);
+    window.location.href='mailto:'+encodeURIComponent(to)+'?cc='+encodeURIComponent(cc)+'&subject='+encodeURIComponent(subj)+'&body='+encode(body);
   }
 }
 
