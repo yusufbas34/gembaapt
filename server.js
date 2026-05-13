@@ -255,6 +255,51 @@ app.post('/models/auth', (req, res) => {
   res.json({ok: pin === MODEL_PIN});
 });
 
+
+// ── Model adı çıkarma ────────────────────────────────────────────────────────
+app.post('/ai/extract-models', async (req, res) => {
+  const {feedbacks} = req.body||{};
+  if(!feedbacks||!feedbacks.length) return res.json({ok:false,error:'Eksik'});
+
+  const ANTHROPIC_KEY = process.env.ANTHROPIC_API_KEY;
+  if(!ANTHROPIC_KEY) return res.json({ok:true, models: feedbacks.map(()=>null)});
+
+  const prompt = `Aşağıdaki geri bildirimlerin her birinde geçen ÜRÜN MODEL ADINI bul.
+
+Model adı: LC Waikiki ürünlerinin özel isimleri (örn: Scup, Zero, Ferjo, Jerno, Parma, Semper, Atina, Dubar, Neso, Iko vb.)
+Bunlar genellikle büyük harfle başlar veya tamamen büyük harfle yazılır.
+
+Eğer model adı yoksa null döndür.
+Sadece JSON döndür:
+[{"index":0,"model":"MODEL_ADI_veya_null"}]
+
+Geri bildirimler:
+${feedbacks.map((f,i)=>`${i}. "${f}"`).join('\n')}`;
+
+  try {
+    const response = await fetch('https://api.anthropic.com/v1/messages', {
+      method:'POST',
+      headers:{
+        'Content-Type':'application/json',
+        'x-api-key': ANTHROPIC_KEY,
+        'anthropic-version': '2023-06-01'
+      },
+      body: JSON.stringify({
+        model: 'claude-haiku-4-5-20251001',
+        max_tokens: 500,
+        messages: [{role:'user', content: prompt}]
+      })
+    });
+    const data = await response.json();
+    const text = data.content&&data.content[0] ? data.content[0].text : '[]';
+    const clean = text.replace(/```json|```/g,'').trim();
+    const results = JSON.parse(clean);
+    res.json({ok:true, models: results});
+  } catch(e) {
+    res.json({ok:true, models: feedbacks.map(()=>null)});
+  }
+});
+
 // ── Model DB ────────────────────────────────────────────────────────────────
 const MODEL_FILE = process.env.DATA_PATH
   ? path.join(path.dirname(process.env.DATA_PATH || '/app/data/data.json'), 'models.json')
