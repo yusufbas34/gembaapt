@@ -3950,19 +3950,38 @@ function renderHistCards(){
       ? '<span style="background:#e8f0fe;color:#1a56b0;font-size:10px;font-weight:600;padding:2px 8px;border-radius:100px">📱 Telegram</span>'
       : '<span style="background:var(--bg3);color:var(--text3);font-size:10px;padding:2px 8px;border-radius:100px">📋 Manuel</span>';
     var mags = uniq((v.notes||[]).map(function(n){return n.mag;}).filter(Boolean)).join(', ');
-    return '<div class="card" style="position:relative">'
-      +'<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px" onclick="openVisit('+i+')" >'
-      +'<div style="font-size:14px;font-weight:600">'+v.store+'</div>'
+    var storeName = v.store || '';
+    // Telegram'dan gelen store adı bazen "subject" formatında geliyor, temizle
+    if(storeName.match(/^[📋🤖]/)) storeName = storeName.replace(/^[^A-Za-z0-9T]+/,'');
+    return '<div class="card" style="cursor:pointer;position:relative" onclick="openVisit('+i+')" >'
+      +'<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px">'
+      +'<div style="font-size:14px;font-weight:600">'+storeName+'</div>'
       +srcBadge
       +'</div>'
-      +'<div style="font-size:12px;color:var(--text2);margin-bottom:4px" onclick="openVisit('+i+')">'+v.date+' · '+v.reyon+(mags?' · '+mags:'')+'</div>'
+      +'<div style="font-size:12px;color:var(--text2);margin-bottom:4px">'+v.date+' · '+v.reyon+(mags?' · '+mags:'')+'</div>'
       +'<div style="display:flex;justify-content:space-between;align-items:center">'
-      +'<div style="font-size:12px;color:var(--text3)" onclick="openVisit('+i+')">'+(v.notes||[]).length+' not · '+v.user+'</div>'
-      +'<button onclick="deleteVisitAI('+i+')" style="background:none;border:none;color:var(--red);font-size:13px;cursor:pointer;padding:4px 8px">Sil</button>'
+      +'<div style="font-size:12px;color:var(--text3)">'+(v.notes||[]).length+' not · '+v.user+'</div>'
+      +'<button onclick="event.stopPropagation();deleteVisitAI('+i+')" style="background:none;border:none;color:var(--red);font-size:13px;cursor:pointer;padding:4px 8px">Sil</button>'
       +'</div>'
       +'</div>';
   }).join('');
   document.getElementById('histCards').innerHTML = html;
+}
+
+
+function findTurkishBG(mag, reyon, bg){
+  if(!bg) return null;
+  var md = erkekMAG[mag] || RD[reyon] || {};
+  // Direct match first
+  if((md.kl||{})[bg] || (md.bg||[]).includes(bg)) return bg;
+  // Normalize and match
+  function norm(s){ return (s||'').toLowerCase().replace(/ğ/g,'g').replace(/ü/g,'u').replace(/ş/g,'s').replace(/ı/g,'i').replace(/ö/g,'o').replace(/ç/g,'c'); }
+  var bgN = norm(bg);
+  var allBGs = md.bg||[];
+  for(var i=0;i<allBGs.length;i++){
+    if(norm(allBGs[i])===bgN) return allBGs[i];
+  }
+  return bg;
 }
 
 function openVisit(idx){
