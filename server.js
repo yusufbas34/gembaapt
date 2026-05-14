@@ -794,16 +794,16 @@ async function processAnalysis(chatId, user, store, mag, feedbacks, reyon){
       return;
     }
     if(!dbData.users[userKey].visits) dbData.users[userKey].visits=[];
-    // Duplicate check
-    const recent = dbData.users[userKey].visits.slice(0,5);
-    const fbHash = feedbacks.join('|');
+    // Duplicate check - sadece birebir aynı içerik
+    const recent = dbData.users[userKey].visits.slice(0,3);
+    const fbHash = feedbacks.join('|||');
     const isDup = recent.some(function(v){
-      const vHash = (v.notes||[]).map(function(n){return n.tx;}).join('|');
-      return vHash===fbHash || (v.store===store && (v.notes||[]).length===feedbacks.length && (Date.now()-v.id)<300000);
+      const vHash = (v.notes||[]).map(function(n){return n.tx;}).join('|||');
+      return vHash===fbHash && (Date.now()-v.id)<60000; // Sadece 1 dakika içinde birebir aynı
     });
     if(isDup){
       console.log('Duplicate blocked:', store);
-      sendTGMsg(chatId, '✅ '+feedbacks.length+' geri bildirim zaten kaydedildi!\nhttps://gembaapt.up.railway.app/ai-test.html');
+      sendTGMsg(chatId, '✅ Bu geri bildirimler zaten kaydedildi!\nhttps://gembaapt.up.railway.app/ai-test.html');
       return;
     }
     dbData.users[userKey].visits.unshift(visit);
