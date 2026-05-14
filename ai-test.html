@@ -3946,9 +3946,11 @@ function loadVisits(){
 function renderHistCards(){
   if(!VISITS.length){ document.getElementById('histEmpty').style.display='block'; return; }
   var html = VISITS.map(function(v,i){
-    var srcBadge = v.source==='telegram'
-      ? '<span style="background:#e8f0fe;color:#1a56b0;font-size:10px;font-weight:600;padding:2px 8px;border-radius:100px">📱 Telegram</span>'
-      : '<span style="background:var(--bg3);color:var(--text3);font-size:10px;padding:2px 8px;border-radius:100px">📋 Manuel</span>';
+    var srcBadge = v.source==='telegram' && !v.analyzed
+      ? '<span style="background:#fff3cd;color:#7a5200;font-size:10px;font-weight:600;padding:2px 8px;border-radius:100px">📱 Analiz Bekliyor</span>'
+      : v.source==='telegram'
+        ? '<span style="background:#e8f0fe;color:#1a56b0;font-size:10px;font-weight:600;padding:2px 8px;border-radius:100px">📱 Telegram</span>'
+        : '<span style="background:var(--bg3);color:var(--text3);font-size:10px;padding:2px 8px;border-radius:100px">📋 Manuel</span>';
     var mags = uniq((v.notes||[]).map(function(n){return n.mag;}).filter(Boolean)).join(', ');
     var storeName = v.store || '';
     // Telegram'dan gelen store adı bazen "subject" formatında geliyor, temizle
@@ -3984,9 +3986,99 @@ function findTurkishBG(mag, reyon, bg){
   return bg;
 }
 
+
+async function runVisitAnalysis(idx){
+  var v = VISITS[idx];
+  document.getElementById('visitOverlay').style.display='block';
+  document.getElementById('visitTitle').textContent = v.store + ' · ' + v.reyon + ' — Analiz ediliyor...';
+  document.getElementById('visitNotes').innerHTML = '<div class="log" style="display:block">⏳ Analiz başlıyor...<br>Phase 1: Model tespiti...<br></div>';
+
+  var feedbacks = (v.notes||[]).map(function(n){return n.tx;});
+  var mag = v.notes&&v.notes[0] ? v.notes[0].mag : '';
+  var reyon = v.reyon||'Erkek';
+
+  var logEl = document.getElementById('visitNotes').querySelector('.log');
+  function log(msg, color){ if(logEl){ logEl.innerHTML += '<span style="color:'+(color||'#9a9990')+'">'+msg+'</span><br>'; logEl.scrollTop=logEl.scrollHeight; } }
+
+  try{
+    // Phase 1: Model tespiti (Haiku)
+    log('── Phase 1: Model Tespiti ──','#5040a0');
+    var modelHints = [];
+    try{
+      var mResp = await fetch('/ai/extract-models',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({feedbacks:feedbacks})});
+      var mData = await mResp.json();
+      modelHints = mData.models||[];
+      modelHints.forEach(function(m,i){ if(m&&m.model) log('🏷 '+(i+1)+'. Model: '+m.model,'#5040a0'); });
+    }catch(e){ log('⚠ Model tespiti atlandı','#c8900a'); }
+
+    // Phase 2: KW analizi
+    log('── Phase 2: KW ──','#1a56b0');
+    var kwRes = feedbacks.map(function(fb,i){
+      var hint = modelHints[i] ? modelHints[i].model : null;
+      var r = kwScore(fb, mag, reyon, hint);
+      if(r.bg) log('✓ '+(i+1)+'. '+(r.src==='model'?'📦 Model':'🔑 KW')+': '+r.bg+(r.kl?' / '+r.kl:''),'#1a9e6e');
+      else log('? '+(i+1)+'. eşleşme yok','#c8900a');
+      return r;
+    });
+
+    // Phase 3: AI doğrulama (Sonnet)
+    log('── Phase 3: AI ──','#5040a0');
+    var aiRes = [];
+    try{
+      var aResp = await fetch('/ai/analyze',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({mag:mag,feedbacks:feedbacks,kwResults:kwRes,mags:feedbacks.map(function(){return mag;}),reyon:reyon})});
+      var aData = await aResp.json();
+      if(aData.ok) aiRes = aData.results||[];
+      log('✓ AI tamamlandı','#1a9e6e');
+    }catch(e){ log('⚠ AI atlandı: '+e.message,'#c8900a'); }
+
+    // Sonuçları birleştir - buildResults ile aynı mantık
+    (v.notes||[]).forEach(function(n,i){
+      var kw = kwRes[i]||{};
+      var ai = (aiRes||[]).find(function(a){return a.index===i;})||{};
+      if(kw.src==='model'){
+        n.bg=kw.bg; n.kl=kw.kl||null; n.src='model'; n.model=kw.model;
+      } else if(ai.bg){
+        n.bg=ai.bg; n.kl=ai.kl||null; n.src='ai'; n.aiConf=ai.confidence;
+        if(kw.bg&&ai.bg!==kw.bg) log('↻ '+(i+1)+'. AI: '+kw.bg+' → '+ai.bg,'#5040a0');
+      } else {
+        n.bg=kw.bg||'GENEL'; n.kl=kw.kl||null; n.src=kw.src;
+      }
+      n.kwScore=kw.score||0;
+      n.analyzed=true;
+    });
+
+    v.analyzed = true;
+    VISITS[idx] = v;
+    CURRENT_VISIT = v;
+
+    // Railway'e kaydet
+    var auth = null;
+    try{ auth = JSON.parse(localStorage.getItem('gemba_auth')||'null'); }catch(e){}
+    if(auth){
+      try{
+        await fetch('/visits/save',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:auth.name,pin:auth.pin,visit:v})});
+      }catch(e){}
+    }
+
+    log('✓ Tamamlandı','#1a9e6e');
+    // Şimdi normal görünümde göster
+    openVisit(idx);
+
+  }catch(e){
+    document.getElementById('visitNotes').innerHTML = '<div style="color:var(--red);padding:20px">❌ Analiz hatası: '+e.message+'</div>';
+  }
+}
+
 function openVisit(idx){
   CURRENT_VISIT = VISITS[idx];
   var v = CURRENT_VISIT;
+
+  // Telegram'dan gelmiş ama analiz edilmemişse önce analiz et
+  if(v.source==='telegram' && !v.analyzed){
+    runVisitAnalysis(idx);
+    return;
+  }
+
   document.getElementById('visitTitle').textContent = v.store + ' · ' + v.reyon;
 
   // Notları RES formatına çevir - buildTagsHTML kullanmak için
