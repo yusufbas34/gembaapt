@@ -3938,12 +3938,7 @@ var CURRENT_VISIT = null;
 var VISITS_LOADED = false;
 
 function loadVisits(force){
-  // Zaten yüklendiyse tekrar fetch etme
-  if(VISITS_LOADED && !force){
-    document.getElementById('histLoading').style.display='none';
-    renderHistCards();
-    return;
-  }
+  // Her zaman Railway'den çek - cache kaldırıldı
   var auth = null;
   try{ auth = JSON.parse(localStorage.getItem('gemba_auth')||'null'); }catch(e){}
   if(!auth||!auth.name||!auth.pin){
