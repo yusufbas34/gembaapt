@@ -563,86 +563,182 @@ function kwMatchServer(text, mag){
   return 'GENEL';
 }
 
+
+// ── Server-side KW puanlama (ai-test.html kwScore ile aynı mantık) ────────────
+function nrServer(s){
+  return (s||'').toLowerCase()
+    .replace(/ğ/g,'g').replace(/ü/g,'u').replace(/ş/g,'s')
+    .replace(/ı/g,'i').replace(/ö/g,'o').replace(/ç/g,'c')
+    .replace(/i̇/g,'i').replace(/İ/g,'i');
+}
+
+function kwScoreServer(text, mag, reyon, modelHint, KW, MDB, ERKEK_DATA, RD_DATA){
+  const n = nrServer(text);
+  const md = reyon==='Erkek' ? (ERKEK_DATA[mag]||null) : (RD_DATA[reyon]||null);
+  if(!md) return {bg:'GENEL', kl:null, src:'empty', score:0};
+
+  const textWords = n.split(/[\s,.\/\-]+/).filter(p=>p.length>1);
+
+  // 1. Model DB - hint ile exact search
+  if(modelHint && MDB.length){
+    const hn = nrServer(modelHint).replace(/[.,\-\/]/g,' ').trim();
+    let found = null;
+    // Exact match
+    for(let i=0;i<MDB.length;i++){
+      if(nrServer(MDB[i].model)===nrServer(modelHint) || MDB[i].normalized===hn){
+        found=MDB[i]; break;
+      }
+    }
+    // Partial match
+    if(!found){
+      for(let i=0;i<MDB.length;i++){
+        const mn = MDB[i].normalized||'';
+        if(mn.includes(hn)||hn.includes(mn)) { found=MDB[i]; break; }
+      }
+    }
+    if(found && found.bg) return {bg:found.bg, kl:found.kl||null, src:'model', model:found.model, score:100};
+  }
+
+  const bgList = md.bg || [];
+
+  // 2. BG ismi metinde var mı?
+  for(let i=0;i<bgList.length;i++){
+    const bgNorm = nrServer(bgList[i]);
+    if(n.includes(bgNorm)){
+      const klList = ((md.kl||{})[bgList[i]])||[];
+      let bestKL=null, bestKLS=0;
+      const STOP=['key','basic','cl','orme','dokuma','triko'];
+      klList.forEach(kl=>{
+        const klWords = nrServer(kl).replace(/[.\/\-]/g,' ').split(' ').filter(w=>w.length>3&&!STOP.includes(w));
+        let s=0; klWords.forEach(w=>{if(n.includes(w))s+=w.length*2;});
+        if(s>bestKLS){bestKLS=s;bestKL=kl;}
+      });
+      return {bg:bgList[i], kl:bestKL, src:'kw', score:80+bestKLS};
+    }
+  }
+
+  // 3. KW kuralları - tam puanlama sistemi
+  const scores = {};
+  const STOP_WORDS=['key','basic','cl','orme','dokuma','triko','icgym','aksesuar','classic','sort','takim','gomlek','ince','kalin','orta','uzun','kisa','alt','ust','pant'];
+
+  (KW||[]).forEach(rule=>{
+    if(rule.mag && rule.mag!==mag) return;
+    if(bgList.length && !bgList.includes(rule.bg)) return;
+    let ruleScore=0;
+    (rule.kw||[]).forEach(kw=>{
+      const isPriority = typeof kw==='object' ? kw.p : (typeof kw==='string' && kw.charAt(0)==='!');
+      const kwStr = typeof kw==='object' ? kw.w : (isPriority ? kw.slice(1) : kw);
+      const kwn = nrServer(kwStr);
+      let matchScore=0;
+      if(n===kwn) matchScore=10;
+      else if(n.includes(kwn)) matchScore=5;
+      else if(kwn.includes(n)) matchScore=2;
+      if(matchScore>0){
+        ruleScore += isPriority && matchScore>=5 ? matchScore+100 : matchScore;
+      }
+    });
+    if(ruleScore>0){
+      const key = rule.bg+'|||'+(rule.kl||'');
+      scores[key] = (scores[key]||0)+ruleScore;
+    }
+  });
+
+  let bestKey=null, bestScore=0;
+  Object.keys(scores).forEach(k=>{ if(scores[k]>bestScore){bestScore=scores[k];bestKey=k;} });
+  if(bestKey && bestScore>0){
+    const parts = bestKey.split('|||');
+    return {bg:parts[0], kl:parts[1]||null, src:'kw', score:bestScore};
+  }
+
+  // 4. KL isim tarama - puanlama
+  const klData = md.kl||{};
+  const klScores = [];
+  Object.keys(klData).forEach(bg=>{
+    (klData[bg]||[]).forEach(kl=>{
+      const klNorm = nrServer(kl).replace(/[.\/\-]/g,' ');
+      const klWords = klNorm.split(' ').filter(w=>w.length>2&&!STOP_WORDS.includes(w));
+      let score=0;
+      klWords.forEach(w=>{ if(n===w) score+=w.length*3; else if(n.includes(w)) score+=w.length*2; else if(w.includes(n)&&n.length>2) score+=n.length; });
+      textWords.forEach(tw=>{ if(tw.length>2&&klNorm.includes(tw)) score+=tw.length; });
+      if(score>0) klScores.push({bg,kl,score});
+    });
+  });
+  if(klScores.length){
+    klScores.sort((a,b)=>b.score-a.score);
+    if(klScores[0].score>=4) return {bg:klScores[0].bg, kl:klScores[0].kl, src:'kw', score:klScores[0].score};
+  }
+
+  return {bg:'GENEL', kl:null, src:'empty', score:0};
+}
+
 async function processAnalysis(chatId, user, store, mag, feedbacks, reyon){
-  sendTGMsg(chatId, '⏳ '+store+' / '+mag+' icin '+feedbacks.length+' geri bildirim analiz ediliyor...');
+  sendTGMsg(chatId, '⏳ '+feedbacks.length+' geri bildirim analiz ediliyor...');
 
   try{
     const ANTHROPIC_KEY = process.env.ANTHROPIC_API_KEY;
 
-    // Step 1: Model adı çıkar (Haiku)
+    // KW kurallarını ve model DB'yi yükle
+    let KW = [];
+    let MDB = [];
+    try{ KW = JSON.parse(fs.readFileSync(KW_FILE,'utf8')); }catch(e){ console.log('KW load err:', e.message); }
+    try{ MDB = JSON.parse(fs.readFileSync(MODEL_FILE,'utf8')); }catch(e){ console.log('MDB load err:', e.message); }
+
+    // erkekMAG ve RD verisini yükle (ai-test.html ile aynı)
+    const ERKEK_DATA = {
+      "BUC":{bg:["CHINO DUVARI","DIŞ GİYİM","DOKUMA ÜST","ÖRME","ÖRME BASIC","TRİKO","GENEL","LINE"],kl:{"CHINO DUVARI":["BASİC DOKUMA CHİNO PANTOLON İNCE","BASIC DOKUMA CHINO PANTOLON ORTA","CL BASIC DOKUMA PANTOLON KALIN","CLASSIC DOKUMA ROLLER","CLASSIC DOKUMA ŞORT"],"DIŞ GİYİM":["İNCE MONT","İNCE PUFFER MONT","MONT/KABAN KALIN","PARKA","PU MONT İNCE","PU MONT KALIN","YELEK"],"DOKUMA ÜST":["KEY DOKUMA GOMLEK K.KOL","KEY DOKUMA GOMLEK U.KOL","KEY EKOSELİ DOKUMA GOMLEK K.KOL","KEY EKOSELİ DOKUMA GOMLEK U.KOL"],"ÖRME":["BASIC ORME BİSİKLET YAKA T-SHIRT K.KOL","BASIC ORME POLO YAKA T-SHIRT K.KOL","BASIC ORME V YAKA T-SHIRT K.KOL","KEY BASKILI ORME T-SHIRT K.KOL","KEY ORME T-SHIRT K.KOL"],"ÖRME BASIC":["BASIC KEY BASKILI ORME SWEAT","CL BASIC ORME HIRKA","CL BASIC ORME PANTOLON","CL BASIC ORME ROLLER","CL BASIC ORME SORT / BERMUDA","CL BASIC ORME SWEAT","CL BASIC ORME T-SHIRT U.KOL","ÖRME ATLET"],"TRİKO":["KEY ÇİZGİLİ TRIKO KAZAK","KEY TRIKO HIRKA","KEY TRIKO HIRKA MONT","KEY TRIKO KAZAK","KEY TRIKO YELEK"]}},
+      "BUB":{bg:["BLAZER CEKET","DENİM","DIŞ GİYİM","DOKUMA ALT","DOKUMA ÜST","ÖRME","TRİKO","GENEL","LINE"],kl:{"BLAZER CEKET":["BLAZER CEKET"],"DENİM":["KEY DOKUMA JEAN PANTOLON"],"DIŞ GİYİM":["İNCE MONT","MONT/KABAN KALIN","PARKA","PU MONT İNCE","PU MONT KALIN","YELEK"],"DOKUMA ALT":["KEY DOKUMA PANTOLON ORTA","KEY DOKUMA ŞORT/BERMUDA"],"DOKUMA ÜST":["DOKUMA SHACKET","KEY DOKUMA GOMLEK K.KOL","KEY DOKUMA GOMLEK U.KOL"],"ÖRME":["KEY BASKILI ORME T-SHIRT K.KOL","KEY ORME HIRKA","KEY ORME PANTOLON","KEY ORME SORT / BERMUDA","KEY ORME SWEAT","KEY ORME T-SHIRT K.KOL"],"TRİKO":["KEY TRIKO HIRKA","KEY TRIKO KAZAK","KEY TRIKO SUVETER","KEY TRIKO YELEK"]}},
+      "BUL":{bg:["BLAZER CEKET","DIŞ GİYİM","DOKUMA ALT","DOKUMA ÜST","ÖRME","TRİKO","GENEL","LINE"],kl:{}},
+      "BUXL":{bg:["DENİM","DIŞ GİYİM","DOKUMA ALT","DOKUMA ÜST","ÖRME","TRİKO","GENEL","LINE"],kl:{}},
+      "BUMH":{bg:["DOKUMA ÜST","ÖRME","YÜZME GİYİM","GENEL","LINE"],kl:{}},
+      "BUGA":{bg:["AKTİF SPOR","DIŞ GİYİM","DOKUMA ALT","GENEL","LINE"],kl:{}},
+      "BUJD":{bg:["DENİM","GENEL","LINE"],kl:{}},
+      "BUJW":{bg:["DENİM","DENIM DUVARI","GENEL","LINE"],kl:{}},
+      "BUK":{bg:["DERİ AKSESUAR","DOKUMA AKSESUAR","TRİKO ÖRME AKSESUAR","GENEL","LINE"],kl:{}},
+      "BUR":{bg:["ÇORAP","GENEL","LINE"],kl:{}},
+      "BUS":{bg:["BOXER","İÇ GİYİM","GENEL","LINE"],kl:{}},
+      "BUSP":{bg:["PİJAMA","GENEL","LINE"],kl:{}},
+      "BUCF":{bg:["BLAZER CEKET","DOKUMA ALT","DOKUMA ÜST","KRAVAT/PAPYON","GENEL","LINE"],kl:{}}
+    };
+    const RD_DATA = {};
+
+    // Phase 1: Haiku model tespiti
     let modelHints = feedbacks.map(()=>null);
     if(ANTHROPIC_KEY){
       try{
-        const mPrompt = 'Aşağıdaki geri bildirimlerin her birinde geçen ÜRÜN MODEL ADINI bul.\n'
-          +'Model adı: LC Waikiki ürünlerinin özel isimleri (Scup, Zero, Ferjo, Jerno, Parma, Atina vb)\n'
-          +'Eğer model adı yoksa null döndür. Sadece JSON:\n'
-          +'[{"index":0,"model":"MODEL_ADI_veya_null"}]\n\n'
-          +'Geri bildirimler:\n'
-          +feedbacks.map((f,i)=>i+'. "'+f+'"').join('\n');
-
+        const mPrompt = 'Asagidaki geri bildirimlerin her birinde gecen URUN MODEL ADINI bul.\n'
+          +'Model adi: LC Waikiki urunlerinin ozel isimleri (Scup, Zero, Ferjo, Jerno, Parma, Atina vb)\n'
+          +'Yoksa null dondur. Sadece JSON:\n[{"index":0,"model":"MODEL_ADI_veya_null"}]\n\n'
+          +'Geri bildirimler:\n'+feedbacks.map((f,i)=>i+'. "'+f+'"').join('\n');
         const mResp = await fetch('https://api.anthropic.com/v1/messages',{
           method:'POST',
           headers:{'Content-Type':'application/json','x-api-key':ANTHROPIC_KEY,'anthropic-version':'2023-06-01'},
-          body:JSON.stringify({model:'claude-haiku-4-5-20251001',max_tokens:300,messages:[{role:'user',content:mPrompt}]})
+          body:JSON.stringify({model:'claude-haiku-4-5-20251001',max_tokens:400,messages:[{role:'user',content:mPrompt}]})
         });
         const mData = await mResp.json();
-        const mText = mData.content&&mData.content[0] ? mData.content[0].text : '[]';
+        const mText = mData.content&&mData.content[0]?mData.content[0].text:'[]';
         modelHints = JSON.parse(mText.replace(/```json|```/g,'').trim());
-      }catch(e){ console.log('Model extract err:', e.message); }
+      }catch(e){ console.log('Model hint err:', e.message); }
     }
 
-    // Step 2: KW analizi + model DB eşleştirme
-    const data = loadData();
-    const modelDB = (() => { try{ return JSON.parse(require('fs').readFileSync(MODEL_FILE,'utf8')); }catch(e){ return []; } })();
-
-    const kwResults = feedbacks.map(function(f, i){
+    // Phase 2: kwScoreServer - 182 kural + model DB
+    const kwResults = feedbacks.map((f,i)=>{
       const hint = modelHints[i] ? modelHints[i].model : null;
-      // Model DB eşleştir
-      if(hint && modelDB.length){
-        const hn = hint.toLowerCase().replace(/[.,\-\/]/g,' ').trim();
-        const found = modelDB.find(m => {
-          const mn = (m.normalized||m.model||'').toLowerCase();
-          const parts = mn.split(/[\s,.\/\-]+/).filter(p=>p.length>2);
-          return parts.some(p => {
-            const re = new RegExp('(^|[\\s,.\/\\-!?])('+p+')([\\s,.\/\\-!?]|$)');
-            return re.test(hn) || re.test(f.toLowerCase());
-          });
-        });
-        if(found && found.bg) return {bg:found.bg, kl:found.kl||null, src:'model', model:found.model, score:100};
-      }
-      // KW analizi
-      return {bg: kwMatchServer(f, mag), kl:null, src:'kw', score:5};
+      return kwScoreServer(f, mag, reyon||'Erkek', hint, KW, MDB, ERKEK_DATA, RD_DATA);
     });
 
-    // Step 3: AI doğrulama (Sonnet)
+    // Phase 3: Sonnet doğrulama
     let aiResults = [];
     if(ANTHROPIC_KEY){
       try{
-        const ERKEK_DATA = {
-          "BUC":{bg:["CHINO DUVARI","DIŞ GİYİM","DOKUMA ÜST","ÖRME","ÖRME BASIC","TRİKO","GENEL","LINE"],kl:{"CHINO DUVARI":["BASİC DOKUMA CHİNO PANTOLON İNCE","BASIC DOKUMA CHINO PANTOLON ORTA","CL BASIC DOKUMA PANTOLON KALIN","CLASSIC DOKUMA ROLLER","CLASSIC DOKUMA ŞORT"],"DIŞ GİYİM":["İNCE MONT","İNCE PUFFER MONT","MONT/KABAN KALIN","PARKA","PU MONT İNCE","PU MONT KALIN","YELEK"],"DOKUMA ÜST":["KEY DOKUMA GOMLEK K.KOL","KEY DOKUMA GOMLEK U.KOL","KEY EKOSELİ DOKUMA GOMLEK K.KOL","KEY EKOSELİ DOKUMA GOMLEK U.KOL"],"ÖRME":["BASIC ORME BİSİKLET YAKA T-SHIRT K.KOL","BASIC ORME POLO YAKA T-SHIRT K.KOL","BASIC ORME V YAKA T-SHIRT K.KOL","KEY BASKILI ORME T-SHIRT K.KOL","KEY ORME T-SHIRT K.KOL"],"ÖRME BASIC":["BASIC KEY BASKILI ORME SWEAT","CL BASIC ORME HIRKA","CL BASIC ORME PANTOLON","CL BASIC ORME ROLLER","CL BASIC ORME SORT / BERMUDA","CL BASIC ORME SWEAT","CL BASIC ORME T-SHIRT U.KOL","ÖRME ATLET"],"TRİKO":["KEY ÇİZGİLİ TRIKO KAZAK","KEY TRIKO HIRKA","KEY TRIKO HIRKA MONT","KEY TRIKO KAZAK","KEY TRIKO YELEK"]}},
-          "BUB":{bg:["BLAZER CEKET","DENİM","DIŞ GİYİM","DOKUMA ALT","DOKUMA ÜST","ÖRME","TRİKO","GENEL","LINE"]},
-          "BUL":{bg:["BLAZER CEKET","DIŞ GİYİM","DOKUMA ALT","DOKUMA ÜST","ÖRME","TRİKO","GENEL","LINE"]},
-          "BUXL":{bg:["DENİM","DIŞ GİYİM","DOKUMA ALT","DOKUMA ÜST","ÖRME","TRİKO","GENEL","LINE"]},
-          "BUMH":{bg:["DOKUMA ÜST","ÖRME","YÜZME GİYİM","GENEL","LINE"]},
-          "BUGA":{bg:["AKTİF SPOR","DIŞ GİYİM","DOKUMA ALT","GENEL","LINE"]},
-          "BUJD":{bg:["DENİM","GENEL","LINE"]},
-          "BUJW":{bg:["DENİM","DENIM DUVARI","GENEL","LINE"]},
-          "BUK":{bg:["DERİ AKSESUAR","DOKUMA AKSESUAR","TRİKO ÖRME AKSESUAR","GENEL","LINE"]},
-          "BUR":{bg:["ÇORAP","GENEL","LINE"]},
-          "BUS":{bg:["BOXER","İÇ GİYİM","GENEL","LINE"]},
-          "BUSP":{bg:["PİJAMA","GENEL","LINE"]},
-          "BUCF":{bg:["BLAZER CEKET","DOKUMA ALT","DOKUMA ÜST","KRAVAT/PAPYON","GENEL","LINE"]}
-        };
         const md = ERKEK_DATA[mag]||{bg:['GENEL'],kl:{}};
         const bgList = md.bg.join(', ');
         let klSummary = '';
         Object.keys(md.kl||{}).forEach(bg=>{
           klSummary += bg+': ['+(md.kl[bg]||[]).join(', ')+']\n';
         });
-
         const feedbacksWithKW = feedbacks.map((f,i)=>{
           const kw = kwResults[i]||{};
-          return 'index='+i+': "'+f+'" → KW: BG='+(kw.bg||'?')+(kw.src==='model'?' (MODEL:'+kw.model+')':'');
+          return 'index='+i+': "'+f+'" → KW: BG='+(kw.bg||'?')+(kw.kl?' KL='+kw.kl:'')+(kw.src==='model'?' (MODEL:'+kw.model+')':'');
         }).join('\n');
 
         const prompt = 'LC Waikiki magaza ziyaret geri bildirim siniflandirma.\n\n'
@@ -651,32 +747,38 @@ async function processAnalysis(chatId, user, store, mag, feedbacks, reyon){
           +'- ust/tisort/gomlek/sweat/kazak/hirka → ust giyim\n'
           +'- pantolon/chino/jean/sort/alt → alt giyim\n'
           +'- mont/kaban/parka/yelek → dis giyim\n'
+          +'- v yaka/bisiklet yaka/polo yaka → o yakanin tisortü\n'
           +'- ince/kalin/orta urun tipini degistirmez\n'
-          +'- KW model kaynakli ise BG degistirme\n\n'
-          +'Geri bildirimler:\n'+feedbacksWithKW+'\n\n'
+          +'- KW model kaynakli ise BG degistirme, sadece KL oner\n'
+          +'- KW acikca yanlissa (ust urun → pantolon gibi) DUZELT\n\n'
+          +'Geri bildirimler (KW onerisiyle):\n'+feedbacksWithKW+'\n\n'
           +'JSON dondur: [{"index":0,"bg":"BG_ADI","kl":"KL_veya_null","confidence":"high/medium/low"}]';
 
         const aiResp = await fetch('https://api.anthropic.com/v1/messages',{
           method:'POST',
           headers:{'Content-Type':'application/json','x-api-key':ANTHROPIC_KEY,'anthropic-version':'2023-06-01'},
-          body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:800,messages:[{role:'user',content:prompt}]})
+          body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:1000,messages:[{role:'user',content:prompt}]})
         });
         const aiData = await aiResp.json();
-        const aiText = aiData.content&&aiData.content[0] ? aiData.content[0].text : '[]';
+        const aiText = aiData.content&&aiData.content[0]?aiData.content[0].text:'[]';
         aiResults = JSON.parse(aiText.replace(/```json|```/g,'').trim());
       }catch(e){ console.log('AI err:', e.message); }
     }
 
-    // Step 4: Birleştir
+    // Birleştir - ai-test.html buildResults ile aynı mantık
     const wn = getWeekNumber(new Date());
-    const visitNotes = feedbacks.map(function(f, i){
+    const visitNotes = feedbacks.map((f,i)=>{
       const kw = kwResults[i]||{};
       const ai = aiResults.find(a=>a.index===i)||{};
       let bg, kl;
-      if(kw.src==='model'){ bg=kw.bg; kl=kw.kl||null; }
-      else if(ai.bg && ai.confidence==='high'){ bg=ai.bg; kl=ai.kl||null; }
-      else { bg=ai.bg||kw.bg||'GENEL'; kl=ai.kl||null; }
-      return {id:Date.now()+i, reyon:reyon||'Erkek', mag:mag, bg:bg||'GENEL', kl:kl||'', tx:f, photos:[]};
+      if(kw.src==='model'){
+        bg=kw.bg; kl=kw.kl||null;
+      } else if(ai.bg){
+        bg=ai.bg; kl=ai.kl||null;
+      } else {
+        bg=kw.bg||'GENEL'; kl=kw.kl||null;
+      }
+      return {id:Date.now()+i, reyon:reyon||'Erkek', mag, bg:bg||'GENEL', kl:kl||'', tx:f, photos:[]};
     });
 
     // Kaydet
@@ -694,7 +796,7 @@ async function processAnalysis(chatId, user, store, mag, feedbacks, reyon){
       dbData.users[userKey].visits.unshift(visit);
       if(dbData.users[userKey].visits.length>100) dbData.users[userKey].visits.splice(100);
       saveData(dbData);
-      console.log('Visit saved:', store, 'for', user.name);
+      console.log('Visit saved:', store, mag, feedbacks.length, 'notes for', user.name);
     }
 
     sendTGMsg(chatId, '✅ Ziyaretiniz kaydedildi! GembaGPT uygulamasindan goruntuleyebilirsiniz.');
