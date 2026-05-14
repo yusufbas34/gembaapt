@@ -3970,117 +3970,135 @@ function openVisit(idx){
   var v = CURRENT_VISIT;
   document.getElementById('visitTitle').textContent = v.store + ' · ' + v.reyon;
 
-  // Group by MAG+BG
-  var groups = {};
-  (v.notes||[]).forEach(function(n,ni){
-    var key = (n.mag||'__') + '|||' + (n.bg||'GENEL');
-    if(!groups[key]) groups[key] = {mag:n.mag, bg:n.bg, noteIdxs:[]};
-    groups[key].noteIdxs.push(ni);
+  // Notları RES formatına çevir - buildTagsHTML kullanmak için
+  var html = '';
+  (v.notes||[]).forEach(function(n, ni){
+    var r = {
+      id: 'v_'+idx+'_'+ni,
+      mag: n.mag,
+      bg: n.bg,
+      kl: n.kl,
+      src: n.src || (v.source==='telegram' ? 'ai' : 'kw'),
+      model: n.model||'',
+      kwScore: n.kwScore||0,
+      aiConf: n.aiConf||'',
+      text: n.tx
+    };
+    html += '<div class="rcard" id="vrc_'+idx+'_'+ni+'">';
+    html += '<div class="rtxt">• '+n.tx+'</div>';
+    html += '<div class="tags" id="vtags_'+idx+'_'+ni+'"></div>';
+    html += '<div id="vep_'+idx+'_'+ni+'" style="display:none"></div>';
+    html += '</div>';
   });
 
-  var html = Object.keys(groups).map(function(k){
-    var g = groups[k];
-    var notesHtml = g.noteIdxs.map(function(ni){
-      var n = v.notes[ni];
-      var magTag = n.mag ? '<span class="tag tm">'+n.mag+'</span>' : '';
-      var srcTag = n.source==='telegram'
-        ? '<span class="tag tai" style="background:#e8f0fe;color:#1a56b0;border-color:#b0c8f8">📱 TG</span>'
-        : '<span class="tag tkw">🔑 KW</span>';
-      var bgTag = n.bg
-        ? '<span class="etag etag-bg" onclick="visitEditBG('+idx+','+ni+')" style="cursor:pointer">'+n.bg
-          +'<span class="etag-x" onclick="event.stopPropagation();visitDelBG('+idx+','+ni+')"> ×</span></span>'
-        : '<span class="etag etag-empty" onclick="visitEditBG('+idx+','+ni+')" style="cursor:pointer">Buyer Grup ?</span>';
-      var klTag = n.kl
-        ? '<span class="etag etag-kl" onclick="visitEditKL('+idx+','+ni+')" style="cursor:pointer">'+n.kl
-          +'<span class="etag-x" onclick="event.stopPropagation();visitDelKL('+idx+','+ni+')"> ×</span></span>'
-        : (n.bg ? '<span class="etag etag-empty" onclick="visitEditKL('+idx+','+ni+')" style="cursor:pointer">Klasman ?</span>' : '');
-
-      return '<div class="rcard" id="vrc-'+ni+'">'
-        +'<div class="rtxt">• '+n.tx+'</div>'
-        +'<div class="tags">'+magTag+' '+bgTag+' '+klTag+'</div>'
-        +'<div id="vep-'+idx+'-'+ni+'"></div>'
-        +'</div>';
-    }).join('');
-
-    return '<div class="card">'
-      +(g.mag?'<div style="font-size:11px;color:var(--text3);margin-bottom:10px">'+g.mag+'</div>':'')
-      +notesHtml
-      +'</div>';
-  }).join('');
-
   document.getElementById('visitNotes').innerHTML = html;
+
+  // Tags render - buildTagsHTML ile
+  (v.notes||[]).forEach(function(n, ni){
+    var el = document.getElementById('vtags_'+idx+'_'+ni);
+    if(!el) return;
+    var id = 'v_'+idx+'_'+ni;
+    var magTag = n.mag ? '<span class="tag tm">'+n.mag+'</span>' : '';
+    var srcStr = v.source==='telegram' ? 'telegram' : (n.src||'kw');
+    var srcTag = srcStr==='telegram' ? '<span class="tag tai" style="background:#e8f0fe;color:#1a56b0">📱 TG</span>'
+               : srcStr==='model' ? '<span class="tag tmodel">📦 Model</span>'
+               : srcStr==='ai' ? '<span class="tag tai">🤖 AI</span>'
+               : '<span class="tag tkw">🔑 KW</span>';
+    var trueBG = findTurkishBG(n.mag, v.reyon, n.bg);
+    var bgTag = trueBG
+      ? '<span class="etag etag-bg" onclick="vEditBG('+idx+','+ni+')" style="cursor:pointer">'+trueBG
+        +'<span class="etag-x" onclick="event.stopPropagation();vDelBG('+idx+','+ni+')"> ×</span></span>'
+      : '<span class="etag etag-empty" onclick="vEditBG('+idx+','+ni+')" style="cursor:pointer">Buyer Grup ?</span>';
+    var klTag = n.kl
+      ? '<span class="etag etag-kl" onclick="vEditKL('+idx+','+ni+')" style="cursor:pointer">'+n.kl
+        +'<span class="etag-x" onclick="event.stopPropagation();vDelKL('+idx+','+ni+')"> ×</span></span>'
+      : (trueBG ? '<span class="etag etag-empty" onclick="vEditKL('+idx+','+ni+')" style="cursor:pointer">Klasman ?</span>' : '');
+    el.innerHTML = magTag+srcTag+bgTag+klTag;
+  });
+
   document.getElementById('visitOverlay').style.display='block';
 }
 
-function visitEditBG(visitIdx, ni){
+function vEditBG(visitIdx, ni){
   var v = VISITS[visitIdx];
   var n = v.notes[ni];
   var md = erkekMAG[n.mag] || RD[v.reyon] || {};
+  var trueBG = findTurkishBG(n.mag, v.reyon, n.bg);
+  var ep = document.getElementById('vep_'+visitIdx+'_'+ni);
+  if(!ep) return;
+  if(ep.style.display==='block'){ ep.style.display='none'; return; }
   var opts = '<option value="">-- BG seç</option>'
     + (md.bg||['GENEL']).map(function(b){
-        return '<option value="'+b+'"'+(b===n.bg?' selected':'')+'>'+b+'</option>';
+        return '<option value="'+b+'"'+(b===trueBG?' selected':'')+'>'+b+'</option>';
       }).join('');
-  var html = '<div class="epanel"><select onchange="visitChBG('+visitIdx+','+ni+',this.value)" style="margin-bottom:8px">'+opts+'</select>'
-    +'<button class="rbtn" onclick="visitClosePanel('+visitIdx+','+ni+')">Kapat</button></div>';
-  var ep = document.getElementById('vep-'+visitIdx+'-'+ni);
-  if(ep){ ep.innerHTML = ep.innerHTML ? '' : html; }
+  ep.innerHTML = '<div class="epanel"><div style="font-size:11px;color:var(--text3);margin-bottom:4px">Buyer Grup</div>'
+    +'<select onchange="vChBG('+visitIdx+','+ni+',this.value)" style="margin-bottom:8px">'+opts+'</select>'
+    +'<div class="epbtns"><button class="rbtn" onclick="vCloseEP('+visitIdx+','+ni+')">Kapat</button></div></div>';
+  ep.style.display='block';
 }
 
-function visitEditKL(visitIdx, ni){
+function vEditKL(visitIdx, ni){
   var v = VISITS[visitIdx];
   var n = v.notes[ni];
-  if(!n.bg){ visitEditBG(visitIdx,ni); return; }
+  var trueBG = findTurkishBG(n.mag, v.reyon, n.bg);
+  if(!trueBG){ vEditBG(visitIdx,ni); return; }
   var md = erkekMAG[n.mag] || RD[v.reyon] || {};
-  var kls = ((md.kl||{})[n.bg])||[];
+  var kls = ((md.kl||{})[trueBG])||[];
+  var ep = document.getElementById('vep_'+visitIdx+'_'+ni);
+  if(!ep) return;
+  if(ep.style.display==='block'){ ep.style.display='none'; return; }
   var opts = '<option value="">-- KL seç</option>'
     + kls.map(function(k){
         return '<option value="'+k+'"'+(k===n.kl?' selected':'')+'>'+k+'</option>';
       }).join('');
-  var html = '<div class="epanel"><select onchange="visitChKL('+visitIdx+','+ni+',this.value)" style="margin-bottom:8px">'+opts+'</select>'
-    +'<button class="rbtn" onclick="visitClosePanel('+visitIdx+','+ni+')">Kapat</button></div>';
-  var ep = document.getElementById('vep-'+visitIdx+'-'+ni);
-  if(ep){ ep.innerHTML = ep.innerHTML ? '' : html; }
+  ep.innerHTML = '<div class="epanel"><div style="font-size:11px;color:var(--text3);margin-bottom:4px">Klasman</div>'
+    +'<select onchange="vChKL('+visitIdx+','+ni+',this.value)" style="margin-bottom:8px">'+opts+'</select>'
+    +'<div class="epbtns"><button class="rbtn" onclick="vCloseEP('+visitIdx+','+ni+')">Kapat</button></div></div>';
+  ep.style.display='block';
 }
 
-function visitChBG(visitIdx, ni, val){
+function vChBG(visitIdx, ni, val){
   VISITS[visitIdx].notes[ni].bg = val||null;
   VISITS[visitIdx].notes[ni].kl = null;
   CURRENT_VISIT = VISITS[visitIdx];
   openVisit(visitIdx);
 }
-function visitChKL(visitIdx, ni, val){
+function vChKL(visitIdx, ni, val){
   VISITS[visitIdx].notes[ni].kl = val||null;
   CURRENT_VISIT = VISITS[visitIdx];
   openVisit(visitIdx);
 }
-function visitDelBG(visitIdx, ni){
+function vDelBG(visitIdx, ni){
   VISITS[visitIdx].notes[ni].bg = null;
   VISITS[visitIdx].notes[ni].kl = null;
   CURRENT_VISIT = VISITS[visitIdx];
   openVisit(visitIdx);
 }
-function visitDelKL(visitIdx, ni){
+function vDelKL(visitIdx, ni){
   VISITS[visitIdx].notes[ni].kl = null;
   CURRENT_VISIT = VISITS[visitIdx];
   openVisit(visitIdx);
 }
-function visitClosePanel(visitIdx, ni){
-  var ep = document.getElementById('vep-'+visitIdx+'-'+ni);
-  if(ep) ep.innerHTML = '';
+function vCloseEP(visitIdx, ni){
+  var ep = document.getElementById('vep_'+visitIdx+'_'+ni);
+  if(ep){ ep.style.display='none'; ep.innerHTML=''; }
 }
 
+
 function buildBGOptions(mag, reyon, selectedBG){
-  // Erkek için MAG kodu kullan, diğerleri için reyon
   var md = erkekMAG[mag] || RD[reyon] || {};
   var bgs = (md.bg||['GENEL']);
+  var selNorm = selectedBG ? selectedBG.toLowerCase().replace(/[ğüşıöç]/g,function(c){return {ğ:'g',ü:'u',ş:'s',ı:'i',ö:'o',ç:'c'}[c]||c;}) : '';
   return '<option value="">BG seç</option>' + bgs.map(function(b){
-    return '<option value="'+b+'"'+(b===selectedBG?' selected':'')+'>'+b+'</option>';
+    var bNorm = b.toLowerCase().replace(/[ğüşıöç]/g,function(c){return {ğ:'g',ü:'u',ş:'s',ı:'i',ö:'o',ç:'c'}[c]||c;});
+    return '<option value="'+b+'"'+(b===selectedBG||bNorm===selNorm?' selected':'')+'>'+b+'</option>';
   }).join('');
 }
 
 function buildKLOptions(mag, reyon, bg, selectedKL){
   var md = erkekMAG[mag] || RD[reyon] || {};
-  var kls = ((md.kl||{})[bg])||[];
+  var trueBG = typeof findTurkishBG==='function' ? findTurkishBG(mag, reyon, bg) : bg;
+  var kls = ((md.kl||{})[trueBG])||[];
   return '<option value="">KL seç</option>' + kls.map(function(k){
     return '<option value="'+k+'"'+(k===selectedKL?' selected':'')+'>'+k+'</option>';
   }).join('');
