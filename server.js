@@ -379,10 +379,18 @@ app.post('/telegram/get-link', (req, res) => {
 });
 
 // Telegram Webhook - bottan gelen mesajlar
+// Deduplication - aynı update_id iki kez işlenmesin
+const processedUpdates = new Set();
+
 app.post('/telegram/webhook', async (req, res) => {
   res.json({ok:true}); // Telegram'a hemen 200 ver
   const update = req.body;
   if(!update.message) return;
+  
+  // Duplicate check
+  const updateId = update.update_id;
+  if(updateId && processedUpdates.has(updateId)) return;
+  if(updateId){ processedUpdates.add(updateId); if(processedUpdates.size>200) processedUpdates.clear(); }
   
   const msg = update.message;
   const chatId = msg.chat.id;
@@ -689,6 +697,14 @@ async function processAnalysis(chatId, user, store, mag, feedbacks, reyon){
     const userKey = Object.keys(dbData.users||{}).find(k=>dbData.users[k].name===user.name);
     if(userKey){
       if(!dbData.users[userKey].visits) dbData.users[userKey].visits=[];
+      // Duplicate check - aynı mağaza+mag+not sayısı son 30 sn içinde kaydedilmiş mi?
+      const recent = dbData.users[userKey].visits.slice(0,5);
+      const isDup = recent.some(function(v){
+        return v.store===store && v.mag===mag && 
+               (v.notes||[]).length===feedbacks.length &&
+               (Date.now()-v.id) < 30000;
+      });
+      if(isDup){ console.log('Duplicate visit blocked:', store, mag); return; }
       dbData.users[userKey].visits.unshift(visit);
       if(dbData.users[userKey].visits.length>100) dbData.users[userKey].visits.splice(100);
       saveData(dbData);
