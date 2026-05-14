@@ -712,10 +712,8 @@ function kwScoreServer(text, mag, reyon, modelHint, KW, MDB, ERKEK_DATA, RD_DATA
 }
 
 async function processAnalysis(chatId, user, store, mag, feedbacks, reyon){
-  sendTGMsg(chatId, '⏳ Kaydediliyor...');
   try{
     const wn = getWeekNumber(new Date());
-    // Ham notları kaydet - bg/kl yok, analiz geçmişte yapılacak
     const visitNotes = feedbacks.map(function(f, i){
       return {id:Date.now()+i, reyon:reyon||'Erkek', mag:mag, bg:null, kl:null, tx:f, photos:[], analyzed:false};
     });
@@ -726,27 +724,31 @@ async function processAnalysis(chatId, user, store, mag, feedbacks, reyon){
     };
     const dbData = loadData();
     const userKey = Object.keys(dbData.users||{}).find(k=>dbData.users[k].name===user.name);
-    if(userKey){
-      if(!dbData.users[userKey].visits) dbData.users[userKey].visits=[];
-      // Duplicate check - aynı mağaza+mag+not sayısı son 30 sn içinde kaydedilmiş mi?
-      const recent = dbData.users[userKey].visits.slice(0,5);
-      const fbHash = feedbacks.join('|');
-      const isDup = recent.some(function(v){
-        const vHash = (v.notes||[]).map(function(n){return n.tx;}).join('|');
-        return vHash===fbHash || (v.store===store && v.mag===mag && 
-               (v.notes||[]).length===feedbacks.length &&
-               (Date.now()-v.id) < 300000);
-      });
-      if(isDup){ console.log('Duplicate visit blocked:', store, mag); return; }
-      dbData.users[userKey].visits.unshift(visit);
-      if(dbData.users[userKey].visits.length>100) dbData.users[userKey].visits.splice(100);
-      saveData(dbData);
-      console.log('Visit saved (unanalyzed):', store, mag, feedbacks.length, 'notes for', user.name);
+    if(!userKey){
+      sendTGMsg(chatId, '❌ Kullanıcı bulunamadı. QR kod ile yeniden bağlanın.');
+      return;
     }
+    if(!dbData.users[userKey].visits) dbData.users[userKey].visits=[];
+    // Duplicate check
+    const recent = dbData.users[userKey].visits.slice(0,5);
+    const fbHash = feedbacks.join('|');
+    const isDup = recent.some(function(v){
+      const vHash = (v.notes||[]).map(function(n){return n.tx;}).join('|');
+      return vHash===fbHash || (v.store===store && (v.notes||[]).length===feedbacks.length && (Date.now()-v.id)<300000);
+    });
+    if(isDup){
+      console.log('Duplicate blocked:', store);
+      sendTGMsg(chatId, '✅ '+feedbacks.length+' geri bildirim zaten kaydedildi!\nhttps://gembaapt.up.railway.app/ai-test.html');
+      return;
+    }
+    dbData.users[userKey].visits.unshift(visit);
+    if(dbData.users[userKey].visits.length>100) dbData.users[userKey].visits.splice(100);
+    saveData(dbData);
+    console.log('Visit saved:', store, mag, feedbacks.length, 'for', user.name);
     sendTGMsg(chatId, '✅ '+feedbacks.length+' geri bildirim kaydedildi!\nAnaliz için uygulamayı açın:\nhttps://gembaapt.up.railway.app/ai-test.html');
   }catch(e){
     console.log('processAnalysis err:', e.message);
-    sendTGMsg(chatId, '❌ Hata: '+e.message);
+    sendTGMsg(chatId, '❌ Kayıt hatası: '+e.message);
   }
 }
 
