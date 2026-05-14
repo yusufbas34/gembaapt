@@ -496,7 +496,7 @@ app.post('/telegram/webhook', async (req, res) => {
     tokens[token] = t;
     saveTGTokens(tokens);
     
-    sendTGMsg(chatId, `✅ Merhaba <b>${t.name}</b>! Telegram hesabın GembaGPT'e bağlandı.\n\nArtık geri bildirim gönderebilirsin. Format:\n\n<b>MAĞAZA ADI</b>\n<b>MAG</b> (örn: BUC)\n- Geri bildirim 1\n- Geri bildirim 2`);
+    sendTGMsg(chatId, `✅ Merhaba <b>${t.name}</b>! Telegram hesabın GembaGPT'e bağlandı.\n\nArtık geri bildirim gönderebilirsin. Format:\n\n<b>MAĞAZA ADI</b>\n<b>Reyon</b> (örn: Erkek)\n<b>MAG</b> (örn: BUC)\n- Geri bildirim 1\n- Geri bildirim 2`);
     return;
   }
 
@@ -733,7 +733,19 @@ function kwScoreServer(text, mag, reyon, modelHint, KW, MDB, ERKEK_DATA, RD_DATA
   Object.keys(scores).forEach(k=>{ if(scores[k]>bestScore){bestScore=scores[k];bestKey=k;} });
   if(bestKey && bestScore>0){
     const parts = bestKey.split('|||');
-    return {bg:parts[0], kl:parts[1]||null, src:'kw', score:bestScore};
+    let selectedBG = parts[0];
+    let selectedKL = parts[1]||null;
+    // ÖRME yaka KL - net yaka tipi yoksa null
+    if(selectedKL){
+      const klU = selectedKL.toUpperCase();
+      const hasYakaKL = ['BİSİKLET YAKA','BISIKLET YAKA','V YAKA','POLO YAKA'].some(y=>klU.includes(y));
+      if(hasYakaKL){
+        const nLow = nrServer(text);
+        const hasYakaInText = nLow.includes('bisiklet')||nLow.includes('v yaka')||nLow.includes('polo')||nLow.includes('v-yaka');
+        if(!hasYakaInText) selectedKL = null;
+      }
+    }
+    return {bg:selectedBG, kl:selectedKL, src:'kw', score:bestScore};
   }
 
   // 4. KL isim tarama - puanlama
