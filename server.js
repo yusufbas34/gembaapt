@@ -243,7 +243,9 @@ app.get('/admin/cleanup', (req, res) => {
     const visits = data.users[uk].visits||[];
     const seen = new Set();
     const unique = visits.filter(function(v){
-      const hash = (v.store||'')+'|'+(v.mag||v.notes&&v.notes[0]&&v.notes[0].mag||'')+'|'+(v.notes||[]).map(function(n){return n.tx;}).join('|');
+      // Hash: mağaza + tüm notların metni
+      const notesText = (v.notes||[]).map(function(n){return (n.tx||'').trim().toLowerCase();}).sort().join('|');
+      const hash = (v.store||'').toLowerCase().trim() + '|' + notesText;
       if(seen.has(hash)){ totalRemoved++; return false; }
       seen.add(hash);
       return true;
@@ -833,6 +835,24 @@ app.get('*',(req,res)=>res.sendFile(path.join(__dirname,'index.html')));
 
 app.listen(PORT,()=>{
   console.log(`Server running on port ${PORT}`);
+  // Startup cleanup - duplicate ziyaretleri temizle
+  try{
+    const d = loadData();
+    let removed = 0;
+    Object.keys(d.users||{}).forEach(function(uk){
+      const visits = d.users[uk].visits||[];
+      const seen = new Set();
+      const unique = visits.filter(function(v){
+        const notesText = (v.notes||[]).map(function(n){return (n.tx||'').trim().toLowerCase();}).sort().join('|');
+        const hash = (v.store||'').toLowerCase().trim()+'|'+notesText;
+        if(seen.has(hash)){removed++;return false;}
+        seen.add(hash);
+        return true;
+      });
+      d.users[uk].visits = unique;
+    });
+    if(removed>0){ saveData(d); console.log('Startup cleanup: removed', removed, 'duplicate visits'); }
+  }catch(e){ console.log('Cleanup err:', e.message); }
   console.log('Telegram:', TG_TOKEN?'configured':'not configured');
   console.log('Files:', fs.readdirSync(__dirname).filter(f=>!f.includes('node_modules')).join(', '));
   // Init data file
