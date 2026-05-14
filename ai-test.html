@@ -3006,7 +3006,22 @@ function kwScore(text, mag, reyonName, modelHint){
 
   if(bestKey && bestScore>0){
     var parts2=bestKey.split('|||');
-    return {bg:parts2[0], kl:parts2[1]||null, src:'kw', score:bestScore};
+    var selectedBG = parts2[0];
+    var selectedKL = parts2[1]||null;
+
+    // ÖRME yaka klasmanları - net yaka tipi yoksa KL boş bırak
+    var YAKA_KLS = ['BİSİKLET YAKA','BISIKLET YAKA','V YAKA','POLO YAKA'];
+    if(selectedKL){
+      var klUpper = selectedKL.toUpperCase();
+      var hasYakaKL = YAKA_KLS.some(function(y){ return klUpper.includes(y); });
+      if(hasYakaKL){
+        // Metinde net yaka tipi geçiyor mu?
+        var hasYakaInText = n.includes('bisiklet') || n.includes('v yaka') || n.includes('polo') || n.includes('v-yaka');
+        if(!hasYakaInText) selectedKL = null; // Yaka tipi belli değil
+      }
+    }
+
+    return {bg:selectedBG, kl:selectedKL, src:'kw', score:bestScore};
   }
 
   // 4. KL puanlama sistemi - tüm KL'lere puan ver
