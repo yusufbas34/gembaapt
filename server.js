@@ -497,8 +497,9 @@ app.post('/telegram/webhook', async (req, res) => {
     return;
   }
 
-  setSession(tgId, {store, reyon, mag, feedbacks});
-  sendTGMsg(chatId, '📋 <b>'+store+'</b> — '+reyon+' — <b>'+mag+'</b>\n'+feedbacks.length+' geri bildirim alındı:\n\n'+feedbacks.map(function(f){return '• '+f;}).join('\n')+'\n\n<b>tamam</b> → analiz et\n<b>iptal</b> → sil\nYa da devam edin');
+  // Tam veri var - direkt analiz et, tamam bekleme
+  clearSession(tgId);
+  await processAnalysis(chatId, user, store, mag, feedbacks, reyon);
   return;
 
   // Bu noktaya artık gelmiyor - processAnalysis fonksiyonu kullanılıyor
