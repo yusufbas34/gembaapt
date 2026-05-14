@@ -539,7 +539,7 @@ app.post('/telegram/webhook', async (req, res) => {
       return;
     }
     clearSession(tgId);
-    await processAnalysis(chatId, user, sess.store, sess.mag, sess.feedbacks, sess.reyon||'Erkek');
+    await processAnalysis(chatId, user, sess.store, sess.mag, sess.feedbacks, sess.reyon||'Erkek', sess.magBlocks||null);
     return;
   }
 
@@ -568,34 +568,63 @@ app.post('/telegram/webhook', async (req, res) => {
   }
 
   const store = lines[0];
-  // 2. satır reyon mu MAG mı?
   const REYONLAR = ['erkek','kadin','kadın','cocuk','çocuk','home','bebek'];
-  let reyon = 'Erkek', mag = '', fbStart = 1;
+  const MAG_KODLARI = ['BUC','BUB','BUL','BUXL','BUMH','BUCF','BUGA','BUJD','BUJW','BUK','BUR','BUS','BUSP'];
   
+  let reyon = 'Erkek', lineStart = 1;
   if(REYONLAR.includes(lines[1].toLowerCase().trim())){
     reyon = lines[1].trim();
     reyon = reyon.charAt(0).toUpperCase() + reyon.slice(1).toLowerCase();
-    mag = lines[2] ? lines[2].toUpperCase().trim() : '';
-    fbStart = 3;
-  } else {
-    mag = lines[1].toUpperCase().trim();
-    fbStart = 2;
+    lineStart = 2;
   }
 
-  const feedbacks = lines.slice(fbStart).map(l=>l.replace(/^[-•*\d.)]\s*/,'')).filter(function(l){return l.length>2;});
+  // Çoklu MAG parse - MAG kodunu satır başında gördüğünde yeni blok başlat
+  const magBlocks = []; // [{mag, feedbacks}]
+  let currentMag = null;
+  let currentFbs = [];
 
-  if(!feedbacks.length){
-    setSession(tgId, {store, reyon, mag, feedbacks:[]});
-    sendTGMsg(chatId, '📋 <b>'+store+'</b> / '+reyon+' / <b>'+mag+'</b> oturumu başlatıldı.\n\nGeri bildirimlerinizi yazın. Bitince <b>tamam</b> yazın.');
+  for(let i = lineStart; i < lines.length; i++){
+    const l = lines[i].trim();
+    const lUp = l.toUpperCase();
+    if(MAG_KODLARI.includes(lUp)){
+      // Yeni MAG bloğu
+      if(currentMag && currentFbs.length) magBlocks.push({mag:currentMag, feedbacks:currentFbs});
+      else if(currentMag && !currentFbs.length){} // MAG var ama geri bildirim yok - atla
+      currentMag = lUp;
+      currentFbs = [];
+    } else if(currentMag){
+      const fb = l.replace(/^[-•*0-9.)]\s*/,'');
+      if(fb.length > 2) currentFbs.push(fb);
+    }
+  }
+  if(currentMag && currentFbs.length) magBlocks.push({mag:currentMag, feedbacks:currentFbs});
+
+  // Geri bildirim yok ama MAG var - oturum aç
+  if(magBlocks.length === 0 && currentMag){
+    setSession(tgId, {store, reyon, mag:currentMag, feedbacks:[], magBlocks:[]});
+    sendTGMsg(chatId, '📋 <b>'+store+'</b> / '+reyon+' / <b>'+currentMag+'</b> oturumu başlatıldı.\n\nGeri bildirimlerinizi yazın. Bitince <b>tamam</b> yazın.');
     return;
   }
 
+  // Hiç MAG yok
+  if(magBlocks.length === 0){
+    sendTGMsg(chatId, '👋 Merhaba <b>'+user.name+'</b>!\n\nFormat:\n<code>MAĞAZA ADI\nReyon\nMAG (BUC, BUB...)\n- Geri bildirim 1</code>');
+    return;
+  }
+
+  // Tek MAG ise eski yapıya uyumlu tut
+  const mag = magBlocks[0].mag;
+  const feedbacks = magBlocks.length === 1 ? magBlocks[0].feedbacks : magBlocks.map(b=>b.feedbacks).flat();
+
   // Özet göster ve onay bekle
-  setSession(tgId, {store, reyon, mag, feedbacks});
-  const preview = '📋 <b>'+store+'</b> — '+reyon+' — <b>'+mag+'</b>\n'
-    +feedbacks.length+' geri bildirim:\n\n'
-    +feedbacks.map(function(f){return '• '+f;}).join('\n')
-    +'\n\n<b>tamam</b> → kaydet\n<b>iptal</b> → sil\nEklemek için devam yazın';
+  setSession(tgId, {store, reyon, mag, feedbacks, magBlocks});
+  let preview = '📋 <b>'+store+'</b> — '+reyon+'\n\n';
+  magBlocks.forEach(function(b){
+    preview += '🏷 <b>'+b.mag+'</b>\n';
+    b.feedbacks.forEach(function(f){ preview += '  • '+f+'\n'; });
+    preview += '\n';
+  });
+  preview += '<b>tamam</b> → kaydet\n<b>iptal</b> → sil\nEklemek için devam yazın';
   sendTGMsg(chatId, preview);
   return;
 
@@ -753,8 +782,9 @@ function kwScoreServer(text, mag, reyon, modelHint, KW, MDB, ERKEK_DATA, RD_DATA
       const hasYakaKL = ['BİSİKLET YAKA','BISIKLET YAKA','V YAKA','POLO YAKA'].some(y=>klU.includes(y));
       if(hasYakaKL){
         const nLow = nrServer(text);
-        const hasYakaInText = nLow.includes('bisiklet')||nLow.includes('v yaka')||nLow.includes('polo')||nLow.includes('v-yaka');
-        if(!hasYakaInText) selectedKL = null;
+        // "polo yaka" veya "bisiklet yaka" açıkça yazılmışsa koru, sadece "polo" yetmez
+        const hasExplicitYaka = nLow.includes('polo yaka')||nLow.includes('bisiklet yaka')||nLow.includes('v yaka')||nLow.includes('v-yaka');
+        if(!hasExplicitYaka) selectedKL = null;
       }
     }
     return {bg:selectedBG, kl:selectedKL, src:'kw', score:bestScore};
@@ -781,12 +811,22 @@ function kwScoreServer(text, mag, reyon, modelHint, KW, MDB, ERKEK_DATA, RD_DATA
   return {bg:'GENEL', kl:null, src:'empty', score:0};
 }
 
-async function processAnalysis(chatId, user, store, mag, feedbacks, reyon){
+async function processAnalysis(chatId, user, store, mag, feedbacks, reyon, magBlocks){
   try{
     const wn = getWeekNumber(new Date());
-    const visitNotes = feedbacks.map(function(f, i){
-      return {id:Date.now()+i, reyon:reyon||'Erkek', mag:mag, bg:null, kl:null, tx:f, photos:[], analyzed:false};
-    });
+    // Çoklu MAG desteği
+    let visitNotes = [];
+    if(magBlocks && magBlocks.length > 0){
+      magBlocks.forEach(function(block, bi){
+        block.feedbacks.forEach(function(f, fi){
+          visitNotes.push({id:Date.now()+(bi*100+fi), reyon:reyon||'Erkek', mag:block.mag, bg:null, kl:null, tx:f, photos:[], analyzed:false});
+        });
+      });
+    } else {
+      visitNotes = feedbacks.map(function(f, i){
+        return {id:Date.now()+i, reyon:reyon||'Erkek', mag:mag, bg:null, kl:null, tx:f, photos:[], analyzed:false};
+      });
+    }
     const visit = {
       id:Date.now(), store, reyon:reyon||'Erkek', week:wn,
       date:new Date().toLocaleString('tr-TR',{timeZone:'Europe/Istanbul',hour:'2-digit',minute:'2-digit',day:'2-digit',month:'2-digit',year:'numeric'}), user:user.name,

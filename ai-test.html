@@ -2974,8 +2974,8 @@ function kwScore(text, mag, reyonName, modelHint){
     if(rule.mag && rule.mag!==mag) return;
     if(!bgList.includes(rule.bg)) return;
     var ruleScore=0;
+    var hasPriorityHit=false;
     (rule.kw||[]).forEach(function(kw){
-      // kw format: "kelime" veya "!kelime" (öncelikli)
       var isPriority = typeof kw==='object' ? kw.p : (kw.charAt(0)==='!');
       var kwStr = typeof kw==='object' ? kw.w : (isPriority ? kw.slice(1) : kw);
       var kwn=nr(kwStr);
@@ -2984,9 +2984,9 @@ function kwScore(text, mag, reyonName, modelHint){
       else if(n.includes(kwn)) matchScore=5;
       else if(kwn.includes(n)) matchScore=2;
       if(matchScore>0){
-        // Öncelikli kelime eşleşti - bu klasmana 100 bonus ver
         if(isPriority && matchScore>=5){
           ruleScore+=matchScore+100;
+          hasPriorityHit=true;
         } else {
           ruleScore+=matchScore;
         }
@@ -2995,6 +2995,7 @@ function kwScore(text, mag, reyonName, modelHint){
     if(ruleScore>0){
       var key=rule.bg+'|||'+(rule.kl||'');
       scores[key]=(scores[key]||0)+ruleScore;
+      if(hasPriorityHit) scores[key+'__priority']=true;
     }
   });
 
@@ -3008,16 +3009,17 @@ function kwScore(text, mag, reyonName, modelHint){
     var parts2=bestKey.split('|||');
     var selectedBG = parts2[0];
     var selectedKL = parts2[1]||null;
+    var winnerHadPriority = scores[bestKey+'__priority']===true;
 
     // ÖRME yaka klasmanları - net yaka tipi yoksa KL boş bırak
+    // AMA: öncelikli (!kelime) eşleşme olduysa bypass et - o KL doğrudur
     var YAKA_KLS = ['BİSİKLET YAKA','BISIKLET YAKA','V YAKA','POLO YAKA'];
-    if(selectedKL){
+    if(selectedKL && !winnerHadPriority){
       var klUpper = selectedKL.toUpperCase();
       var hasYakaKL = YAKA_KLS.some(function(y){ return klUpper.includes(y); });
       if(hasYakaKL){
-        // Metinde net yaka tipi geçiyor mu?
-        var hasYakaInText = n.includes('bisiklet') || n.includes('v yaka') || n.includes('polo') || n.includes('v-yaka');
-        if(!hasYakaInText) selectedKL = null; // Yaka tipi belli değil
+        var hasExplicitYaka = n.includes('polo yaka') || n.includes('bisiklet yaka') || n.includes('v yaka') || n.includes('v-yaka');
+        if(!hasExplicitYaka) selectedKL = null;
       }
     }
 
