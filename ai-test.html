@@ -4296,7 +4296,10 @@ function sendVisitMail(){
     if(m.mag) body += '📦 '+boldFn('MAG: '+m.mag)+'\n\n';
     Object.values(m.bgs).forEach(function(g){
       body += '  👔 '+boldFn(g.bg)+'\n';
-      Object.values(g.kls).forEach(function(k){
+      // Önce KL'si olmayanlar, sonra KL'si olanlar
+      var klList = Object.values(g.kls);
+      klList.sort(function(a,b){ return (a.kl?1:0)-(b.kl?1:0); });
+      klList.forEach(function(k){
         if(k.kl) body += '  🏷 '+k.kl+'\n';
         k.items.forEach(function(item){ body += '      • '+item+'\n'; });
       });
