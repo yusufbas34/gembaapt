@@ -3999,8 +3999,7 @@ function openVisit(idx){
     }).join('');
 
     return '<div class="card">'
-      +(g.mag?'<div style="font-size:11px;color:var(--text3);margin-bottom:2px">'+g.mag+'</div>':'')
-      +'<div style="font-size:14px;font-weight:600;color:var(--acc);margin-bottom:10px">'+(g.bg||'GENEL')+'</div>'
+      +(g.mag?'<div style="font-size:11px;color:var(--text3);margin-bottom:10px">'+g.mag+'</div>':'')
       +notesHtml
       +'</div>';
   }).join('');
@@ -4121,41 +4120,47 @@ function sendVisitMail(){
   if(!CURRENT_VISIT) return;
   var v = CURRENT_VISIT;
   var store = v.store, reyon = v.reyon;
+  var wn = v.week || gwn(new Date());
+  var auth = null;
+  try{ auth = JSON.parse(localStorage.getItem('gemba_auth')||'null'); }catch(e){}
+  var userName = auth ? auth.name : '';
 
-  var groups = {};
+  // Mail body - index.html ile aynı format
+  var magMap = {};
   (v.notes||[]).forEach(function(n){
-    var mk = (n.mag||'__');
-    if(!groups[mk]) groups[mk]={mag:n.mag, bgs:{}};
+    var mk = n.mag||'__noMag__';
+    if(!magMap[mk]) magMap[mk]={mag:n.mag, bgs:{}};
     var bgk = n.bg||'GENEL';
-    if(!groups[mk].bgs[bgk]) groups[mk].bgs[bgk]={bg:bgk,kls:{}};
-    var klk = n.kl||'__';
-    if(!groups[mk].bgs[bgk].kls[klk]) groups[mk].bgs[bgk].kls[klk]={kl:n.kl,items:[]};
-    groups[mk].bgs[bgk].kls[klk].items.push(n.tx);
+    if(!magMap[mk].bgs[bgk]) magMap[mk].bgs[bgk]={bg:n.bg, kls:{}};
+    var klk = n.kl||'__noKl__';
+    if(!magMap[mk].bgs[bgk].kls[klk]) magMap[mk].bgs[bgk].kls[klk]={kl:n.kl, items:[]};
+    magMap[mk].bgs[bgk].kls[klk].items.push(n.tx);
   });
 
-  var body = 'Merhabalar,\n\n'+(v.week||'')+'. Hafta '+store+' magazasi '+reyon+' reyonu ziyaret notlari.\n\n';
-  Object.values(groups).forEach(function(m){
-    if(m.mag) body += 'MAG: '+m.mag+'\n\n';
+  var bold = typeof toBold === 'function' ? toBold : function(s){return s;};
+  var body = 'Merhabalar,\n\n'+wn+'. Hafta '+store+' magazasina ait '+reyon+' reyonu ziyaret notlarim asagidaki gibidir.\n\n';
+
+  Object.values(magMap).forEach(function(m){
+    if(m.mag) body += '📦 '+bold('MAG: '+m.mag)+'\n\n';
     Object.values(m.bgs).forEach(function(g){
-      body += '  '+g.bg+'\n';
+      if(g.bg && g.bg!=='GENEL') body += '  👔 '+bold(g.bg)+'\n';
       Object.values(g.kls).forEach(function(k){
-        if(k.kl) body += '  '+k.kl+'\n';
-        k.items.forEach(function(item){ body += '    - '+item+'\n'; });
+        if(k.kl) body += '  🏷 '+k.kl+'\n';
+        k.items.forEach(function(i){ body += '      \u2022 '+i+'\n'; });
       });
       body += '\n';
     });
-    body += '---\n\n';
+    body += '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n';
   });
-  body += 'Iyi calismalar dilerim,\nLC Waikiki';
+  body += 'Iyi calismalar dilerim,\n'+bold(userName)+'\nLC Waikiki';
 
+  // Alıcılar
   var mags = uniq((v.notes||[]).map(function(n){return n.mag;}).filter(Boolean));
   var toSet = [];
-  if(typeof magMailMap !== 'undefined'){
-    mags.forEach(function(m){ if(magMailMap[m] && toSet.indexOf(magMailMap[m])<0) toSet.push(magMailMap[m]); });
-  }
+  mags.forEach(function(m){ if(magMailMap[m] && toSet.indexOf(magMailMap[m])<0) toSet.push(magMailMap[m]); });
   var to = toSet.join(';');
-  var cc = typeof GEMBA_CC !== 'undefined' ? GEMBA_CC : '';
-  var subj = (v.week||'')+'. Hafta '+store+' '+reyon+' Reyonu Magaza Ziyaret Notlari';
+  var cc = GEMBA_CC||'';
+  var subj = wn+'. Hafta '+store+' '+reyon+' Reyonu Mağaza Ziyaret Notları';
 
   var isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
   var encode = function(s){ return s.replace(/&/g,'%26').replace(/[?]/g,'%3F').replace(/=/g,'%3D').replace(/#/g,'%23').replace(/[+]/g,'%2B').replace(/[\r\n]/g,'%0A'); };
