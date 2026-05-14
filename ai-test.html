@@ -3043,7 +3043,7 @@ function kwScore(text, mag, reyonName, modelHint){
     klScores.sort(function(a,b){return b.score-a.score;});
     var winner=klScores[0];
     // Minimum eşik: skor anlamlı olmalı
-    if(winner.score>=4){
+    if(winner.score>=8){
       return {bg:winner.bg, kl:winner.kl, src:'kw', score:winner.score};
     }
   }
@@ -3052,7 +3052,6 @@ function kwScore(text, mag, reyonName, modelHint){
 }
 
 function scoreBG(bg, n, md, src, baseScore){
-  // BG found, now find best KL
   var klList=(md.kl||{})[bg]||[];
   var bestKL=null, bestKLS=0;
   klList.forEach(function(kl){
@@ -3062,6 +3061,8 @@ function scoreBG(bg, n, md, src, baseScore){
     klWords.forEach(function(w){if(n.includes(w))s+=3;});
     if(s>bestKLS){bestKLS=s;bestKL=kl;}
   });
+  // KL için minimum eşik - çok düşükse boş bırak
+  if(bestKLS < 6) bestKL = null;
   return {bg:bg, kl:bestKL, src:src, score:baseScore+bestKLS};
 }
 
@@ -4237,13 +4238,12 @@ function editNoteKL(visitIdx, noteIdx, val){
 }
 
 async function closeVisit(){
-  // Değişiklikleri kaydet
-  if(CURRENT_VISIT){
+  if(CURRENT_VISIT && CURRENT_VISIT.analyzed){
     var auth = null;
     try{ auth = JSON.parse(localStorage.getItem('gemba_auth')||'null'); }catch(e){}
     if(auth){
       try{
-        var visitIdx = VISITS.indexOf(CURRENT_VISIT);
+        var visitIdx = VISITS.findIndex(function(v){return v.id===CURRENT_VISIT.id;});
         if(visitIdx >= 0) VISITS[visitIdx] = CURRENT_VISIT;
         await fetch('/visits/save',{
           method:'POST',
