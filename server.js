@@ -655,8 +655,7 @@ async function processAnalysis(chatId, user, store, mag, feedbacks, reyon){
     summary += '\n';
   });
 
-  if(TG_CHAT) sendTGMsg(TG_CHAT, summary);
-  sendTGMsg(chatId, summary+'✅ Kaydedildi!');
+  sendTGMsg(chatId, '✅ Ziyaretiniz kaydedildi! GembaGPT uygulamasindan goruntuleyebilirsiniz.');
 
   // Kaydet
   try{
