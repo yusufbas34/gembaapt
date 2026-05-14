@@ -431,7 +431,7 @@ app.post('/telegram/webhook', async (req, res) => {
   if(text.startsWith('/start')){
     const token = text.split(' ')[1];
     if(!token){
-      sendTGMsg(chatId, '👋 Merhaba! GembaGPT uygulamasindan QR kodu okutun.');
+      sendTGMsg(chatId, '👋 GembaGPT\'e hoş geldiniz!\n\nHesabınızı bağlamak için GembaGPT uygulamasını açın → Telegram sekmesi → QR kodu okutun.\n\n📋 Mesaj formatı:\n<code>MAĞAZA ADI\nReyon (Erkek/Kadın/Çocuk/Home/Bebek)\nMAG kodu (BUC, BUB, BUL...)\n- Geri bildirim 1\n- Geri bildirim 2</code>\n\nÖrnek:\n<code>T385-IST MALL OF ISTANBUL\nErkek\nBUC\n- Chino pantolon çeşidi az\n- Jerno modeli yok</code>');
       return;
     }
     const tokens = loadTGTokens();
@@ -741,7 +741,7 @@ async function processAnalysis(chatId, user, store, mag, feedbacks, reyon){
       saveData(dbData);
       console.log('Visit saved (unanalyzed):', store, mag, feedbacks.length, 'notes for', user.name);
     }
-    sendTGMsg(chatId, '✅ '+feedbacks.length+' geri bildirim kaydedildi!\nGembaGPT uygulamasını açıp analiz edebilirsiniz.');
+    sendTGMsg(chatId, '✅ '+feedbacks.length+' geri bildirim kaydedildi!\nAnaliz için uygulamayı açın:\nhttps://gembaapt.up.railway.app/ai-test.html');
   }catch(e){
     console.log('processAnalysis err:', e.message);
     sendTGMsg(chatId, '❌ Hata: '+e.message);
