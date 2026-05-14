@@ -3982,18 +3982,22 @@ function openVisit(idx){
     var g = groups[k];
     var notesHtml = g.noteIdxs.map(function(ni){
       var n = v.notes[ni];
+      var magTag = n.mag ? '<span class="tag tm">'+n.mag+'</span>' : '';
+      var srcTag = n.source==='telegram'
+        ? '<span class="tag tai" style="background:#e8f0fe;color:#1a56b0;border-color:#b0c8f8">📱 TG</span>'
+        : '<span class="tag tkw">🔑 KW</span>';
       var bgTag = n.bg
         ? '<span class="etag etag-bg" onclick="visitEditBG('+idx+','+ni+')" style="cursor:pointer">'+n.bg
           +'<span class="etag-x" onclick="event.stopPropagation();visitDelBG('+idx+','+ni+')"> ×</span></span>'
-        : '<span class="etag etag-empty" onclick="visitEditBG('+idx+','+ni+')" style="cursor:pointer">BG ?</span>';
+        : '<span class="etag etag-empty" onclick="visitEditBG('+idx+','+ni+')" style="cursor:pointer">Buyer Grup ?</span>';
       var klTag = n.kl
         ? '<span class="etag etag-kl" onclick="visitEditKL('+idx+','+ni+')" style="cursor:pointer">'+n.kl
           +'<span class="etag-x" onclick="event.stopPropagation();visitDelKL('+idx+','+ni+')"> ×</span></span>'
-        : (n.bg ? '<span class="etag etag-empty" onclick="visitEditKL('+idx+','+ni+')" style="cursor:pointer">KL ?</span>' : '');
+        : (n.bg ? '<span class="etag etag-empty" onclick="visitEditKL('+idx+','+ni+')" style="cursor:pointer">Klasman ?</span>' : '');
 
-      return '<div style="padding:10px;background:var(--bg3);border-radius:10px;margin-bottom:8px">'
-        +'<div style="font-size:13px;margin-bottom:8px">• '+n.tx+'</div>'
-        +'<div class="tags" style="margin-bottom:6px">'+bgTag+' '+klTag+'</div>'
+      return '<div class="rcard" id="vrc-'+ni+'">'
+        +'<div class="rtxt">• '+n.tx+'</div>'
+        +'<div class="tags">'+magTag+' '+bgTag+' '+klTag+'</div>'
         +'<div id="vep-'+idx+'-'+ni+'"></div>'
         +'</div>';
     }).join('');
@@ -4125,34 +4129,34 @@ function sendVisitMail(){
   try{ auth = JSON.parse(localStorage.getItem('gemba_auth')||'null'); }catch(e){}
   var userName = auth ? auth.name : '';
 
-  // Mail body - index.html ile aynı format
-  var magMap = {};
+  // buildMailPreview ile aynı mantık - magMap oluştur
+  var magMap2 = {};
   (v.notes||[]).forEach(function(n){
-    var mk = n.mag||'__noMag__';
-    if(!magMap[mk]) magMap[mk]={mag:n.mag, bgs:{}};
+    var mk = n.mag||'__';
+    if(!magMap2[mk]) magMap2[mk]={mag:n.mag, bgs:{}};
     var bgk = n.bg||'GENEL';
-    if(!magMap[mk].bgs[bgk]) magMap[mk].bgs[bgk]={bg:n.bg, kls:{}};
-    var klk = n.kl||'__noKl__';
-    if(!magMap[mk].bgs[bgk].kls[klk]) magMap[mk].bgs[bgk].kls[klk]={kl:n.kl, items:[]};
-    magMap[mk].bgs[bgk].kls[klk].items.push(n.tx);
+    if(!magMap2[mk].bgs[bgk]) magMap2[mk].bgs[bgk]={bg:bgk, kls:{}};
+    var klk = n.kl||'__';
+    if(!magMap2[mk].bgs[bgk].kls[klk]) magMap2[mk].bgs[bgk].kls[klk]={kl:n.kl, items:[]};
+    magMap2[mk].bgs[bgk].kls[klk].items.push(n.tx);
   });
 
-  var bold = typeof toBold === 'function' ? toBold : function(s){return s;};
-  var body = 'Merhabalar,\n\n'+wn+'. Hafta '+store+' magazasina ait '+reyon+' reyonu ziyaret notlarim asagidaki gibidir.\n\n';
+  var boldFn = typeof toBold === 'function' ? toBold : function(s){return s;};
+  var body = 'Merhabalar,\n\n'+wn+'. Hafta '+store+' mağazasına ait '+reyon+' reyonu ziyaret notlarım aşağıdaki gibidir.\n\n';
 
-  Object.values(magMap).forEach(function(m){
-    if(m.mag) body += '📦 '+bold('MAG: '+m.mag)+'\n\n';
+  Object.values(magMap2).forEach(function(m){
+    if(m.mag) body += '📦 '+boldFn('MAG: '+m.mag)+'\n\n';
     Object.values(m.bgs).forEach(function(g){
-      if(g.bg && g.bg!=='GENEL') body += '  👔 '+bold(g.bg)+'\n';
+      body += '  👔 '+boldFn(g.bg)+'\n';
       Object.values(g.kls).forEach(function(k){
         if(k.kl) body += '  🏷 '+k.kl+'\n';
-        k.items.forEach(function(i){ body += '      \u2022 '+i+'\n'; });
+        k.items.forEach(function(item){ body += '      • '+item+'\n'; });
       });
       body += '\n';
     });
     body += '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n';
   });
-  body += 'Iyi calismalar dilerim,\n'+bold(userName)+'\nLC Waikiki';
+  body += 'İyi çalışmalar dilerim,\n'+boldFn(userName)+'\nLC Waikiki';
 
   // Alıcılar
   var mags = uniq((v.notes||[]).map(function(n){return n.mag;}).filter(Boolean));
@@ -4284,6 +4288,7 @@ async function deleteVisitAI(idx){
       Bota mesaj formatı:<br><br>
       <div style="background:var(--bg3);border-radius:8px;padding:12px;font-family:monospace;font-size:12px;color:var(--text)">
         T385 MALL OF ISTANBUL<br>
+        Erkek<br>
         BUC<br>
         - Chino pantolon çeşidi az<br>
         - Jerno modeli yok<br>
