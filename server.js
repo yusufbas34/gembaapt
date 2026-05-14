@@ -229,6 +229,32 @@ JSON döndür:
 
 
 
+
+// Cleanup - duplicate ziyaretleri temizle
+app.get('/admin/cleanup', (req, res) => {
+  const key = req.query.key;
+  const BACKUP_KEY = process.env.BACKUP_KEY || 'gemba2024';
+  if(key !== BACKUP_KEY) return res.json({ok:false, error:'Unauthorized'});
+  
+  const data = loadData();
+  let totalRemoved = 0;
+  
+  Object.keys(data.users||{}).forEach(function(uk){
+    const visits = data.users[uk].visits||[];
+    const seen = new Set();
+    const unique = visits.filter(function(v){
+      const hash = (v.store||'')+'|'+(v.mag||v.notes&&v.notes[0]&&v.notes[0].mag||'')+'|'+(v.notes||[]).map(function(n){return n.tx;}).join('|');
+      if(seen.has(hash)){ totalRemoved++; return false; }
+      seen.add(hash);
+      return true;
+    });
+    data.users[uk].visits = unique;
+  });
+  
+  saveData(data);
+  res.json({ok:true, removed: totalRemoved});
+});
+
 // ── KW Rules ────────────────────────────────────────────────────────────────
 const KW_FILE = path.join(path.dirname(process.env.DATA_PATH || '/app/data/data.json'), 'kw_rules.json');
 
@@ -379,18 +405,21 @@ app.post('/telegram/get-link', (req, res) => {
 });
 
 // Telegram Webhook - bottan gelen mesajlar
-// Deduplication - aynı update_id iki kez işlenmesin
-const processedUpdates = new Set();
+// Deduplication - update_id dosyaya kayıt
+const UPDATES_FILE = path.join(path.dirname(DATA_FILE), 'tg_updates.json');
+function loadUpdates(){ try{ return JSON.parse(fs.readFileSync(UPDATES_FILE,'utf8')); }catch(e){ return []; } }
+function saveUpdate(id){ const arr=loadUpdates(); if(!arr.includes(id)){ arr.push(id); if(arr.length>500) arr.splice(0, arr.length-500); fs.writeFileSync(UPDATES_FILE,JSON.stringify(arr)); } }
+function isProcessed(id){ return loadUpdates().includes(id); }
 
 app.post('/telegram/webhook', async (req, res) => {
   res.json({ok:true}); // Telegram'a hemen 200 ver
   const update = req.body;
   if(!update.message) return;
   
-  // Duplicate check
+  // Duplicate check - update_id dosyada var mı?
   const updateId = update.update_id;
-  if(updateId && processedUpdates.has(updateId)) return;
-  if(updateId){ processedUpdates.add(updateId); if(processedUpdates.size>200) processedUpdates.clear(); }
+  if(updateId && isProcessed(updateId)){ console.log('Duplicate update ignored:', updateId); return; }
+  if(updateId) saveUpdate(updateId);
   
   const msg = update.message;
   const chatId = msg.chat.id;
@@ -699,10 +728,12 @@ async function processAnalysis(chatId, user, store, mag, feedbacks, reyon){
       if(!dbData.users[userKey].visits) dbData.users[userKey].visits=[];
       // Duplicate check - aynı mağaza+mag+not sayısı son 30 sn içinde kaydedilmiş mi?
       const recent = dbData.users[userKey].visits.slice(0,5);
+      const fbHash = feedbacks.join('|');
       const isDup = recent.some(function(v){
-        return v.store===store && v.mag===mag && 
+        const vHash = (v.notes||[]).map(function(n){return n.tx;}).join('|');
+        return vHash===fbHash || (v.store===store && v.mag===mag && 
                (v.notes||[]).length===feedbacks.length &&
-               (Date.now()-v.id) < 30000;
+               (Date.now()-v.id) < 300000);
       });
       if(isDup){ console.log('Duplicate visit blocked:', store, mag); return; }
       dbData.users[userKey].visits.unshift(visit);
