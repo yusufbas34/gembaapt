@@ -3919,7 +3919,15 @@ var _origCheckTG = checkTGStatus;
 var VISITS = [];
 var CURRENT_VISIT = null;
 
-function loadVisits(){
+var VISITS_LOADED = false;
+
+function loadVisits(force){
+  // Zaten yüklendiyse tekrar fetch etme
+  if(VISITS_LOADED && !force){
+    document.getElementById('histLoading').style.display='none';
+    renderHistCards();
+    return;
+  }
   var auth = null;
   try{ auth = JSON.parse(localStorage.getItem('gemba_auth')||'null'); }catch(e){}
   if(!auth||!auth.name||!auth.pin){
@@ -3933,6 +3941,7 @@ function loadVisits(){
       document.getElementById('histLoading').style.display='none';
       if(d.ok && d.visits && d.visits.length){
         VISITS = d.visits;
+        VISITS_LOADED = true;
         renderHistCards();
       } else {
         document.getElementById('histEmpty').style.display='block';
@@ -4309,6 +4318,7 @@ function sendVisitMail(){
 
 async function deleteVisitAI(idx){
   if(!confirm('Bu ziyaret silinsin mi?')) return;
+  VISITS_LOADED = false;
   var v = VISITS[idx];
   var auth = null;
   try{ auth = JSON.parse(localStorage.getItem('gemba_auth')||'null'); }catch(e){}
