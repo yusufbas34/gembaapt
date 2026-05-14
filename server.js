@@ -496,7 +496,7 @@ app.post('/telegram/webhook', async (req, res) => {
     tokens[token] = t;
     saveTGTokens(tokens);
     
-    sendTGMsg(chatId, `✅ Merhaba <b>${t.name}</b>! Telegram hesabın GembaGPT'e bağlandı.\n\nArtık geri bildirim gönderebilirsin. Format:\n\n<b>MAĞAZA ADI</b>\n<b>Reyon</b> (örn: Erkek)\n<b>MAG</b> (örn: BUC)\n- Geri bildirim 1\n- Geri bildirim 2`);
+    sendTGMsg(chatId, `✅ Merhaba <b>${t.name}</b>! Telegram hesabın GembaGPT'e bağlandı.\n\nArtık geri bildirim gönderebilirsin. Format:\n\n<b>MAĞAZA ADI</b>\n<b>MAG</b> (örn: BUC)\n- Geri bildirim 1\n- Geri bildirim 2`);
     return;
   }
 
@@ -904,6 +904,7 @@ app.listen(PORT,()=>{
       const seen = new Set();
       const unique = visits.filter(function(v){
         const notesText = (v.notes||[]).map(function(n){return (n.tx||'').trim().toLowerCase();}).sort().join('|');
+        if(!notesText) return true; // notesiz ziyaretleri koru
         const hash = (v.store||'').toLowerCase().trim()+'|'+notesText;
         if(seen.has(hash)){removed++;return false;}
         seen.add(hash);
