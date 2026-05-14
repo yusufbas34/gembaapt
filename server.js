@@ -95,8 +95,14 @@ app.post('/visits/save', (req, res) => {
   if(!user||user.pin!==pin) return res.json({ok:false, error:'Yetkisiz'});
 
   if(!user.visits) user.visits=[];
-  user.visits.unshift(visit);
-  if(user.visits.length>50) user.visits.splice(50);
+  // Var olan ziyareti güncelle (id eşleşmesi)
+  const existIdx = user.visits.findIndex(v => v.id === visit.id);
+  if(existIdx >= 0){
+    user.visits[existIdx] = visit; // güncelle
+  } else {
+    user.visits.unshift(visit); // yeni ekle
+  }
+  if(user.visits.length>100) user.visits.splice(100);
   saveData(data);
 
   const now = new Date().toLocaleString('tr-TR',{timeZone:'Europe/Istanbul'});
@@ -255,6 +261,46 @@ app.get('/admin/cleanup', (req, res) => {
   
   saveData(data);
   res.json({ok:true, removed: totalRemoved});
+});
+
+
+// ── İstatistikler ────────────────────────────────────────────────────────────
+app.get('/admin/stats', (req, res) => {
+  const key = req.query.key;
+  const BACKUP_KEY = process.env.BACKUP_KEY || 'gemba2024';
+  if(key !== BACKUP_KEY) return res.json({ok:false, error:'Unauthorized'});
+
+  const data = loadData();
+  const users = data.users||{};
+  const userKeys = Object.keys(users);
+
+  let totalVisits = 0;
+  let totalMail = 0;
+  const userStats = [];
+
+  userKeys.forEach(function(uk){
+    const u = users[uk];
+    const visits = u.visits||[];
+    const mailCount = visits.filter(v => v.mailSent).length;
+    totalVisits += visits.length;
+    totalMail += mailCount;
+    userStats.push({
+      name: u.name,
+      visits: visits.length,
+      telegramVisits: visits.filter(v=>v.source==='telegram').length,
+      manualVisits: visits.filter(v=>v.source!=='telegram').length,
+      mailSent: mailCount,
+      lastVisit: visits[0] ? visits[0].date : null
+    });
+  });
+
+  res.json({
+    ok: true,
+    totalUsers: userKeys.length,
+    totalVisits,
+    totalMail,
+    users: userStats.sort((a,b)=>b.visits-a.visits)
+  });
 });
 
 // ── KW Rules ────────────────────────────────────────────────────────────────
