@@ -80,7 +80,8 @@ app.post('/auth/login', (req, res) => {
   const now = new Date().toLocaleString('tr-TR',{timeZone:'Europe/Istanbul'});
   sendTelegram(`🔑 <b>Giriş</b>\n\nİsim: <b>${name}</b>\nZaman: ${now}`);
 
-  res.json({ok:true, name:user.name, visits:user.visits||[]});
+  const sortedVisits = (user.visits||[]).slice().sort((a,b)=>(b.id||0)-(a.id||0));
+  res.json({ok:true, name:user.name, visits:sortedVisits});
 });
 
 // Ziyaret kaydet
@@ -392,15 +393,21 @@ function loadTGTokens(){ try{ return JSON.parse(fs.readFileSync(TG_TOKENS_FILE,'
 function saveTGTokens(d){ fs.writeFileSync(TG_TOKENS_FILE, JSON.stringify(d,null,2)); }
 
 function sendTGMsg(chatId, text){
-  if(!TG_TOKEN) return;
+  if(!TG_TOKEN){ console.log('sendTGMsg: no token'); return; }
+  if(!chatId){ console.log('sendTGMsg: no chatId'); return; }
   const body = JSON.stringify({chat_id:chatId, text, parse_mode:'HTML'});
+  console.log('TG send to', chatId, ':', text.substring(0,60));
   const req = https.request({
     hostname:'api.telegram.org',
     path:`/bot${TG_TOKEN}/sendMessage`,
     method:'POST',
     headers:{'Content-Type':'application/json','Content-Length':Buffer.byteLength(body)}
-  }, (res)=>{ res.on('data',()=>{}); });
-  req.on('error',()=>{});
+  }, (res)=>{
+    let d='';
+    res.on('data',c=>d+=c);
+    res.on('end',()=>{ try{ const r=JSON.parse(d); if(!r.ok) console.log('TG error:', r.description, 'chatId:', chatId); }catch(e){} });
+  });
+  req.on('error',(e)=>{ console.log('sendTGMsg req error:', e.message); });
   req.write(body); req.end();
 }
 
@@ -777,11 +784,11 @@ async function processAnalysis(chatId, user, store, mag, feedbacks, reyon){
     });
     const visit = {
       id:Date.now(), store, reyon:reyon||'Erkek', week:wn,
-      date:new Date().toLocaleDateString('tr-TR'), user:user.name,
+      date:new Date().toLocaleString('tr-TR',{timeZone:'Europe/Istanbul',hour:'2-digit',minute:'2-digit',day:'2-digit',month:'2-digit',year:'numeric'}), user:user.name,
       notes:visitNotes, source:'telegram', analyzed:false
     };
     const dbData = loadData();
-    const userKey = Object.keys(dbData.users||{}).find(k=>dbData.users[k].name===user.name);
+    const userKey = Object.keys(dbData.users||{}).find(k=>{ const u=dbData.users[k]; return u.name===user.name || (u.name||'').toLowerCase()===(user.name||'').toLowerCase() || k===(user.name||'').trim().toLowerCase().replace(/\s+/g,'_'); });
     if(!userKey){
       sendTGMsg(chatId, '❌ Kullanıcı bulunamadı. QR kod ile yeniden bağlanın.');
       return;
