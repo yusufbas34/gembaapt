@@ -446,7 +446,7 @@ app.post('/telegram/webhook', async (req, res) => {
       return;
     }
     clearSession(tgId);
-    await processAnalysis(chatId, user, sess.store, sess.mag, sess.feedbacks);
+    await processAnalysis(chatId, user, sess.store, sess.mag, sess.feedbacks, sess.reyon||'Erkek');
     return;
   }
 
