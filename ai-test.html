@@ -3011,6 +3011,26 @@ function kwScore(text, mag, reyonName, modelHint){
     var selectedKL = parts2[1]||null;
     var winnerHadPriority = scores[bestKey+'__priority']===true;
 
+    // TRİKO BG - sadece çizgi/desen eşleştiyse ve net triko ifadesi yoksa BG null yap
+    if(parts2[0]==='TRİKO' && !winnerHadPriority){
+      var hasTrikoClear = n.includes('triko') || n.includes('kazak') || n.includes('orgu') || n.includes('knitwear') || n.includes('suveter');
+      if(!hasTrikoClear) return {bg:'GENEL', kl:null, src:'kw', score:0};
+    }
+    // ÖRME BASIC - sadece "hırka/hirka" varsa ama sweat/örme bağlamı yoksa null
+    if((parts2[0]==='ÖRME' || parts2[0]==='ÖRME BASIC') && !winnerHadPriority){
+      var klU2 = (parts2[1]||'').toUpperCase();
+      if(klU2.includes('HIRKA')){
+        // Hırka tek başına net değil - triko mu örme mi?
+        var hasOrmeCtx = n.includes('sweat') || n.includes('kapuson') || n.includes('fermuarli') || 
+                         n.includes('fermuar') || n.includes('orme') || n.includes('örme');
+        var hasTrikCtx = n.includes('triko') || n.includes('orgu') || n.includes('kazak');
+        if(!hasOrmeCtx && !hasTrikCtx){
+          // Bağlam yok - KL null, BG kalsın (ÖRME ya da ÖRME BASIC)
+          return {bg:parts2[0], kl:null, src:'kw', score:bestScore};
+        }
+      }
+    }
+
     // ÖRME yaka klasmanları - net yaka tipi yoksa KL boş bırak
     // AMA: öncelikli (!kelime) eşleşme olduysa bypass et - o KL doğrudur
     var YAKA_KLS = ['BİSİKLET YAKA','BISIKLET YAKA','V YAKA','POLO YAKA'];
