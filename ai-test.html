@@ -3167,7 +3167,6 @@ function scoreBG(bg, n, md, src, baseScore){
 /* ═══ ANALYSIS ═══ */
 
 function runKWPhase(all, fbs, mags, modelHints){
-  // Phase 2: KW + Model DB
   document.getElementById('phase').innerHTML='<span style="color:#1a56b0;font-weight:500">🔑 Anahtar Kelime Analizi...</span>';
   addLog('── Phase 2: KW ──','#1a56b0');
 
@@ -3183,16 +3182,36 @@ function runKWPhase(all, fbs, mags, modelHints){
 
   setTimeout(function(){
     document.getElementById('phase').innerHTML='<span style="color:#5040a0;font-weight:500">🤖 Claude AI Doğrulama...</span>';
-    addLog('── Phase 3: AI ──','#5040a0');
-    callAI(all[0].mag||'BUC', fbs, kwRes, mags, AI_REYON)
-      .then(function(aiRes){
-        addLog('✓ AI tamamlandı','#1a9e6e');
-        buildResults(all,kwRes,aiRes);
-      })
-      .catch(function(e){
-        addLog('⚠ AI: '+e.message+' — KW kullanılıyor','#e03e3e');
-        buildResults(all,kwRes,[]);
-      });
+    addLog('── Phase 3: AI (MAG bazlı) ──','#5040a0');
+
+    // Her MAG için ayrı AI çağrısı
+    var magGroups={};
+    all.forEach(function(item,i){ var m=item.mag||'BUC'; if(!magGroups[m]) magGroups[m]=[]; magGroups[m].push(i); });
+    var magList=Object.keys(magGroups);
+    var allAiRes=[];
+    var pending=magList.length;
+
+    magList.forEach(function(mag){
+      var indices=magGroups[mag];
+      var magFbs=indices.map(function(i){return fbs[i];});
+      var magKwRes=indices.map(function(i){return kwRes[i];});
+      var magMags=indices.map(function(){return mag;});
+      callAI(mag, magFbs, magKwRes, magMags, AI_REYON)
+        .then(function(aiRes){
+          // Re-index results back to original indices
+          (aiRes||[]).forEach(function(r){
+            allAiRes.push({index:indices[r.index], bg:r.bg, kl:r.kl, confidence:r.confidence, reason:r.reason});
+          });
+          addLog('✓ ['+mag+'] AI tamamlandı','#1a9e6e');
+        })
+        .catch(function(e){ addLog('⚠ ['+mag+'] AI hata: '+e.message,'#e03e3e'); })
+        .finally(function(){
+          pending--;
+          if(pending===0) buildResults(all,kwRes,allAiRes);
+        });
+    });
+
+    if(magList.length===0) buildResults(all,kwRes,[]);
   },400);
 }
 
@@ -3204,7 +3223,7 @@ function runAnalysis(){
     var mag=AI_REYON==='Erkek'?(b.querySelector('.bmagsel')?b.querySelector('.bmagsel').value:''):'';
     var raw=b.querySelector('.btxt').value.trim();
     if(raw){
-      if(AI_REYON==='Erkek'&&!mag) return; // skip Erkek blocks without MAG
+      if(AI_REYON==='Erkek'&&!mag) return;
       raw.split('\n').forEach(function(line){
         var t=line.trim();
         if(t) all.push({mag:mag,text:t,reyon:AI_REYON});
@@ -3212,6 +3231,12 @@ function runAnalysis(){
     }
   });
   if(!all.length){alert('Geri bildirim girin!');return;}
+  // MAG kontrolü - her item kendi MAG'ını taşıyor
+  window._AI_MAG_BLOCKS = {};
+  all.forEach(function(item){
+    if(!window._AI_MAG_BLOCKS[item.mag]) window._AI_MAG_BLOCKS[item.mag]=[];
+    window._AI_MAG_BLOCKS[item.mag].push(item);
+  });
 
   document.getElementById('s1').className='stp done';
   document.getElementById('s2').className='stp act';
@@ -3327,15 +3352,26 @@ function getMD(r){
 
 function renderRes(){
   var html='';
+  // MAG'a göre grupla ve başlık ekle
+  var magGroups={};
+  var magOrder=[];
   RES.forEach(function(r){
-    var cls=r.status==='confirmed'?' ok':r.status==='rejected'?' skip':'';
-    html+='<div class="rcard'+cls+'" id="rc'+r.id+'">';
-    html+='<div class="rtxt">'+r.text+'</div>';
-    html+='<div class="tags" id="tags'+r.id+'"></div>';
-    // reason hidden
-    html+='<div id="ep'+r.id+'" style="display:none"></div>';
-    // Onaylama yok - tag düzenleme yeterli
-    html+='</div>';
+    var m=r.mag||'';
+    if(!magGroups[m]){magGroups[m]=[];magOrder.push(m);}
+    magGroups[m].push(r);
+  });
+  magOrder.forEach(function(mag){
+    if(mag){
+      html+='<div style="font-size:13px;font-weight:700;color:#fff;background:var(--acc);border-radius:8px;padding:8px 14px;margin:10px 0 6px;letter-spacing:.04em">📦 '+mag+'</div>';
+    }
+    magGroups[mag].forEach(function(r){
+      var cls=r.status==='confirmed'?' ok':r.status==='rejected'?' skip':'';
+      html+='<div class="rcard'+cls+'" id="rc'+r.id+'">';
+      html+='<div class="rtxt">'+r.text+'</div>';
+      html+='<div class="tags" id="tags'+r.id+'"></div>';
+      html+='<div id="ep'+r.id+'" style="display:none"></div>';
+      html+='</div>';
+    });
   });
   document.getElementById('rlist').innerHTML=html;
   RES.forEach(function(r){
@@ -3366,7 +3402,7 @@ function closePanel(id){var p=document.getElementById('ep'+id);if(p)p.style.disp
 
 function editTagBG(id){
   var r=RES[id];
-  var md=getMD(r);
+  var md=getMD(r); // getMD uses r.mag - correct MAG's data
   var opts='<option value="">-- Boş</option>';
   (md.bg||[]).forEach(function(b){opts+='<option value="'+b+'"'+(r.bg===b?' selected':'')+'>'+b+'</option>';});
   var html='<div class="epanel"><div style="font-size:11px;color:var(--text3);margin-bottom:4px">Buyer Grup</div>';
@@ -4527,7 +4563,9 @@ async function deleteVisitAI(idx){
         BUC<br>
         - Chino pantolon çeşidi az<br>
         - Jerno modeli yok<br>
-        - Sweat renk seçeneği isteniyor
+        BUB<br>
+        - Blazer ceket isteniyor<br>
+        - Jean pantolon az
       </div>
       <div style="font-size:12px;color:var(--text3);margin-top:10px;line-height:1.8">
         📍 1. satır: Mağaza adı<br>
