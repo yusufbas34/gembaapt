@@ -2793,13 +2793,35 @@ var ACC_STATE = {};
 
 /* ═══ INIT ═══ */
 (function init(){
-  try{ var s=localStorage.getItem('gemba_kw3'); KW=s?JSON.parse(s):null; }catch(e){ KW=null; }
-  if(!KW || !KW.length){
-    fetch('/kw/load').then(function(r){return r.json();}).then(function(d){
-      if(d.ok && d.rules && d.rules.length){ KW=d.rules; }
-      else { KW=JSON.parse(JSON.stringify(DEFAULT_KW)); }
-    }).catch(function(){ KW=JSON.parse(JSON.stringify(DEFAULT_KW)); });
-  }
+  // Railway'den yükle, DEFAULT_KW ile merge et
+  fetch('/kw/load').then(function(r){return r.json();}).then(function(d){
+    var base = JSON.parse(JSON.stringify(DEFAULT_KW));
+    if(d.ok && d.rules && d.rules.length){
+      // Railway'deki kuralları ekle, DEFAULT_KW'de olmayanları ekle
+      var merged = base.slice();
+      d.rules.forEach(function(rule){
+        // Aynı mag+bg+kl kombinasyonu yoksa ekle
+        var exists = merged.some(function(r){
+          return r.mag===rule.mag && r.bg===rule.bg && r.kl===rule.kl;
+        });
+        if(!exists) merged.push(rule);
+        else {
+          // Varsa kw listelerini merge et
+          var existing = merged.find(function(r){ return r.mag===rule.mag && r.bg===rule.bg && r.kl===rule.kl; });
+          if(existing && rule.kw){
+            rule.kw.forEach(function(kw){
+              var kwStr = typeof kw==='object' ? kw.w : kw;
+              var alreadyHas = existing.kw.some(function(k){ return (typeof k==='object'?k.w:k)===kwStr; });
+              if(!alreadyHas) existing.kw.push(kw);
+            });
+          }
+        }
+      });
+      KW = merged;
+    } else {
+      KW = base;
+    }
+  }).catch(function(){ KW=JSON.parse(JSON.stringify(DEFAULT_KW)); });
   fetch('/models/load').then(function(r){return r.json();}).then(function(d){
     if(d.ok && d.models && d.models.length){ MDB=d.models; if(MDB.length) showMStats(); }
   }).catch(function(){});
