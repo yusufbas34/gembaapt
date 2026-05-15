@@ -463,6 +463,38 @@ app.post('/telegram/get-link', (req, res) => {
 });
 
 // Telegram Webhook - bottan gelen mesajlar
+
+function sendTGMsgWithButtons(chatId, text, buttons){
+  if(!TG_TOKEN || !chatId) return;
+  const keyboard = {inline_keyboard: [buttons]};
+  const body = JSON.stringify({chat_id:chatId, text, parse_mode:'HTML', reply_markup:keyboard});
+  const req = https.request({
+    hostname:'api.telegram.org',
+    path:`/bot${TG_TOKEN}/sendMessage`,
+    method:'POST',
+    headers:{'Content-Type':'application/json','Content-Length':Buffer.byteLength(body)}
+  }, (res)=>{
+    let d='';
+    res.on('data',c=>d+=c);
+    res.on('end',()=>{ try{ const r=JSON.parse(d); if(!r.ok) console.log('TG btn error:', r.description); }catch(e){} });
+  });
+  req.on('error',(e)=>{ console.log('sendTGMsgWithButtons error:', e.message); });
+  req.write(body); req.end();
+}
+
+function answerCallback(callbackQueryId, text){
+  if(!TG_TOKEN) return;
+  const body = JSON.stringify({callback_query_id: callbackQueryId, text: text||''});
+  const req = https.request({
+    hostname:'api.telegram.org',
+    path:`/bot${TG_TOKEN}/answerCallbackQuery`,
+    method:'POST',
+    headers:{'Content-Type':'application/json','Content-Length':Buffer.byteLength(body)}
+  }, (res)=>{ res.on('data',()=>{}); });
+  req.on('error',()=>{});
+  req.write(body); req.end();
+}
+
 // Deduplication - update_id dosyaya kayıt
 const UPDATES_FILE = path.join(path.dirname(DATA_FILE), 'tg_updates.json');
 function loadUpdates(){ try{ return JSON.parse(fs.readFileSync(UPDATES_FILE,'utf8')); }catch(e){ return []; } }
@@ -472,6 +504,33 @@ function isProcessed(id){ return loadUpdates().includes(id); }
 app.post('/telegram/webhook', async (req, res) => {
   res.json({ok:true}); // Telegram'a hemen 200 ver
   const update = req.body;
+  // Inline button callback
+  if(update.callback_query){
+    const cq = update.callback_query;
+    const cqChatId = cq.message.chat.id;
+    const cqTgId = cq.from.id.toString();
+    const cqData = cq.data;
+    answerCallback(cq.id);
+    
+    const cqTgUsers = loadTGUsers();
+    const cqUser = cqTgUsers[cqTgId];
+    if(!cqUser){ sendTGMsg(cqChatId, '❌ Bağlantı kurulmadı.'); return; }
+    
+    if(cqData==='confirm_save'){
+      const sess = getSession(cqTgId);
+      if(!sess||!sess.feedbacks||!sess.feedbacks.length){
+        sendTGMsg(cqChatId, '❌ Kaydedilecek veri yok.');
+        return;
+      }
+      clearSession(cqTgId);
+      await processAnalysis(cqChatId, cqUser, sess.store, sess.mag, sess.feedbacks, sess.reyon||'Erkek', sess.magBlocks||null);
+    } else if(cqData==='cancel_save'){
+      clearSession(cqTgId);
+      sendTGMsg(cqChatId, '🗑 İptal edildi. Yeni geri bildirim için mağaza adıyla başlayın.');
+    }
+    return;
+  }
+
   if(!update.message) return;
   
   // Duplicate check - update_id dosyada var mı?
@@ -618,7 +677,7 @@ app.post('/telegram/webhook', async (req, res) => {
   const mag = magBlocks[0].mag;
   const feedbacks = magBlocks.length === 1 ? magBlocks[0].feedbacks : magBlocks.map(b=>b.feedbacks).flat();
 
-  // Özet göster ve onay bekle
+  // Özet göster ve onay bekle - inline butonlar ile
   setSession(tgId, {store, reyon, mag, feedbacks, magBlocks});
   let preview = '📋 <b>'+store+'</b> — '+reyon+'\n\n';
   magBlocks.forEach(function(b){
@@ -626,8 +685,11 @@ app.post('/telegram/webhook', async (req, res) => {
     b.feedbacks.forEach(function(f){ preview += '  • '+f+'\n'; });
     preview += '\n';
   });
-  preview += '<b>tamam</b> → kaydet\n<b>iptal</b> → sil\nEklemek için devam yazın';
-  sendTGMsg(chatId, preview);
+  preview += 'Eklemek için mesaj yazmaya devam edin.';
+  sendTGMsgWithButtons(chatId, preview, [
+    {text:'✅ Kaydet', callback_data:'confirm_save'},
+    {text:'❌ İptal', callback_data:'cancel_save'}
+  ]);
   return;
 
   // Bu noktaya artık gelmiyor - processAnalysis fonksiyonu kullanılıyor

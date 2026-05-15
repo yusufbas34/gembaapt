@@ -141,7 +141,7 @@ textarea{resize:vertical;line-height:1.6}
     <div class="card">
       <div class="lbl">Mağaza</div>
       <div class="swrap" id="storeWrapAI">
-        <input type="text" id="storeInputAI" class="sinput" placeholder="Mağaza ara..." autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" name="store-search-x"
+        <input type="text" id="storeInputAI" class="sinput" placeholder="Mağaza ara..." autocomplete="new-password" autocorrect="off" autocapitalize="off" spellcheck="false" name="gemba-store-x-nofill"
           oninput="filterStoreAI(this.value)" onfocus="openStoreAI()" readonly
           style="background-image:url('data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2212%22 height=%227%22 viewBox=%220 0 12 7%22%3E%3Cpath d=%22M1 1l5 4.5L11 1%22 stroke=%22%23aeaea9%22 stroke-width=%221.5%22 fill=%22none%22/%3E%3C/svg%3E');background-repeat:no-repeat;background-position:right 12px center;cursor:pointer"/>
         <div class="sdrop" id="storeDropAI"></div>
@@ -3485,7 +3485,10 @@ function buildMailPreview(groups){
   var store=AI_STORE||'—';
   var reyon=AI_REYON||'—';
   var wn=typeof gwn==='function'?gwn(new Date()):0;
-  var userName='';
+  var auth2=null;
+  try{ auth2=JSON.parse(localStorage.getItem('gemba_auth')||'null'); }catch(e){}
+  var userName = (auth2&&auth2.name) ? auth2.name : '';
+  if(!userName){ try{ var gu2=JSON.parse(localStorage.getItem('gu')||'null'); if(gu2&&gu2.name) userName=gu2.name; }catch(e){} }
 
   var body='Merhabalar,\n\n'+wn+'. Hafta '+store+' mağazasına ait '+reyon+' reyonu ziyaret notlarım aşağıdaki gibidir.\n\n';
 
@@ -4130,17 +4133,26 @@ async function runVisitAnalysis(idx){
   var v = VISITS[idx];
   document.getElementById('visitOverlay').style.display='block';
   document.getElementById('visitTitle').textContent = v.store + ' · ' + v.reyon + ' — Analiz ediliyor...';
-  document.getElementById('visitNotes').innerHTML = '<div class="log" style="display:block">⏳ Analiz başlıyor...<br>Phase 1: Model tespiti...<br></div>';
+  document.getElementById('visitNotes').innerHTML = '<div class="log" style="display:block;margin:16px">⏳ Analiz başlıyor...<br></div>';
 
-  var feedbacks = (v.notes||[]).map(function(n){return n.tx;});
-  var mag = v.notes&&v.notes[0] ? v.notes[0].mag : '';
+  var notes = v.notes||[];
+  var feedbacks = notes.map(function(n){return n.tx;});
   var reyon = v.reyon||'Erkek';
+
+  // MAG gruplarını bul
+  var magGroups = {};
+  var magOrder = [];
+  notes.forEach(function(n,i){
+    var m = n.mag||'';
+    if(!magGroups[m]){magGroups[m]=[];magOrder.push(m);}
+    magGroups[m].push(i);
+  });
 
   var logEl = document.getElementById('visitNotes').querySelector('.log');
   function log(msg, color){ if(logEl){ logEl.innerHTML += '<span style="color:'+(color||'#9a9990')+'">'+msg+'</span><br>'; logEl.scrollTop=logEl.scrollHeight; } }
 
   try{
-    // Phase 1: Model tespiti (Haiku)
+    // Phase 1: Model tespiti
     log('── Phase 1: Model Tespiti ──','#5040a0');
     var modelHints = [];
     try{
@@ -4150,30 +4162,45 @@ async function runVisitAnalysis(idx){
       modelHints.forEach(function(m,i){ if(m&&m.model) log('🏷 '+(i+1)+'. Model: '+m.model,'#5040a0'); });
     }catch(e){ log('⚠ Model tespiti atlandı','#c8900a'); }
 
-    // Phase 2: KW analizi
+    // Phase 2: KW analizi - her note kendi MAG'ıyla
     log('── Phase 2: KW ──','#1a56b0');
     var kwRes = feedbacks.map(function(fb,i){
+      var noteMag = notes[i].mag||magOrder[0]||'BUC';
       var hint = modelHints[i] ? modelHints[i].model : null;
-      var r = kwScore(fb, mag, reyon, hint);
-      if(r.bg) log('✓ '+(i+1)+'. '+(r.src==='model'?'📦 Model':'🔑 KW')+': '+r.bg+(r.kl?' / '+r.kl:''),'#1a9e6e');
-      else log('? '+(i+1)+'. eşleşme yok','#c8900a');
+      var r = kwScore(fb, noteMag, reyon, hint);
+      if(r.src==='model') log('✓ '+(i+1)+'. ['+noteMag+'] 📦 Model: '+r.model+' → '+r.bg,'#1a9e6e');
+      else if(r.bg) log('✓ '+(i+1)+'. ['+noteMag+'] KW: '+r.bg+(r.kl?' / '+r.kl:''),'#1a9e6e');
+      else log('? '+(i+1)+'. ['+noteMag+'] eşleşme yok','#c8900a');
       return r;
     });
 
-    // Phase 3: AI doğrulama (Sonnet)
-    log('── Phase 3: AI ──','#5040a0');
-    var aiRes = [];
-    try{
-      var aResp = await fetch('/ai/analyze',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({mag:mag,feedbacks:feedbacks,kwResults:kwRes,mags:feedbacks.map(function(){return mag;}),reyon:reyon})});
-      var aData = await aResp.json();
-      if(aData.ok) aiRes = aData.results||[];
-      log('✓ AI tamamlandı','#1a9e6e');
-    }catch(e){ log('⚠ AI atlandı: '+e.message,'#c8900a'); }
+    // Phase 3: AI doğrulama - her MAG için ayrı
+    log('── Phase 3: AI (MAG bazlı) ──','#5040a0');
+    var allAiRes = [];
+    var magPending = magOrder.length;
 
-    // Sonuçları birleştir - buildResults ile aynı mantık
-    (v.notes||[]).forEach(function(n,i){
+    for(var mi=0; mi<magOrder.length; mi++){
+      var mag = magOrder[mi];
+      var indices = magGroups[mag];
+      var magFbs = indices.map(function(i){return feedbacks[i];});
+      var magKw = indices.map(function(i){return kwRes[i];});
+      var magMags = indices.map(function(){return mag;});
+      try{
+        var aResp = await fetch('/ai/analyze',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({mag:mag,feedbacks:magFbs,kwResults:magKw,mags:magMags,reyon:reyon})});
+        var aData = await aResp.json();
+        if(aData.ok){
+          (aData.results||[]).forEach(function(r){
+            allAiRes.push({index:indices[r.index], bg:r.bg, kl:r.kl, confidence:r.confidence});
+          });
+          log('✓ ['+mag+'] AI tamamlandı','#1a9e6e');
+        }
+      }catch(e){ log('⚠ ['+mag+'] AI atlandı','#c8900a'); }
+    }
+
+    // Sonuçları birleştir
+    notes.forEach(function(n,i){
       var kw = kwRes[i]||{};
-      var ai = (aiRes||[]).find(function(a){return a.index===i;})||{};
+      var ai = allAiRes.find(function(a){return a.index===i;})||{};
       if(kw.src==='model'){
         n.bg=kw.bg; n.kl=kw.kl||null; n.src='model'; n.model=kw.model;
       } else if(ai.bg){
@@ -4199,8 +4226,8 @@ async function runVisitAnalysis(idx){
       }catch(e){}
     }
 
-    log('✓ Tamamlandı','#1a9e6e');
-    // Şimdi normal görünümde göster
+    log('✓ Analiz tamamlandı','#1a9e6e');
+    // Normal görünümde göster
     openVisit(idx);
 
   }catch(e){
@@ -4394,7 +4421,11 @@ function sendVisitMail(){
   var wn = v.week || gwn(new Date());
   var auth = null;
   try{ auth = JSON.parse(localStorage.getItem('gemba_auth')||'null'); }catch(e){}
-  var userName = auth ? auth.name : '';
+  var userName = (auth && auth.name) ? auth.name : '';
+  // Analiz sekmesinde de auth kontrol et
+  if(!userName){
+    try{ var ga=JSON.parse(localStorage.getItem('gu')||'null'); if(ga&&ga.name) userName=ga.name; }catch(e){}
+  }
 
   // buildMailPreview ile aynı mantık - magMap oluştur
   var magMap2 = {};
