@@ -194,7 +194,9 @@ TEMEL MANTIK — önce ürün tipini anla:
 - "mont / kaban / parka / yelek / ceket" → dış giyim klasmanı
 - "v yaka / bisiklet yaka / polo yaka" → o yaka tipinin tişörtü — sadece bu kelimeler geçiyorsa o KL'yi seç
 - "ince / kalın / orta" → ürün kalınlığı/ağırlığı — ürün tipini değiştirmez!
-- ÖRME BG'de yaka KL'leri (BİSİKLET YAKA, V YAKA, POLO YAKA): metinde "bisiklet yaka", "v yaka", "polo yaka" geçmiyorsa KL null bırak. "tshirt/kısa kol/beyaz/renk" yaka tipini belirtmez!
+- ÖRME BG'de yaka KL'leri (BİSİKLET YAKA, V YAKA, POLO YAKA): metinde "bisiklet yaka", "v yaka", "polo yaka" geçmiyorsa KL null bırak
+- Kumaş/özellik kelimesi (merserize, pike, modal, viskon) + yaka tipi birlikte varsa → kumaş kelimesi önceliklidir → KEY ORME T-SHIRT K.KOL seç
+- Örnek: "merserize polo yaka" → KEY ORME T-SHIRT K.KOL (merserize özelliği belirleyici)
 - TRİKO BG: sadece "kazak", "hırka", "triko", "örgü" gibi net ifadeler varsa TRİKO seç. "çizgili", "desenli", "renkli" gibi özellikler tek başına TRİKO'yu belirtmez — bu durumda BG null veya GENEL bırak
 - Genel kural: geri bildirimde ürün tipi NET belirtilmemişse (sadece renk/desen/kalite ifadesi varsa) BG null bırak
 - Model adı (örn: Dubar, Scup, Zero, Ferjo) → o modelin ait olduğu kategori

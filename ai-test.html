@@ -140,8 +140,8 @@ textarea{resize:vertical;line-height:1.6}
     <!-- Mağaza seç -->
     <div class="card">
       <div class="lbl">Mağaza</div>
-      <div class="swrap" id="storeWrapAI">
-        <input type="text" id="storeInputAI" class="sinput" placeholder="Mağaza ara..." autocomplete="new-password" autocorrect="off" autocapitalize="off" spellcheck="false" name="gemba-store-x-nofill"
+      <div class="swrap" id="storeWrapAI"><input type="text" style="display:none" name="fake-user"/><input type="password" style="display:none" name="fake-pass"/>
+        <input type="text" id="storeInputAI" class="sinput" placeholder="Mağaza ara..." autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" name="gemba-store-nofill-897667"
           oninput="filterStoreAI(this.value)" onfocus="openStoreAI()" readonly
           style="background-image:url('data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2212%22 height=%227%22 viewBox=%220 0 12 7%22%3E%3Cpath d=%22M1 1l5 4.5L11 1%22 stroke=%22%23aeaea9%22 stroke-width=%221.5%22 fill=%22none%22/%3E%3C/svg%3E');background-repeat:no-repeat;background-position:right 12px center;cursor:pointer"/>
         <div class="sdrop" id="storeDropAI"></div>
@@ -496,15 +496,9 @@ var DEFAULT_KW = [
     "bg": "ÖRME",
     "kl": "BASIC ORME POLO YAKA T-SHIRT K.KOL",
     "kw": [
-      "k.kol",
-      "kisa kol",
-      "kkol",
-      "kısa kollu",
-      "polo",
-      "polo yaka",
-      "t-shirt",
-      "tisort",
-      "tshirt"
+      "!polo yaka",
+      "!polo yaka tisort",
+      "polo yaka tshirt"
     ]
   },
   {
@@ -548,6 +542,9 @@ var DEFAULT_KW = [
     "bg": "ÖRME",
     "kl": "KEY ORME T-SHIRT K.KOL",
     "kw": [
+      "!merserize",
+      "!merserize tisort",
+      "!merserize tshirt",
       "k.kol",
       "kisa kol",
       "kkol",
@@ -3072,6 +3069,21 @@ function kwScore(text, mag, reyonName, modelHint){
     var selectedKL = parts2[1]||null;
     var winnerHadPriority = scores[bestKey+'__priority']===true;
 
+    // KUMAŞ/MODEL KELİMESİ kontrolü - yaka tipinden önce gelir
+    // Metinde kumaş/model özelliği varsa yaka KL'yi override et
+    var FABRIC_WORDS = ['merserize', 'pike', 'pique', 'modal', 'viskon', 'viscon', 'pamuk', 'likrali', 'likra'];
+    var hasFabricWord = FABRIC_WORDS.some(function(fw){ return n.includes(fw); });
+    if(hasFabricWord && selectedKL){
+      var klU3 = selectedKL.toUpperCase();
+      var isYakaKL3 = ['BİSİKLET YAKA','BISIKLET YAKA','V YAKA','POLO YAKA'].some(function(y){ return klU3.includes(y); });
+      if(isYakaKL3){
+        // Kumaş kelimesi var + yaka KL seçilmiş → yaka bağlamı siliyoruz
+        // KEY ORME veya daha uygun KL ara
+        selectedKL = null; // AI düzeltsin
+        // BG ÖRME kalır
+      }
+    }
+
     // TRİKO BG - sadece çizgi/desen eşleştiyse ve net triko ifadesi yoksa BG null yap
     if(parts2[0]==='TRİKO' && !winnerHadPriority){
       var hasTrikoClear = n.includes('triko') || n.includes('kazak') || n.includes('orgu') || n.includes('knitwear') || n.includes('suveter');
@@ -4248,24 +4260,28 @@ function openVisit(idx){
   document.getElementById('visitTitle').textContent = v.store + ' · ' + v.reyon;
 
   // Notları RES formatına çevir - buildTagsHTML kullanmak için
+  // MAG gruplarını bul
+  var vMagGroups={}, vMagOrder=[];
+  (v.notes||[]).forEach(function(n,ni){
+    var m=n.mag||'';
+    if(!vMagGroups[m]){vMagGroups[m]=[];vMagOrder.push(m);}
+    vMagGroups[m].push(ni);
+  });
+
   var html = '';
-  (v.notes||[]).forEach(function(n, ni){
-    var r = {
-      id: 'v_'+idx+'_'+ni,
-      mag: n.mag,
-      bg: n.bg,
-      kl: n.kl,
-      src: n.src || (v.source==='telegram' ? 'ai' : 'kw'),
-      model: n.model||'',
-      kwScore: n.kwScore||0,
-      aiConf: n.aiConf||'',
-      text: n.tx
-    };
-    html += '<div class="rcard" id="vrc_'+idx+'_'+ni+'">';
-    html += '<div class="rtxt">• '+n.tx+'</div>';
-    html += '<div class="tags" id="vtags_'+idx+'_'+ni+'"></div>';
-    html += '<div id="vep_'+idx+'_'+ni+'" style="display:none"></div>';
-    html += '</div>';
+  vMagOrder.forEach(function(mag){
+    // MAG başlığı
+    if(mag){
+      html += '<div style="font-size:13px;font-weight:700;color:#fff;background:var(--acc);border-radius:8px;padding:8px 14px;margin:10px 0 6px;letter-spacing:.04em">📦 '+mag+'</div>';
+    }
+    vMagGroups[mag].forEach(function(ni){
+      var n = v.notes[ni];
+      html += '<div class="rcard" id="vrc_'+idx+'_'+ni+'">';
+      html += '<div class="rtxt">• '+n.tx+'</div>';
+      html += '<div class="tags" id="vtags_'+idx+'_'+ni+'"></div>';
+      html += '<div id="vep_'+idx+'_'+ni+'" style="display:none"></div>';
+      html += '</div>';
+    });
   });
 
   document.getElementById('visitNotes').innerHTML = html;
