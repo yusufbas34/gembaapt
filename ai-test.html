@@ -3491,6 +3491,59 @@ function showSummary(){
 
   // Build mail
   buildMailPreview(groups);
+
+  // Ziyareti kaydet
+  saveAnalysisVisit(groups);
+}
+
+async function saveAnalysisVisit(groups){
+  try{
+    var auth = null;
+    try{ auth = JSON.parse(localStorage.getItem('gemba_auth')||'null'); }catch(e){}
+    if(!auth||!auth.name||!auth.pin) return;
+
+    var wn = gwn(new Date());
+    var store = AI_STORE||'';
+    var reyon = AI_REYON||'Erkek';
+    var notes = [];
+
+    RES.forEach(function(r){
+      notes.push({
+        id: Date.now()+r.id,
+        reyon: r.reyon||reyon,
+        mag: r.mag||'',
+        bg: r.bg||null,
+        kl: r.kl||null,
+        tx: r.text,
+        src: r.src||'ai',
+        analyzed: true,
+        photos: []
+      });
+    });
+
+    var visit = {
+      id: Date.now(),
+      store: store,
+      reyon: reyon,
+      week: wn,
+      date: new Date().toLocaleString('tr-TR',{hour:'2-digit',minute:'2-digit',day:'2-digit',month:'2-digit',year:'numeric'}),
+      user: auth.name,
+      notes: notes,
+      source: 'manual',
+      analyzed: true
+    };
+
+    await fetch('/visits/save',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({name:auth.name, pin:auth.pin, visit:visit})
+    });
+    console.log('Visit saved:', store, reyon, notes.length, 'notes');
+    // Refresh visits cache
+    VISITS_LOADED = false;
+  }catch(e){
+    console.log('saveAnalysisVisit error:', e.message);
+  }
 }
 
 function buildMailPreview(groups){
