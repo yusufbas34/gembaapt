@@ -218,11 +218,11 @@ textarea{resize:none;line-height:1.5}
     <div class="fg" id="mwrap" style="display:none"><label class="fl">Mağaza adı</label><input type="text" id="stMan" placeholder="Mağaza adını yazın..."/></div>
     <div class="sl2">Reyon seçiniz</div>
     <div class="rscroll">
-      <div class="chip" data-r="Kadın" onclick="selR(this)">👗 Kadın</div>
-      <div class="chip" data-r="Erkek" onclick="selR(this)">👔 Erkek</div>
-      <div class="chip" data-r="Kız Çocuk" onclick="selR(this)">👧 Kız Çocuk</div>
-      <div class="chip" data-r="Erkek Çocuk" onclick="selR(this)">👦 Erkek Çocuk</div>
-      <div class="chip" data-r="Ev" onclick="selR(this)">🏠 Ev</div>
+      <div class="chip" data-r="kadin" onclick="selR(this)">👗 Kadın</div>
+      <div class="chip" data-r="erkek" onclick="selR(this)">👔 Erkek</div>
+      <div class="chip" data-r="kiz-cocuk" onclick="selR(this)">👧 Kız Çocuk</div>
+      <div class="chip" data-r="erkek-cocuk" onclick="selR(this)">👦 Erkek Çocuk</div>
+      <div class="chip" data-r="ev" onclick="selR(this)">🏠 Ev</div>
     </div>
     <div class="err" id="rerr" style="padding:4px 20px">Lütfen bir reyon seçin.</div>
     <div class="hist-section" id="histSection" style="margin-top:20px">
@@ -350,7 +350,7 @@ const RD={
   "Erkek Çocuk":{useMag:true},
   "Ev":{useMag:true}
 };
-const RT={"Kadın":"tk","Erkek":"te","Kız Çocuk":"tc","Erkek Çocuk":"tc","Ev":"th"};
+const RT={"kadin":"tk","erkek":"te","kiz-cocuk":"tc","erkek-cocuk":"tc","ev":"th","Kadın":"tk","Erkek":"te","Kız Çocuk":"tc","Erkek Çocuk":"tc","Ev":"th"};
 const erkekMAG={
   "BUC":{bg:["CHINO DUVARI","DIŞ GİYİM","DOKUMA ÜST","ÖRME","ÖRME BASIC","TRİKO","GENEL","LINE"],kl:{"CHINO DUVARI":["BASİC DOKUMA CHİNO PANTOLON İNCE","BASIC DOKUMA CHINO PANTOLON ORTA","CL BASIC DOKUMA PANTOLON KALIN","CLASSIC DOKUMA ROLLER","CLASSIC DOKUMA ŞORT"],"DIŞ GİYİM":["İNCE MONT","İNCE PUFFER MONT","MONT/KABAN KALIN","PARKA","PU MONT İNCE","PU MONT KALIN","YELEK"],"DOKUMA ÜST":["KEY DOKUMA GOMLEK K.KOL","KEY DOKUMA GOMLEK U.KOL","KEY EKOSELİ DOKUMA GOMLEK K.KOL","KEY EKOSELİ DOKUMA GOMLEK U.KOL"],"ÖRME":["BASIC ORME BİSİKLET YAKA T-SHIRT K.KOL","BASIC ORME POLO YAKA T-SHIRT K.KOL","BASIC ORME V YAKA T-SHIRT K.KOL","KEY BASKILI ORME T-SHIRT K.KOL","KEY ORME T-SHIRT K.KOL"],"ÖRME BASIC":["BASIC KEY BASKILI ORME SWEAT","CL BASIC ORME HIRKA","CL BASIC ORME PANTOLON","CL BASIC ORME ROLLER","CL BASIC ORME SORT / BERMUDA","CL BASIC ORME SWEAT","CL BASIC ORME T-SHIRT U.KOL","ÖRME ATLET"],"TRİKO":["KEY ÇİZGİLİ TRIKO KAZAK","KEY TRIKO HIRKA","KEY TRIKO HIRKA MONT","KEY TRIKO KAZAK","KEY TRIKO YELEK"],"GENEL":["GENEL"],"LINE":["LINE"]}},
   "BUB":{bg:["BLAZER CEKET","DENİM","DIŞ GİYİM","DOKUMA ALT","DOKUMA SET","DOKUMA ÜST","ÖRME","TRİKO","GENEL","LINE"],kl:{"BLAZER CEKET":["BLAZER CEKET"],"DENİM":["KEY DOKUMA JEAN PANTOLON"],"DIŞ GİYİM":["İNCE MONT","MONT/KABAN KALIN","NAYLON PUFFER MONT/KABAN","PARKA","PU MONT İNCE","PU MONT KALIN","YAGMURLUK","YELEK"],"DOKUMA ALT":["KEY DOKUMA PANTOLON ORTA","KEY DOKUMA ŞORT/BERMUDA"],"DOKUMA SET":["BLAZER CEKET SET","DOKUMA SHACKET SET","İNCE MONT SET","KEY DOKUMA GOMLEK K.KOL SET","KEY DOKUMA GOMLEK U.KOL SET","KEY DOKUMA PANTOLON ORTA SET","KEY DOKUMA ŞORT/BERMUDA SET"],"DOKUMA ÜST":["DOKUMA SHACKET","KEY BASKILI DOKUMA GOMLEK K.KOL","KEY ÇİZGİLİ DOKUMA GOMLEK U.KOL","KEY DOKUMA GOMLEK K.KOL","KEY DOKUMA GOMLEK U.KOL"],"ÖRME":["KEY BASKILI ORME T-SHIRT K.KOL","KEY ORME HIRKA","KEY ORME PANTOLON","KEY ORME SORT / BERMUDA","KEY ORME SWEAT","KEY ORME T-SHIRT K.KOL"],"TRİKO":["KEY TRIKO HIRKA","KEY TRIKO KAZAK","KEY TRIKO KAZAK K.KOL","KEY TRIKO SUVETER","KEY TRIKO YELEK"],"GENEL":["GENEL"],"LINE":["LINE"]}},
@@ -373,7 +373,7 @@ const erkekcocukMAG={"CU1A":{"bg":["AYAKKABI","LİSANS AYAKKABI"],"kl":{"AYAKKAB
 const evMAG={"EVBA":{"bg":["BANYO","ÇOCUK BORNOZ","HAVLU","PASPAS","TERLİK","WELLSOFT SABAHLIK"],"kl":{"BANYO":["KEY BORNOZ ERKEK","KEY BORNOZ KADIN","KEY YETİŞKİN BORNOZ"],"ÇOCUK BORNOZ":["KEY BORNOZ ÇOCUK","KEY BORNOZ ERKEK ÇOCUK","KEY BORNOZ KIZ ÇOCUK"],"HAVLU":["KEY HAVLU BANYO","KEY HAVLU EL","KEY HAVLU YÜZ","PEŞTAMAL"],"PASPAS":["AYAK HAVLUSU","BANYO PASPASI","KAPI ÖNÜ PASPASI"],"TERLİK":["KEY EV ÇORAP","KEY TERLİK","TERLİK ERKEK","TERLİK KADIN"],"WELLSOFT SABAHLIK":["WELLSOFT SABAHLIK"]}},"EVHA":{"bg":["HALI"],"kl":{"HALI":["KEY HALI","KEY KİLİM"]}},"EVKO":{"bg":["EV KOZMETİK","MUM"],"kl":{"EV KOZMETİK":["KOKULU ÇUBUK","KOLONYA","ODA KOKUSU"],"MUM":["BARDAK MUM","BASIC MUM","DEKORATİF MUM"]}},"EVLI":{"bg":["AMERİKAN SERVİS SUPLA","BARDAK GRUBU","BATTANİYE","DEKORATIF AKSESUAR","EV DÜZENLEME","HAVLU","KIRLENT","KIRLENT DOLGULU","KURULAMA BEZİ","MASA ÖRTÜSÜ","MUTFAK GRUBU","MUTFAK TEKSTİL ÜRÜNLERİ","NEVRESİM","PİKE","PİŞİRME GRUBU","RUNNER","TABAK GRUBU","WELLSOFT SABAHLIK","YASTIK KILIFI 2 Lİ","YATAK ÖRTÜSÜ"],"kl":{"AMERİKAN SERVİS SUPLA":["AMERİKAN SERVİS"],"BARDAK GRUBU":["BARDAK","FİNCAN","İÇECEK SERVİS","KUPA"],"BATTANİYE":["KEY BATTANİYE Ç.K.","KEY BATTANİYE T.K.","TV BATTANİYESİ"],"DEKORATIF AKSESUAR":["BANYO AKSESUARI","ÇERÇEVE","DEKORATİF AKSESUAR","MUMLUK&ŞAMDAN","VAZO"],"EV DÜZENLEME":["ORGANİZER","SEPET"],"HAVLU":["KEY HAVLU BANYO","KEY HAVLU YÜZ"],"KIRLENT":["KEY KIRLENT"],"KIRLENT DOLGULU":["KIRLENT DOLGULU"],"KURULAMA BEZİ":["KEY KURULAMA BEZİ"],"MASA ÖRTÜSÜ":["KEY MASA ÖRTÜSÜ"],"MUTFAK GRUBU":["MUTFAK AKSESUARI","PEÇETE","SAKLAMA GRUBU","SUNUMLUK","TEPSİ"],"MUTFAK TEKSTİL ÜRÜNLERİ":["MUTFAK ELDİVENİ","MUTFAK ÖNLÜĞÜ"],"NEVRESİM":["KEY NEVRESİM Ç.K.","KEY NEVRESİM T.K."],"PİKE":["KEY PİKE Ç.K."],"PİŞİRME GRUBU":["PİŞİRME ÜRÜNLERİ"],"RUNNER":["KEY RUNNER"],"TABAK GRUBU":["ÇUKUR TABAK","KASE (ÇEREZLİK)","PASTA TABAĞI","SALATA-SUNUM","SERVİS TABAĞI"],"WELLSOFT SABAHLIK":["WELLSOFT SABAHLIK"],"YASTIK KILIFI 2 Lİ":["KEY YASTIK KILIFI 2 Lİ"],"YATAK ÖRTÜSÜ":["KEY YATAK ÖRT Ç.K","KEY YATAK ÖRT T.K"]}},"EVMS":{"bg":["BARDAK GRUBU","MUTFAK GRUBU","TABAK GRUBU"],"kl":{"BARDAK GRUBU":["BARDAK","FİNCAN","İÇECEK SERVİS","KUPA"],"MUTFAK GRUBU":["SAKLAMA GRUBU"],"TABAK GRUBU":["KASE (ÇEREZLİK)","PASTA TABAĞI","SALATA-SUNUM","SERVİS TABAĞI"]}},"EVMU":{"bg":["AMERİKAN SERVİS SUPLA","KURULAMA BEZİ","MASA ÖRTÜSÜ","MUTFAK TEKSTİL ÜRÜNLERİ","RUNNER"],"kl":{"AMERİKAN SERVİS SUPLA":["AMERİKAN SERVİS"],"KURULAMA BEZİ":["KEY KURULAMA BEZİ"],"MASA ÖRTÜSÜ":["KEY MASA ÖRTÜSÜ"],"MUTFAK TEKSTİL ÜRÜNLERİ":["MUTFAK ELDİVENİ","MUTFAK ÖNLÜĞÜ"],"RUNNER":["KEY RUNNER"]}},"EVSA":{"bg":["SABUN"],"kl":{"SABUN":["SABUN"]}},"EVW":{"bg":["KIRLENT BEBEK"],"kl":{"KIRLENT BEBEK":["KEY KIRLENT BEBEK"]}},"EVYA":{"bg":["YARIŞMA"],"kl":{"YARIŞMA":["DENEME ÜRÜNLER"]}},"EVYT":{"bg":["BATTANİYE","BEBEK BATTANİYE","BEBEK ÇOCUK BATTANİYE","BEBEK ÇOCUK NEVRESİM","BEBEK ÇOCUK PİKE","BEYAZ GRUP","ÇARŞAF","ÇOCUK BATTANİYE","NEVRESİM","PİKE","YASTIK KILIFI 2 Lİ","YATAK ÖRTÜSÜ"],"kl":{"BATTANİYE":["KEY BATTANİYE Ç.K.","KEY BATTANİYE T.K.","TV BATTANİYESİ"],"BEBEK BATTANİYE":["BATTANİYE ERKEK BEBEK","BATTANİYE KIZ BEBEK"],"BEBEK ÇOCUK BATTANİYE":["KEY BEBEK ÇOCUK BATTANİYE"],"BEBEK ÇOCUK NEVRESİM":["KEY BEBEK ÇOCUK NEVRESİM"],"BEBEK ÇOCUK PİKE":["KEY BEBEK ÇOCUK PİKE"],"BEYAZ GRUP":["KEY BEYAZ GRUP","KEY YASTIK","KEY YORGAN"],"ÇARŞAF":["ÇARŞAF KING","KEY ÇARŞAF Ç.K","KEY ÇARŞAF T.K"],"ÇOCUK BATTANİYE":["BATTANİYE ERKEK ÇOCUK","BATTANİYE KIZ ÇOCUK"],"NEVRESİM":["KEY NEVRESİM Ç.K.","KEY NEVRESİM T.K."],"PİKE":["KEY PİKE Ç.K.","KEY PİKE T.K."],"YASTIK KILIFI 2 Lİ":["KEY YASTIK KILIFI 2 Lİ"],"YATAK ÖRTÜSÜ":["KEY YATAK ÖRT Ç.K","KEY YATAK ÖRT T.K"]}}};
 
 // MAG lookup - hangi reyon hangi MAG objesini kullanır
-const MAG_MAP={'Kadın':kadinMAG,'Erkek':erkekMAG,'Kız Çocuk':kizcocukMAG,'Erkek Çocuk':erkekcocukMAG,'Ev':evMAG};
+const MAG_MAP={'kadin':kadinMAG,'erkek':erkekMAG,'kiz-cocuk':kizcocukMAG,'erkek-cocuk':erkekcocukMAG,'ev':evMAG};
 
 let notes=[],reyon='',photNoteId=null,editingNoteId=null,lastMAG='',inlinePhotos=[];
 
@@ -553,7 +553,7 @@ function goP2(){
   const u=getUser();if(!u){alert('GembaGPT: Lütfen adınızı girin.');return}
   loadUser();fillBGs();
   document.getElementById('p2st').textContent=getStore();
-  document.getElementById('p2mt').textContent=reyon+' Reyonu · '+wl();
+  document.getElementById('p2mt').textContent=reyonLabel()+' Reyonu · '+wl();
   loadDraft();
   document.getElementById('p1').style.display='none';
   document.getElementById('p2').style.display='block';
@@ -576,6 +576,8 @@ function populateSelect(selId, items, placeholder){
   });
 }
 
+const REYON_LABEL={'kadin':'Kadın','erkek':'Erkek','kiz-cocuk':'Kız Çocuk','erkek-cocuk':'Erkek Çocuk','ev':'Ev'};
+function reyonLabel(){return REYON_LABEL[reyon]||reyon;}
 function fillBGs(){
   // Aktif reyon için MAG objesini al
   var magObj=MAG_MAP[reyon]||null;
@@ -634,7 +636,7 @@ function saveNote(){
   err.style.display='none';
   if(mag)lastMAG=mag;
   if(editingNoteId!==null){const n=notes.find(n=>n.id===editingNoteId);if(n){n.mag=mag;n.bg=bg;n.kl=kl;n.tx=tx;n.photos=[...n.photos,...inlinePhotos];}editingNoteId=null;}
-  else{notes.push({id:Date.now(),reyon,mag,bg,kl,tx,photos:[...inlinePhotos]});}
+  else{notes.push({id:Date.now(),reyon:reyonLabel(),mag,bg,kl,tx,photos:[...inlinePhotos]});}
   inlinePhotos=[];closeSheet();renderNotes();
 }
 function removeNote(id){notes=notes.filter(n=>n.id!==id);renderNotes()}
@@ -747,7 +749,7 @@ function getAllPhotos(){let all=[];notes.forEach(n=>{(n.photos||[]).forEach(p=>a
 function buildPV(){
   const store=getStore(),user=getUser(),wn=gwn(new Date());
   const userName=user?.name||'';
-  const subj=wn+'. Hafta '+store+' '+reyon+' Reyonu Mağaza Ziyaret Notları';
+  const subj=wn+'. Hafta '+store+' '+reyonLabel()+' Reyonu Mağaza Ziyaret Notları';
   let magMap={};
   notes.forEach(n=>{
     const mk=n.mag||'__noMag__';
@@ -925,7 +927,7 @@ async function deleteVisit(id,e){
   }
   renderHistory();
 }
-const reyonTagMap2={"Kadın":"tk","Erkek":"te","Kız Çocuk":"tc","Erkek Çocuk":"tc","Ev":"th"};
+const reyonTagMap2={"kadin":"tk","erkek":"te","kiz-cocuk":"tc","erkek-cocuk":"tc","ev":"th","Kadın":"tk","Erkek":"te","Kız Çocuk":"tc","Erkek Çocuk":"tc","Ev":"th"};
 function renderHistory(){
   const all=loadHistory();const el=document.getElementById('histList');const sec=document.getElementById('histSection');
   if(!all.length){el.innerHTML='<div class="hist-empty">Henüz kayıtlı ziyaret yok.</div>';return;}
