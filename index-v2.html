@@ -629,11 +629,11 @@ function saveNote(){
   var tx=document.getElementById('nTX').value.trim();
   const err=document.getElementById('nerr');
   if(!bg||!tx){err.style.display='block';return}
-  if(reyon==='Erkek'&&!mag){err.style.display='block';return}
+  if(!mag){err.style.display='block';return}
   err.style.display='none';
   if(mag)lastMAG=mag;
-  if(editingNoteId!==null){const n=notes.find(n=>n.id===editingNoteId);if(n){n.mag=reyon==='Erkek'?mag:'';n.bg=bg;n.kl=kl;n.tx=tx;n.photos=[...n.photos,...inlinePhotos];}editingNoteId=null;}
-  else{notes.push({id:Date.now(),reyon,mag:reyon==='Erkek'?mag:'',bg,kl,tx,photos:[...inlinePhotos]});}
+  if(editingNoteId!==null){const n=notes.find(n=>n.id===editingNoteId);if(n){n.mag=mag;n.bg=bg;n.kl=kl;n.tx=tx;n.photos=[...n.photos,...inlinePhotos];}editingNoteId=null;}
+  else{notes.push({id:Date.now(),reyon,mag,bg,kl,tx,photos:[...inlinePhotos]});}
   inlinePhotos=[];closeSheet();renderNotes();
 }
 function removeNote(id){notes=notes.filter(n=>n.id!==id);renderNotes()}
@@ -641,8 +641,7 @@ function removePh(nid,i){const n=notes.find(n=>n.id===nid);if(n)n.photos.splice(
 function editNote(id){
   const n=notes.find(n=>n.id===id);if(!n)return;
   editingNoteId=id;fillBGs();
-  if(reyon==='Erkek'&&n.mag){
-    fillBGs();
+  if(n.mag){
     onMagSelect(n.mag);
     document.getElementById('sel-mag').value=n.mag;
   }
@@ -674,7 +673,7 @@ function renderNotes(){
 function openSheet(){
   closeStore();
   editingNoteId=null;inlinePhotos=[];fillBGs();
-  if(reyon==='Erkek'&&lastMAG){
+  if(lastMAG){
     onMagSelect(lastMAG);
     document.getElementById('sel-mag').value=lastMAG;
   }
