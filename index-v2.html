@@ -275,9 +275,21 @@ textarea{resize:none;line-height:1.5}
     <div class="sbody">
       <div class="sf" id="magField" style="display:none">
         <label>MAG (Merch Alt Grup) <span style="color:var(--red)">*</span></label>
-        <select id="sel-mag" onchange="onMagSelect(this.value)" style="width:100%;padding:14px 16px;border:0.5px solid rgba(0,0,0,0.16);border-radius:12px;font-family:DM Sans,sans-serif;font-size:16px;color:#1a1a18;background:#fff;outline:none;-webkit-appearance:none;appearance:none;">
-          <option value="">Seçin...</option>
-        </select>
+        <div id="mag-dd" style="position:relative">
+          <div id="mag-trigger" onclick="toggleMagDD()" style="width:100%;padding:14px 44px 14px 16px;border:0.5px solid rgba(0,0,0,0.16);border-radius:12px;font-family:DM Sans,sans-serif;font-size:16px;color:#888;background:#fff;cursor:pointer;display:flex;align-items:center;justify-content:space-between;min-height:52px;box-sizing:border-box;">
+            <span id="mag-val">Seçin...</span>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" id="mag-arrow"><polyline points="6 9 12 15 18 9"/></svg>
+          </div>
+          <div id="mag-panel" style="display:none;position:absolute;top:100%;left:0;right:0;z-index:999;background:#fff;border:0.5px solid var(--accent,#1a1a18);border-top:none;border-radius:0 0 12px 12px;max-height:280px;overflow:hidden;flex-direction:column;">
+            <div style="padding:8px 10px;border-bottom:0.5px solid #eee">
+              <input id="mag-search" type="text" placeholder="MAG ara..." autocomplete="off"
+                oninput="filterMagDD(this.value)"
+                style="width:100%;padding:10px 12px;border:0.5px solid #ddd;border-radius:8px;font-size:15px;font-family:DM Sans,sans-serif;outline:none;box-sizing:border-box;">
+            </div>
+            <div id="mag-list" style="overflow-y:auto;max-height:210px;"></div>
+          </div>
+        </div>
+        <input type="hidden" id="sel-mag" value="">
       </div>
       <div class="sf">
         <label>Buyer grup <span style="color:var(--red)">*</span></label>
@@ -563,6 +575,87 @@ function goP2fromP3(){document.getElementById('p3').style.display='none';documen
 function goP3(){if(!notes.length){alert('GembaGPT: En az bir geri bildirim ekleyin.');return}buildPV();document.getElementById('p2').style.display='none';document.getElementById('p3').style.display='block';showAB(3);scr()}
 function scr(){document.getElementById('scr').scrollTo({top:0,behavior:'smooth'})}
 
+
+// ── MAG Arama Dropdown ─────────────────────────────────────────────────────
+var _magItems=[];
+function populateMagDD(items){
+  _magItems=items;
+  resetMagDD();
+  renderMagList('');
+}
+function resetMagDD(){
+  document.getElementById('sel-mag').value='';
+  var val=document.getElementById('mag-val');
+  if(val){val.textContent='Seçin...';val.style.color='#888';}
+  var search=document.getElementById('mag-search');
+  if(search)search.value='';
+  closeMagDD();
+}
+function setMagDD(v){
+  document.getElementById('sel-mag').value=v;
+  var val=document.getElementById('mag-val');
+  if(val){val.textContent=v;val.style.color='#1a1a18';}
+}
+function toggleMagDD(){
+  var panel=document.getElementById('mag-panel');
+  if(!panel)return;
+  var open=panel.style.display==='flex';
+  if(open){closeMagDD();}
+  else{
+    panel.style.display='flex';
+    var arrow=document.getElementById('mag-arrow');
+    if(arrow)arrow.style.transform='rotate(180deg)';
+    var trigger=document.getElementById('mag-trigger');
+    if(trigger)trigger.style.borderColor='var(--accent,#1a1a18)';
+    renderMagList('');
+    setTimeout(function(){var s=document.getElementById('mag-search');if(s)s.focus();},80);
+  }
+}
+function closeMagDD(){
+  var panel=document.getElementById('mag-panel');
+  if(panel)panel.style.display='none';
+  var arrow=document.getElementById('mag-arrow');
+  if(arrow)arrow.style.transform='';
+  var trigger=document.getElementById('mag-trigger');
+  if(trigger)trigger.style.borderColor='rgba(0,0,0,0.16)';
+}
+function filterMagDD(q){renderMagList(q);}
+function renderMagList(q){
+  var list=document.getElementById('mag-list');
+  if(!list)return;
+  var q2=(q||'').toLowerCase().replace(/i̇/g,'i').replace(/ı/g,'i');
+  var filtered=_magItems.filter(function(it){
+    var lbl=(it.label||it.value||'').toLowerCase().replace(/i̇/g,'i').replace(/ı/g,'i');
+    return lbl.includes(q2);
+  });
+  if(!filtered.length){list.innerHTML='<div style="padding:14px 16px;font-size:14px;color:#999">Sonuç bulunamadı</div>';return;}
+  list.innerHTML='';
+  var curVal=document.getElementById('sel-mag').value;
+  filtered.forEach(function(it){
+    var val=it.value||it;
+    var lbl=it.label||it.value||it;
+    var div=document.createElement('div');
+    div.style.cssText='padding:14px 16px;font-size:15px;color:'+(curVal===val?'var(--accent,#1a1a18)':'#1a1a18')+';cursor:pointer;border-bottom:0.5px solid #f0f0f0;background:'+(curVal===val?'#f6f5f2':'#fff')+';font-weight:'+(curVal===val?'600':'400');
+    div.textContent=lbl;
+    var tapped=false;
+    div.addEventListener('touchstart',function(){div.style.background='#f0f0f0';},{passive:true});
+    div.addEventListener('touchend',function(e){e.preventDefault();tapped=true;selectMag(val,lbl);},{passive:false});
+    div.addEventListener('click',function(){if(!tapped)selectMag(val,lbl);tapped=false;});
+    list.appendChild(div);
+  });
+}
+function selectMag(val,lbl){
+  setMagDD(val);
+  closeMagDD();
+  onMagSelect(val);
+}
+// Dışarı tıklayınca kapat
+document.addEventListener('click',function(e){
+  var dd=document.getElementById('mag-dd');
+  if(dd&&!dd.contains(e.target))closeMagDD();
+});
+// ──────────────────────────────────────────────────────────────────────────
+
 function populateSelect(selId, items, placeholder){
   var sel=document.getElementById(selId);
   if(!sel)return;
@@ -579,8 +672,9 @@ function fillBGs(){
   var magObj=MAG_MAP[reyon]||null;
   document.getElementById('magField').style.display=magObj?'block':'none';
   if(magObj){
-    populateSelect('sel-mag', Object.keys(magObj).map(function(k){return{value:k,label:k};}), 'Seçin...');
+    populateMagDD(Object.keys(magObj).map(function(k){return{value:k,label:k};}));
   }
+  if(!magObj){resetMagDD();}
   populateSelect('sel-bg', [], 'Seçin...');
   populateSelect('sel-kl', [], '—');
 }
@@ -639,7 +733,7 @@ function editNote(id){
   editingNoteId=id;fillBGs();
   if(n.mag){
     onMagSelect(n.mag);
-    document.getElementById('sel-mag').value=n.mag;
+    setMagDD(n.mag);
   }
   if(n.bg){
     onBgSelect(n.bg);
@@ -671,7 +765,7 @@ function openSheet(){
   editingNoteId=null;inlinePhotos=[];fillBGs();
   if(lastMAG){
     onMagSelect(lastMAG);
-    document.getElementById('sel-mag').value=lastMAG;
+    setMagDD(lastMAG);
   }
   document.getElementById('nTX').value='';
   document.getElementById('nerr').style.display='none';
