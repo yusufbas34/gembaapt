@@ -576,24 +576,24 @@ function populateSelect(selId, items, placeholder){
   });
 }
 
-function getMAGforReyon(){return MAG_MAP[reyon]||null;}
-
 function fillBGs(){
-  var mag=getMAGforReyon();
-  var hasMag=!!(mag);
-  document.getElementById('magField').style.display=hasMag?'block':'none';
-  if(hasMag){
-    populateSelect('sel-mag', Object.keys(mag).map(function(k){return{value:k,label:k};}), 'Seçin...');
+  // Aktif reyon için MAG objesini al
+  var magObj=MAG_MAP[reyon]||null;
+  document.getElementById('magField').style.display=magObj?'block':'none';
+  if(magObj){
+    populateSelect('sel-mag', Object.keys(magObj).map(function(k){return{value:k,label:k};}), 'Seçin...');
   }
+  // BG ve KL sıfırla - MAG seçilmeden dolmaz
   populateSelect('sel-bg', [], 'Seçin...');
   populateSelect('sel-kl', [], '—');
 }
 
 function onMagSelect(mag){
   lastMAG=mag;
+  // MAG seçilince BG'yi doldur
   populateSelect('sel-bg', [], 'Seçin...');
   populateSelect('sel-kl', [], '—');
-  var magObj=getMAGforReyon();
+  var magObj=MAG_MAP[reyon]||null;
   if(mag&&magObj&&magObj[mag]){
     var bgs=magObj[mag].bg.map(function(b){return{value:b,label:b};});
     populateSelect('sel-bg', bgs, 'Seçin...');
@@ -601,11 +601,12 @@ function onMagSelect(mag){
 }
 
 function onBgSelect(bg){
+  // BG seçilince KL'yi doldur
   populateSelect('sel-kl', [], '—');
   var mag=document.getElementById('sel-mag')?document.getElementById('sel-mag').value:'';
-  var magObj=getMAGforReyon();
+  var magObj=MAG_MAP[reyon]||null;
   var options=[];
-  if(magObj){options=(magObj[mag]&&magObj[mag].kl[bg])||[];}
+  if(magObj&&mag){options=(magObj[mag]&&magObj[mag].kl[bg])||[];}
   populateSelect('sel-kl', options.map(function(k){return{value:k,label:k};}), '—');
   var btn=document.getElementById('klClearBtn');
   if(btn)btn.style.display='none';
