@@ -1,0 +1,712 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GembaGPT — Yönetim Paneli</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500;600;700&display=swap');
+
+  :root {
+    --bg: #0d0d0d;
+    --surface: #161616;
+    --surface2: #1e1e1e;
+    --border: #2a2a2a;
+    --accent: #f5a623;
+    --accent2: #1a56b0;
+    --green: #22c55e;
+    --red: #ef4444;
+    --text: #f0f0f0;
+    --muted: #666;
+    --muted2: #888;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+  }
+
+  /* ── Login ── */
+  #login-screen {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    background: var(--bg);
+  }
+
+  .login-box {
+    width: 340px;
+    text-align: center;
+  }
+
+  .login-logo {
+    font-size: 28px;
+    font-weight: 700;
+    letter-spacing: -1px;
+    margin-bottom: 8px;
+  }
+
+  .login-logo span { color: var(--accent); }
+
+  .login-sub {
+    font-size: 13px;
+    color: var(--muted2);
+    margin-bottom: 40px;
+    font-family: 'DM Mono', monospace;
+  }
+
+  .login-box input {
+    width: 100%;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px 16px;
+    font-size: 15px;
+    color: var(--text);
+    font-family: 'DM Mono', monospace;
+    outline: none;
+    margin-bottom: 12px;
+    transition: border-color .2s;
+  }
+
+  .login-box input:focus { border-color: var(--accent); }
+
+  .login-btn {
+    width: 100%;
+    background: var(--accent);
+    color: #000;
+    border: none;
+    border-radius: 10px;
+    padding: 14px;
+    font-size: 15px;
+    font-weight: 600;
+    font-family: 'DM Sans', sans-serif;
+    cursor: pointer;
+    transition: opacity .2s;
+  }
+
+  .login-btn:hover { opacity: .85; }
+  .login-err { font-size: 13px; color: var(--red); margin-top: 10px; min-height: 18px; }
+
+  /* ── Dashboard ── */
+  #dashboard { display: none; }
+
+  .topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 28px;
+    border-bottom: 1px solid var(--border);
+    position: sticky;
+    top: 0;
+    background: rgba(13,13,13,.92);
+    backdrop-filter: blur(12px);
+    z-index: 10;
+  }
+
+  .topbar-logo {
+    font-size: 18px;
+    font-weight: 700;
+    letter-spacing: -0.5px;
+  }
+
+  .topbar-logo span { color: var(--accent); }
+
+  .topbar-right {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .refresh-btn {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--text);
+    border-radius: 8px;
+    padding: 8px 14px;
+    font-size: 13px;
+    font-family: 'DM Sans', sans-serif;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: all .2s;
+  }
+
+  .refresh-btn:hover { border-color: var(--accent); color: var(--accent); }
+  .refresh-btn.spinning svg { animation: spin .8s linear infinite; }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .last-update {
+    font-size: 11px;
+    color: var(--muted);
+    font-family: 'DM Mono', monospace;
+  }
+
+  .main { padding: 28px; max-width: 1200px; margin: 0 auto; }
+
+  /* ── Stat cards ── */
+  .stat-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+    margin-bottom: 32px;
+  }
+
+  @media (max-width: 768px) {
+    .stat-grid { grid-template-columns: repeat(2, 1fr); }
+    .main { padding: 16px; }
+  }
+
+  .stat-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 20px 22px;
+    position: relative;
+    overflow: hidden;
+    transition: border-color .2s;
+  }
+
+  .stat-card:hover { border-color: #3a3a3a; }
+
+  .stat-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    border-radius: 14px 14px 0 0;
+  }
+
+  .stat-card.c-amber::before { background: var(--accent); }
+  .stat-card.c-blue::before  { background: var(--accent2); }
+  .stat-card.c-green::before { background: var(--green); }
+  .stat-card.c-purple::before { background: #8b5cf6; }
+
+  .stat-icon {
+    font-size: 22px;
+    margin-bottom: 12px;
+    display: block;
+  }
+
+  .stat-label {
+    font-size: 11px;
+    color: var(--muted2);
+    text-transform: uppercase;
+    letter-spacing: .8px;
+    font-family: 'DM Mono', monospace;
+    margin-bottom: 6px;
+  }
+
+  .stat-value {
+    font-size: 36px;
+    font-weight: 700;
+    letter-spacing: -1.5px;
+    line-height: 1;
+    font-family: 'DM Mono', monospace;
+  }
+
+  .stat-card.c-amber .stat-value { color: var(--accent); }
+  .stat-card.c-blue  .stat-value { color: #60a5fa; }
+  .stat-card.c-green .stat-value { color: var(--green); }
+  .stat-card.c-purple .stat-value { color: #a78bfa; }
+
+  .stat-sub {
+    font-size: 12px;
+    color: var(--muted);
+    margin-top: 6px;
+  }
+
+  /* ── Section title ── */
+  .section-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--muted2);
+    text-transform: uppercase;
+    letter-spacing: .8px;
+    font-family: 'DM Mono', monospace;
+    margin-bottom: 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .section-title::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  /* ── Table ── */
+  .table-wrap {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    overflow: hidden;
+    margin-bottom: 32px;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+
+  thead th {
+    padding: 12px 18px;
+    text-align: left;
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--muted2);
+    text-transform: uppercase;
+    letter-spacing: .6px;
+    font-family: 'DM Mono', monospace;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface2);
+    white-space: nowrap;
+  }
+
+  tbody tr {
+    border-bottom: 1px solid var(--border);
+    transition: background .15s;
+  }
+
+  tbody tr:last-child { border-bottom: none; }
+  tbody tr:hover { background: var(--surface2); }
+
+  tbody td {
+    padding: 13px 18px;
+    font-size: 14px;
+    vertical-align: middle;
+  }
+
+  .td-name {
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .avatar {
+    width: 32px; height: 32px;
+    border-radius: 50%;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--accent);
+    flex-shrink: 0;
+    font-family: 'DM Mono', monospace;
+  }
+
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 3px 9px;
+    border-radius: 100px;
+    font-size: 12px;
+    font-weight: 500;
+    font-family: 'DM Mono', monospace;
+  }
+
+  .badge-green { background: rgba(34,197,94,.12); color: var(--green); }
+  .badge-blue  { background: rgba(96,165,250,.12); color: #60a5fa; }
+  .badge-amber { background: rgba(245,166,35,.12);  color: var(--accent); }
+  .badge-muted { background: var(--surface2); color: var(--muted2); }
+
+  .bar-wrap {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .bar {
+    height: 4px;
+    border-radius: 2px;
+    background: var(--accent);
+    transition: width .4s ease;
+    min-width: 2px;
+  }
+
+  .bar-val {
+    font-family: 'DM Mono', monospace;
+    font-size: 13px;
+    color: var(--text);
+    min-width: 28px;
+  }
+
+  .td-muted {
+    color: var(--muted2);
+    font-family: 'DM Mono', monospace;
+    font-size: 12px;
+  }
+
+  .td-date {
+    color: var(--muted2);
+    font-size: 12px;
+    font-family: 'DM Mono', monospace;
+  }
+
+  /* ── Rank ── */
+  .rank {
+    font-family: 'DM Mono', monospace;
+    font-size: 12px;
+    color: var(--muted);
+    width: 20px;
+  }
+
+  .rank-1 { color: var(--accent); font-weight: 700; }
+  .rank-2 { color: #94a3b8; }
+  .rank-3 { color: #cd7c2f; }
+
+  /* ── Loading ── */
+  .loading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 60px;
+    gap: 12px;
+    color: var(--muted2);
+    font-size: 14px;
+  }
+
+  .loading-dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--accent);
+    animation: pulse 1.2s ease-in-out infinite;
+  }
+
+  .loading-dot:nth-child(2) { animation-delay: .2s; }
+  .loading-dot:nth-child(3) { animation-delay: .4s; }
+
+  @keyframes pulse {
+    0%, 100% { opacity: .2; transform: scale(.8); }
+    50% { opacity: 1; transform: scale(1.2); }
+  }
+
+  /* ── Empty ── */
+  .empty {
+    padding: 48px;
+    text-align: center;
+    color: var(--muted);
+    font-size: 14px;
+  }
+
+  /* ── Error ── */
+  .error-box {
+    background: rgba(239,68,68,.08);
+    border: 1px solid rgba(239,68,68,.2);
+    border-radius: 10px;
+    padding: 16px 20px;
+    font-size: 13px;
+    color: #fca5a5;
+    margin-bottom: 20px;
+    font-family: 'DM Mono', monospace;
+  }
+
+  /* ── Auto refresh toggle ── */
+  .toggle-wrap {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+    color: var(--muted2);
+    cursor: pointer;
+    user-select: none;
+  }
+
+  .toggle {
+    width: 34px; height: 18px;
+    border-radius: 9px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    position: relative;
+    transition: background .2s;
+    cursor: pointer;
+  }
+
+  .toggle.on { background: var(--accent); border-color: var(--accent); }
+
+  .toggle::after {
+    content: '';
+    position: absolute;
+    top: 2px; left: 2px;
+    width: 12px; height: 12px;
+    border-radius: 50%;
+    background: #fff;
+    transition: transform .2s;
+  }
+
+  .toggle.on::after { transform: translateX(16px); }
+
+  /* ── Animasyon ── */
+  .fade-in {
+    animation: fadeIn .4s ease both;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .num-animate {
+    display: inline-block;
+    transition: all .3s ease;
+  }
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="login-screen">
+  <div class="login-box">
+    <div class="login-logo">Gemba<span>GPT</span></div>
+    <div class="login-sub">// yonetim paneli</div>
+    <input type="password" id="key-input" placeholder="Erişim anahtarı" autocomplete="off"
+      onkeydown="if(event.key==='Enter')doLogin()">
+    <button class="login-btn" onclick="doLogin()">Giriş Yap</button>
+    <div class="login-err" id="login-err"></div>
+  </div>
+</div>
+
+<!-- DASHBOARD -->
+<div id="dashboard">
+  <div class="topbar">
+    <div class="topbar-logo">Gemba<span>GPT</span> <span style="font-weight:300;color:var(--muted2);font-size:13px">/ panel</span></div>
+    <div class="topbar-right">
+      <div class="toggle-wrap" onclick="toggleAutoRefresh()">
+        <div class="toggle" id="auto-toggle"></div>
+        <span id="auto-label">Otomatik yenile</span>
+      </div>
+      <div class="last-update" id="last-update">—</div>
+      <button class="refresh-btn" id="refresh-btn" onclick="loadStats()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+        Yenile
+      </button>
+    </div>
+  </div>
+
+  <div class="main">
+    <div id="error-area"></div>
+    <div id="content">
+      <div class="loading">
+        <div class="loading-dot"></div>
+        <div class="loading-dot"></div>
+        <div class="loading-dot"></div>
+        <span>Yükleniyor...</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const API = 'https://gembaapt.up.railway.app';
+let apiKey = '';
+let autoRefresh = false;
+let autoTimer = null;
+
+// ── Login ──────────────────────────────────────────────────────────────────
+function doLogin() {
+  const k = document.getElementById('key-input').value.trim();
+  if (!k) return;
+  apiKey = k;
+  document.getElementById('login-err').textContent = '';
+  document.getElementById('login-screen').style.display = 'none';
+  document.getElementById('dashboard').style.display = 'block';
+  loadStats();
+}
+
+// ── Veri çek ──────────────────────────────────────────────────────────────
+async function loadStats() {
+  const btn = document.getElementById('refresh-btn');
+  btn.classList.add('spinning');
+
+  try {
+    const r = await fetch(`${API}/admin/stats?key=${encodeURIComponent(apiKey)}`);
+    const data = await r.json();
+
+    if (!data.ok) {
+      showError(data.error || 'Hata');
+      if (data.error === 'Unauthorized') {
+        document.getElementById('dashboard').style.display = 'none';
+        document.getElementById('login-screen').style.display = 'flex';
+        document.getElementById('login-err').textContent = 'Yanlış anahtar.';
+      }
+      return;
+    }
+
+    document.getElementById('error-area').innerHTML = '';
+    renderDashboard(data);
+    document.getElementById('last-update').textContent =
+      new Date().toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+
+  } catch(e) {
+    showError('Bağlantı hatası: ' + e.message);
+  } finally {
+    btn.classList.remove('spinning');
+  }
+}
+
+function showError(msg) {
+  document.getElementById('error-area').innerHTML =
+    `<div class="error-box">⚠ ${msg}</div>`;
+}
+
+// ── Render ────────────────────────────────────────────────────────────────
+function renderDashboard(data) {
+  const { totalUsers, totalVisits, totalMail, users } = data;
+  const telegramTotal = (users || []).reduce((s, u) => s + (u.telegramVisits || 0), 0);
+  const manualTotal   = (users || []).reduce((s, u) => s + (u.manualVisits  || 0), 0);
+  const maxVisits = users && users.length ? Math.max(...users.map(u => u.visits)) : 1;
+
+  const html = `
+    <!-- Stat kartları -->
+    <div class="stat-grid fade-in">
+      <div class="stat-card c-amber">
+        <span class="stat-icon">👤</span>
+        <div class="stat-label">Toplam Üye</div>
+        <div class="stat-value">${totalUsers}</div>
+        <div class="stat-sub">Kayıtlı kullanıcı</div>
+      </div>
+      <div class="stat-card c-blue">
+        <span class="stat-icon">📋</span>
+        <div class="stat-label">Toplam Ziyaret</div>
+        <div class="stat-value">${totalVisits}</div>
+        <div class="stat-sub">${manualTotal} manuel · ${telegramTotal} Telegram</div>
+      </div>
+      <div class="stat-card c-green">
+        <span class="stat-icon">✉️</span>
+        <div class="stat-label">Mail Gönderildi</div>
+        <div class="stat-value">${totalMail}</div>
+        <div class="stat-sub">${totalVisits > 0 ? Math.round(totalMail / totalVisits * 100) : 0}% mail oranı</div>
+      </div>
+      <div class="stat-card c-purple">
+        <span class="stat-icon">🤖</span>
+        <div class="stat-label">Telegram Ziyaret</div>
+        <div class="stat-value">${telegramTotal}</div>
+        <div class="stat-sub">${totalVisits > 0 ? Math.round(telegramTotal / totalVisits * 100) : 0}% oran</div>
+      </div>
+    </div>
+
+    <!-- Kullanıcı tablosu -->
+    <div class="section-title fade-in">Kullanıcı Detayları</div>
+    <div class="table-wrap fade-in">
+      ${users && users.length ? `
+      <table>
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Kullanıcı</th>
+            <th>Toplam Ziyaret</th>
+            <th>Manuel</th>
+            <th>Telegram</th>
+            <th>Mail</th>
+            <th>Son Ziyaret</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${users.map((u, i) => `
+          <tr>
+            <td class="rank rank-${i+1}">${i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : (i+1)}</td>
+            <td>
+              <div class="td-name">
+                <div class="avatar">${(u.name || '?').substring(0,2).toUpperCase()}</div>
+                ${u.name || '—'}
+              </div>
+            </td>
+            <td>
+              <div class="bar-wrap">
+                <div class="bar" style="width:${maxVisits > 0 ? Math.round((u.visits / maxVisits) * 80) : 0}px"></div>
+                <span class="bar-val">${u.visits}</span>
+              </div>
+            </td>
+            <td>
+              <span class="badge badge-blue">${u.manualVisits || 0}</span>
+            </td>
+            <td>
+              <span class="badge badge-amber">${u.telegramVisits || 0}</span>
+            </td>
+            <td>
+              ${u.mailSent > 0
+                ? `<span class="badge badge-green">✓ ${u.mailSent}</span>`
+                : `<span class="badge badge-muted">0</span>`}
+            </td>
+            <td class="td-date">${u.lastVisit || '—'}</td>
+          </tr>`).join('')}
+        </tbody>
+      </table>` : '<div class="empty">Henüz kayıtlı kullanıcı yok.</div>'}
+    </div>
+
+    <!-- Özet satır -->
+    <div class="section-title fade-in">Özet</div>
+    <div class="table-wrap fade-in">
+      <table>
+        <thead>
+          <tr>
+            <th>Metrik</th>
+            <th>Değer</th>
+            <th>Açıklama</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Üye başına ortalama ziyaret</td>
+            <td><span class="badge badge-blue">${totalUsers > 0 ? (totalVisits / totalUsers).toFixed(1) : '0'}</span></td>
+            <td class="td-muted">Toplam ziyaret / toplam üye</td>
+          </tr>
+          <tr>
+            <td>Mail gönderim oranı</td>
+            <td><span class="badge ${totalVisits > 0 && totalMail/totalVisits > .5 ? 'badge-green' : 'badge-amber'}">${totalVisits > 0 ? Math.round(totalMail / totalVisits * 100) : 0}%</span></td>
+            <td class="td-muted">Kaydedilen ziyaretlerin mail ile gönderilme oranı</td>
+          </tr>
+          <tr>
+            <td>Telegram kullanım oranı</td>
+            <td><span class="badge badge-amber">${totalVisits > 0 ? Math.round(telegramTotal / totalVisits * 100) : 0}%</span></td>
+            <td class="td-muted">Telegram üzerinden gelen ziyaretlerin oranı</td>
+          </tr>
+          <tr>
+            <td>En aktif kullanıcı</td>
+            <td><span class="badge badge-green">${users && users.length ? users[0].name : '—'}</span></td>
+            <td class="td-muted">${users && users.length ? users[0].visits + ' ziyaret' : ''}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  `;
+
+  document.getElementById('content').innerHTML = html;
+}
+
+// ── Otomatik yenile ────────────────────────────────────────────────────────
+function toggleAutoRefresh() {
+  autoRefresh = !autoRefresh;
+  document.getElementById('auto-toggle').classList.toggle('on', autoRefresh);
+  document.getElementById('auto-label').textContent = autoRefresh ? 'Otomatik (30s)' : 'Otomatik yenile';
+
+  if (autoRefresh) {
+    autoTimer = setInterval(loadStats, 30000);
+  } else {
+    clearInterval(autoTimer);
+  }
+}
+
+// ── Enter ile login ────────────────────────────────────────────────────────
+document.addEventListener('keydown', e => {
+  if (e.key === 'Enter' && document.getElementById('login-screen').style.display !== 'none') {
+    doLogin();
+  }
+});
+</script>
+</body>
+</html>
