@@ -6,147 +6,215 @@
 <title>GembaGPT — Mail Düzeltme Aracı</title>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: 'DM Sans', -apple-system, sans-serif; background: #0d0d0d; color: #f0f0f0; min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 24px; }
-  .card { background: #161616; border: 1px solid #2a2a2a; border-radius: 16px; padding: 32px; width: 100%; max-width: 480px; }
+  body { font-family: -apple-system, sans-serif; background: #0d0d0d; color: #f0f0f0; min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 24px; }
+  .card { background: #161616; border: 1px solid #2a2a2a; border-radius: 16px; padding: 28px; width: 100%; max-width: 520px; }
   h1 { font-size: 20px; font-weight: 700; margin-bottom: 4px; }
   h1 span { color: #f5a623; }
-  .sub { font-size: 13px; color: #888; margin-bottom: 28px; }
-  label { font-size: 12px; color: #888; text-transform: uppercase; letter-spacing: .6px; display: block; margin-bottom: 6px; }
-  input { width: 100%; background: #1e1e1e; border: 1px solid #2a2a2a; border-radius: 10px; padding: 12px 14px; font-size: 14px; color: #f0f0f0; font-family: monospace; outline: none; margin-bottom: 20px; }
-  input:focus { border-color: #f5a623; }
-  .radio-group { display: flex; gap: 10px; margin-bottom: 24px; }
-  .radio-opt { flex: 1; background: #1e1e1e; border: 1px solid #2a2a2a; border-radius: 10px; padding: 12px; cursor: pointer; text-align: center; transition: all .2s; }
-  .radio-opt.active { border-color: #f5a623; background: rgba(245,166,35,.08); }
-  .radio-opt input[type=radio] { display: none; }
-  .radio-title { font-size: 13px; font-weight: 600; margin-bottom: 2px; }
-  .radio-desc { font-size: 11px; color: #888; }
-  .btn { width: 100%; background: #f5a623; color: #000; border: none; border-radius: 10px; padding: 14px; font-size: 15px; font-weight: 700; cursor: pointer; transition: opacity .2s; }
+  .sub { font-size: 13px; color: #888; margin-bottom: 24px; line-height: 1.5; }
+  label { font-size: 11px; color: #888; text-transform: uppercase; letter-spacing: .6px; display: block; margin-bottom: 6px; }
+  input, select, textarea { width: 100%; background: #1e1e1e; border: 1px solid #2a2a2a; border-radius: 10px; padding: 11px 13px; font-size: 14px; color: #f0f0f0; font-family: monospace; outline: none; margin-bottom: 16px; }
+  input:focus, textarea:focus { border-color: #f5a623; }
+  textarea { resize: vertical; min-height: 80px; font-size: 12px; line-height: 1.7; }
+  .tabs { display: flex; gap: 8px; margin-bottom: 20px; }
+  .tab { flex: 1; padding: 10px; background: #1e1e1e; border: 1px solid #2a2a2a; border-radius: 8px; cursor: pointer; text-align: center; font-size: 13px; font-weight: 500; transition: all .2s; }
+  .tab.active { background: rgba(245,166,35,.12); border-color: #f5a623; color: #f5a623; }
+  .section { display: none; }
+  .section.active { display: block; }
+  .btn { width: 100%; background: #f5a623; color: #000; border: none; border-radius: 10px; padding: 13px; font-size: 14px; font-weight: 700; cursor: pointer; transition: opacity .2s; margin-top: 4px; }
   .btn:hover { opacity: .85; }
   .btn:disabled { opacity: .4; cursor: not-allowed; }
-  .log { margin-top: 20px; background: #0d0d0d; border: 1px solid #2a2a2a; border-radius: 10px; padding: 14px; font-family: monospace; font-size: 12px; line-height: 1.8; min-height: 60px; max-height: 300px; overflow-y: auto; }
-  .log-line { padding: 1px 0; }
-  .log-ok    { color: #22c55e; }
-  .log-info  { color: #60a5fa; }
-  .log-warn  { color: #f5a623; }
-  .log-err   { color: #ef4444; }
-  .log-muted { color: #555; }
+  .log { margin-top: 16px; background: #0a0a0a; border: 1px solid #1e1e1e; border-radius: 10px; padding: 12px 14px; font-family: monospace; font-size: 12px; line-height: 1.9; min-height: 60px; max-height: 280px; overflow-y: auto; }
+  .ok    { color: #22c55e; }
+  .info  { color: #60a5fa; }
+  .warn  { color: #f5a623; }
+  .err   { color: #ef4444; }
+  .muted { color: #444; }
+  hr { border: none; border-top: 1px solid #2a2a2a; margin: 18px 0; }
+  .hint { font-size: 11px; color: #555; margin-top: -10px; margin-bottom: 16px; line-height: 1.5; }
 </style>
 </head>
 <body>
 <div class="card">
-  <h1>Gemba<span>GPT</span></h1>
-  <div class="sub">Mail Düzeltme Aracı — Eski ziyaretlere mailSent ekler</div>
+  <h1>Gemba<span>GPT</span> Fix</h1>
+  <div class="sub">Mail gönderip ziyaret kaydetmeyenleri düzeltir.</div>
 
   <label>Erişim Anahtarı (BACKUP_KEY)</label>
-  <input type="password" id="key" placeholder="gemba2024" autocomplete="off">
+  <input type="password" id="key" placeholder="gemba2024">
 
-  <label>Mod Seç</label>
-  <div class="radio-group">
-    <label class="radio-opt active" onclick="setMode('missing')">
-      <input type="radio" name="mode" value="missing" checked>
-      <div class="radio-title">Eksik Olanlar</div>
-      <div class="radio-desc">Sadece mailSent field'ı<br>hiç olmayan ziyaretler</div>
-    </label>
-    <label class="radio-opt" onclick="setMode('all')">
-      <input type="radio" name="mode" value="all">
-      <div class="radio-title">Tümü</div>
-      <div class="radio-desc">Tüm ziyaretlere<br>mailSent:true yaz</div>
-    </label>
+  <div class="tabs">
+    <div class="tab active" onclick="switchTab('auto')">Otomatik Tara</div>
+    <div class="tab" onclick="switchTab('manual')">Manuel Ekle</div>
   </div>
 
-  <button class="btn" id="runBtn" onclick="run()">Düzelt ve Kaydet</button>
-  <div class="log" id="log"><span class="log-muted">// Hazır</span></div>
+  <!-- OTOMATİK -->
+  <div class="section active" id="sec-auto">
+    <div class="sub" style="margin-bottom:14px">Backup'taki tüm kullanıcıları tarar. Ziyareti 0 olanları bulur ve 1 adet "mail-only" ziyaret ekler.</div>
+    <button class="btn" id="btn-auto" onclick="runAuto()">Tara ve Düzelt</button>
+  </div>
+
+  <!-- MANUEL -->
+  <div class="section" id="sec-manual">
+    <label>Kullanıcı Adları (her satıra bir isim)</label>
+    <textarea id="names" placeholder="Aylin Reçber&#10;Sema Karaca&#10;Sibel şallı&#10;gökhan sönmez&#10;BEHRA İZMİR"></textarea>
+    <div class="hint">Sistemde kaydı olmayan isimler otomatik oluşturulur.</div>
+    <label>Mağaza (opsiyonel)</label>
+    <input type="text" id="store" placeholder="Bilinmiyor">
+    <label>Reyon (opsiyonel)</label>
+    <input type="text" id="reyon" placeholder="Bilinmiyor">
+    <button class="btn" id="btn-manual" onclick="runManual()">Ekle ve Kaydet</button>
+  </div>
+
+  <div class="log" id="log"><span class="muted">// Hazır</span></div>
 </div>
 
 <script>
 const API = 'https://gembaapt.up.railway.app';
-let selectedMode = 'missing';
 
-function setMode(m) {
-  selectedMode = m;
-  document.querySelectorAll('.radio-opt').forEach(el => el.classList.remove('active'));
-  event.currentTarget.classList.add('active');
+function switchTab(t) {
+  document.querySelectorAll('.tab').forEach((el,i) => el.classList.toggle('active', (i===0&&t==='auto')||(i===1&&t==='manual')));
+  document.getElementById('sec-auto').classList.toggle('active', t==='auto');
+  document.getElementById('sec-manual').classList.toggle('active', t==='manual');
 }
 
-function log(msg, type = 'info') {
+function log(msg, type='info') {
   const div = document.getElementById('log');
   const line = document.createElement('div');
-  line.className = 'log-line log-' + type;
+  line.className = type;
   line.textContent = new Date().toLocaleTimeString('tr-TR') + '  ' + msg;
   div.appendChild(line);
   div.scrollTop = div.scrollHeight;
 }
 
-async function run() {
+function clearLog() { document.getElementById('log').innerHTML = ''; }
+
+function makeVisit(name, store, reyon) {
+  return {
+    id: Date.now() + Math.floor(Math.random()*1000),
+    store: store || 'Bilinmiyor',
+    reyon: reyon || 'Bilinmiyor',
+    week: '',
+    date: new Date().toLocaleDateString('tr-TR'),
+    user: name,
+    notes: [],
+    subject: '',
+    body: '',
+    mailSent: true,
+    source: 'mail-only'
+  };
+}
+
+async function getBackup() {
   const key = document.getElementById('key').value.trim();
-  if (!key) { log('Erişim anahtarı gerekli!', 'err'); return; }
+  if (!key) { log('Erişim anahtarı gerekli!', 'err'); return null; }
+  log('Backup alınıyor...', 'info');
+  const r = await fetch(`${API}/admin/backup?key=${encodeURIComponent(key)}`);
+  if (!r.ok) { log('Backup hatası: ' + r.status, 'err'); return null; }
+  const data = await r.json();
+  log(`Backup alındı — ${Object.keys(data.users||{}).length} kullanıcı`, 'ok');
+  return data;
+}
 
-  const btn = document.getElementById('runBtn');
-  btn.disabled = true;
-  btn.textContent = 'Çalışıyor...';
-  document.getElementById('log').innerHTML = '';
+async function saveBackup(data) {
+  const key = document.getElementById('key').value.trim();
+  log('Sunucuya kaydediliyor...', 'info');
+  const r = await fetch(`${API}/admin/restore?key=${encodeURIComponent(key)}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data)
+  });
+  const d = await r.json();
+  if (d.ok) { log('✓ Kaydedildi: ' + d.message, 'ok'); return true; }
+  else { log('Kayıt hatası: ' + (d.error||'?'), 'err'); return false; }
+}
 
+// ── OTOMATİK ──────────────────────────────────────────────────────────────
+async function runAuto() {
+  clearLog();
+  const btn = document.getElementById('btn-auto');
+  btn.disabled = true; btn.textContent = 'Çalışıyor...';
   try {
-    // 1. Backup al
-    log('Backup alınıyor...', 'info');
-    const backupRes = await fetch(`${API}/admin/backup?key=${encodeURIComponent(key)}`);
-    if (!backupRes.ok) { log('Backup alınamadı: ' + backupRes.status, 'err'); return; }
-    const data = await backupRes.json();
-    log(`Backup alındı — ${Object.keys(data.users||{}).length} kullanıcı`, 'ok');
+    const data = await getBackup();
+    if (!data) return;
 
-    // 2. Ziyaretleri düzelt
     const users = data.users || {};
-    let fixedVisits = 0;
-    let fixedUsers = 0;
+    let fixed = 0;
 
     Object.keys(users).forEach(uk => {
       const u = users[uk];
       const visits = u.visits || [];
-      let userFixed = 0;
-      visits.forEach(v => {
-        if (selectedMode === 'all') {
-          v.mailSent = true;
-          userFixed++;
-        } else if (selectedMode === 'missing' && v.mailSent === undefined) {
-          v.mailSent = true;
-          userFixed++;
-        }
-      });
-      if (userFixed > 0) {
-        fixedVisits += userFixed;
-        fixedUsers++;
-        log(`  ${u.name || uk}: ${userFixed} ziyaret güncellendi`, 'warn');
+
+      // mailSent:true olan var mı?
+      const hasMailSent = visits.some(v => v.mailSent === true);
+      // mailSent field'ı eksik olan var mı?
+      const hasMissing  = visits.some(v => v.mailSent === undefined);
+
+      if (hasMissing) {
+        // Eksik field'ları doldur
+        visits.forEach(v => { if (v.mailSent === undefined) v.mailSent = true; });
+        log(`  ${u.name}: ${visits.filter(v=>v.mailSent).length} ziyaret mailSent=true yapıldı`, 'warn');
+        fixed++;
+      } else if (!hasMailSent && visits.length === 0) {
+        // Hiç ziyareti yok — mail-only ziyaret ekle
+        u.visits = [makeVisit(u.name || uk, '', '')];
+        log(`  ${u.name}: mail-only ziyaret oluşturuldu`, 'warn');
+        fixed++;
       }
     });
 
-    if (fixedVisits === 0) {
-      log('Düzeltilecek ziyaret bulunamadı.', 'warn');
-      return;
-    }
-
-    log(`Toplam ${fixedVisits} ziyaret güncellendi (${fixedUsers} kullanıcı)`, 'ok');
-
-    // 3. Restore et
-    log('Sunucuya kaydediliyor...', 'info');
-    const restoreRes = await fetch(`${API}/admin/restore?key=${encodeURIComponent(key)}`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(data)
-    });
-    const restoreData = await restoreRes.json();
-
-    if (restoreData.ok) {
-      log('✓ Başarıyla kaydedildi: ' + restoreData.message, 'ok');
-      log('Dashboard\'ı yenileyerek kontrol edebilirsiniz.', 'ok');
-    } else {
-      log('Kayıt hatası: ' + (restoreData.error || 'Bilinmiyor'), 'err');
-    }
-
+    if (fixed === 0) { log('Düzeltilecek kullanıcı bulunamadı.', 'warn'); return; }
+    log(`Toplam ${fixed} kullanıcı güncellendi.`, 'ok');
+    await saveBackup(data);
   } catch(e) {
     log('Hata: ' + e.message, 'err');
   } finally {
-    btn.disabled = false;
-    btn.textContent = 'Düzelt ve Kaydet';
+    btn.disabled = false; btn.textContent = 'Tara ve Düzelt';
+  }
+}
+
+// ── MANUEL ────────────────────────────────────────────────────────────────
+async function runManual() {
+  clearLog();
+  const names = document.getElementById('names').value.trim().split('\n').map(s=>s.trim()).filter(Boolean);
+  if (!names.length) { log('En az bir isim girin!', 'err'); return; }
+
+  const store = document.getElementById('store').value.trim() || 'Bilinmiyor';
+  const reyon = document.getElementById('reyon').value.trim() || 'Bilinmiyor';
+
+  const btn = document.getElementById('btn-manual');
+  btn.disabled = true; btn.textContent = 'Çalışıyor...';
+  try {
+    const data = await getBackup();
+    if (!data) return;
+    if (!data.users) data.users = {};
+
+    names.forEach(name => {
+      const key = name.toLowerCase().replace(/\s+/g,'_');
+      // Kullanıcı yoksa oluştur
+      if (!data.users[key]) {
+        data.users[key] = { name, pin: '0000', visits: [] };
+        log(`  ${name}: yeni kullanıcı oluşturuldu`, 'info');
+      }
+      const u = data.users[key];
+      if (!u.visits) u.visits = [];
+
+      // Zaten mailSent visit var mı?
+      const alreadyHas = u.visits.some(v => v.mailSent);
+      if (alreadyHas) {
+        log(`  ${name}: zaten mail kaydı var, atlandı`, 'muted');
+        return;
+      }
+
+      // mail-only ziyaret ekle
+      u.visits.unshift(makeVisit(name, store, reyon));
+      if (u.visits.length > 100) u.visits.splice(100);
+      log(`  ${name}: mail-only ziyaret eklendi`, 'warn');
+    });
+
+    await saveBackup(data);
+  } catch(e) {
+    log('Hata: ' + e.message, 'err');
+  } finally {
+    btn.disabled = false; btn.textContent = 'Ekle ve Kaydet';
   }
 }
 </script>
