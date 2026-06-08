@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GembaGPT — Mail Düzeltme Aracı</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'DM Sans', -apple-system, sans-serif; background: #0d0d0d; color: #f0f0f0; min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 24px; }
+  .card { background: #161616; border: 1px solid #2a2a2a; border-radius: 16px; padding: 32px; width: 100%; max-width: 480px; }
+  h1 { font-size: 20px; font-weight: 700; margin-bottom: 4px; }
+  h1 span { color: #f5a623; }
+  .sub { font-size: 13px; color: #888; margin-bottom: 28px; }
+  label { font-size: 12px; color: #888; text-transform: uppercase; letter-spacing: .6px; display: block; margin-bottom: 6px; }
+  input { width: 100%; background: #1e1e1e; border: 1px solid #2a2a2a; border-radius: 10px; padding: 12px 14px; font-size: 14px; color: #f0f0f0; font-family: monospace; outline: none; margin-bottom: 20px; }
+  input:focus { border-color: #f5a623; }
+  .radio-group { display: flex; gap: 10px; margin-bottom: 24px; }
+  .radio-opt { flex: 1; background: #1e1e1e; border: 1px solid #2a2a2a; border-radius: 10px; padding: 12px; cursor: pointer; text-align: center; transition: all .2s; }
+  .radio-opt.active { border-color: #f5a623; background: rgba(245,166,35,.08); }
+  .radio-opt input[type=radio] { display: none; }
+  .radio-title { font-size: 13px; font-weight: 600; margin-bottom: 2px; }
+  .radio-desc { font-size: 11px; color: #888; }
+  .btn { width: 100%; background: #f5a623; color: #000; border: none; border-radius: 10px; padding: 14px; font-size: 15px; font-weight: 700; cursor: pointer; transition: opacity .2s; }
+  .btn:hover { opacity: .85; }
+  .btn:disabled { opacity: .4; cursor: not-allowed; }
+  .log { margin-top: 20px; background: #0d0d0d; border: 1px solid #2a2a2a; border-radius: 10px; padding: 14px; font-family: monospace; font-size: 12px; line-height: 1.8; min-height: 60px; max-height: 300px; overflow-y: auto; }
+  .log-line { padding: 1px 0; }
+  .log-ok    { color: #22c55e; }
+  .log-info  { color: #60a5fa; }
+  .log-warn  { color: #f5a623; }
+  .log-err   { color: #ef4444; }
+  .log-muted { color: #555; }
+</style>
+</head>
+<body>
+<div class="card">
+  <h1>Gemba<span>GPT</span></h1>
+  <div class="sub">Mail Düzeltme Aracı — Eski ziyaretlere mailSent ekler</div>
+
+  <label>Erişim Anahtarı (BACKUP_KEY)</label>
+  <input type="password" id="key" placeholder="gemba2024" autocomplete="off">
+
+  <label>Mod Seç</label>
+  <div class="radio-group">
+    <label class="radio-opt active" onclick="setMode('missing')">
+      <input type="radio" name="mode" value="missing" checked>
+      <div class="radio-title">Eksik Olanlar</div>
+      <div class="radio-desc">Sadece mailSent field'ı<br>hiç olmayan ziyaretler</div>
+    </label>
+    <label class="radio-opt" onclick="setMode('all')">
+      <input type="radio" name="mode" value="all">
+      <div class="radio-title">Tümü</div>
+      <div class="radio-desc">Tüm ziyaretlere<br>mailSent:true yaz</div>
+    </label>
+  </div>
+
+  <button class="btn" id="runBtn" onclick="run()">Düzelt ve Kaydet</button>
+  <div class="log" id="log"><span class="log-muted">// Hazır</span></div>
+</div>
+
+<script>
+const API = 'https://gembaapt.up.railway.app';
+let selectedMode = 'missing';
+
+function setMode(m) {
+  selectedMode = m;
+  document.querySelectorAll('.radio-opt').forEach(el => el.classList.remove('active'));
+  event.currentTarget.classList.add('active');
+}
+
+function log(msg, type = 'info') {
+  const div = document.getElementById('log');
+  const line = document.createElement('div');
+  line.className = 'log-line log-' + type;
+  line.textContent = new Date().toLocaleTimeString('tr-TR') + '  ' + msg;
+  div.appendChild(line);
+  div.scrollTop = div.scrollHeight;
+}
+
+async function run() {
+  const key = document.getElementById('key').value.trim();
+  if (!key) { log('Erişim anahtarı gerekli!', 'err'); return; }
+
+  const btn = document.getElementById('runBtn');
+  btn.disabled = true;
+  btn.textContent = 'Çalışıyor...';
+  document.getElementById('log').innerHTML = '';
+
+  try {
+    // 1. Backup al
+    log('Backup alınıyor...', 'info');
+    const backupRes = await fetch(`${API}/admin/backup?key=${encodeURIComponent(key)}`);
+    if (!backupRes.ok) { log('Backup alınamadı: ' + backupRes.status, 'err'); return; }
+    const data = await backupRes.json();
+    log(`Backup alındı — ${Object.keys(data.users||{}).length} kullanıcı`, 'ok');
+
+    // 2. Ziyaretleri düzelt
+    const users = data.users || {};
+    let fixedVisits = 0;
+    let fixedUsers = 0;
+
+    Object.keys(users).forEach(uk => {
+      const u = users[uk];
+      const visits = u.visits || [];
+      let userFixed = 0;
+      visits.forEach(v => {
+        if (selectedMode === 'all') {
+          v.mailSent = true;
+          userFixed++;
+        } else if (selectedMode === 'missing' && v.mailSent === undefined) {
+          v.mailSent = true;
+          userFixed++;
+        }
+      });
+      if (userFixed > 0) {
+        fixedVisits += userFixed;
+        fixedUsers++;
+        log(`  ${u.name || uk}: ${userFixed} ziyaret güncellendi`, 'warn');
+      }
+    });
+
+    if (fixedVisits === 0) {
+      log('Düzeltilecek ziyaret bulunamadı.', 'warn');
+      return;
+    }
+
+    log(`Toplam ${fixedVisits} ziyaret güncellendi (${fixedUsers} kullanıcı)`, 'ok');
+
+    // 3. Restore et
+    log('Sunucuya kaydediliyor...', 'info');
+    const restoreRes = await fetch(`${API}/admin/restore?key=${encodeURIComponent(key)}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data)
+    });
+    const restoreData = await restoreRes.json();
+
+    if (restoreData.ok) {
+      log('✓ Başarıyla kaydedildi: ' + restoreData.message, 'ok');
+      log('Dashboard\'ı yenileyerek kontrol edebilirsiniz.', 'ok');
+    } else {
+      log('Kayıt hatası: ' + (restoreData.error || 'Bilinmiyor'), 'err');
+    }
+
+  } catch(e) {
+    log('Hata: ' + e.message, 'err');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Düzelt ve Kaydet';
+  }
+}
+</script>
+</body>
+</html>
