@@ -390,7 +390,7 @@ function notify(action,extra){
     fetch(RAILWAY_URL+'/notify-user',{
       method:'POST',
       headers:{'Content-Type':'application/json'},
-      body:JSON.stringify(Object.assign({name:user.name,action},extra||{}))
+      body:JSON.stringify(Object.assign({name:user.name,pin:AUTH&&AUTH.pin||'',action},extra||{}))
     }).catch(function(){});
   }catch(e){}
 }
@@ -884,7 +884,25 @@ async function smartSendMail(){
   try{
     notify('mail',{store:getStore(),reyon,week:gwn(new Date())});
     openMailFallback();
+    // Mail gönderildi olarak işaretle
+    markMailSent();
   }finally{btn.textContent='✉ Mail Gönder';btn.disabled=false;}
+}
+
+async function markMailSent(){
+  if(!AUTH) return;
+  const visits = AUTH.visits||[];
+  if(!visits.length) return;
+  // En son ziyareti bul ve mailSent=true yap
+  const latest = visits[0];
+  if(!latest || latest.mailSent) return;
+  latest.mailSent = true;
+  try{
+    await fetch(RAILWAY_URL+'/visits/save',{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({name:AUTH.name,pin:AUTH.pin,visit:latest})
+    });
+  }catch(e){}
 }
 
 function showOutlookWarning(){
@@ -951,7 +969,7 @@ async function saveVisit(){
   buildPV();
   const store=getStore(),user=getUser(),wn=gwn(new Date());
   const notesNoPhotos=notes.map(n=>({...n,photos:[]}));
-  const visit={id:Date.now(),store,reyon,week:wn,date:new Date().toLocaleDateString('tr-TR'),user:user?.name||'',notes:notesNoPhotos,subject:window._ms||'',body:window._mb||''};
+  const visit={id:Date.now(),store,reyon,week:wn,date:new Date().toLocaleDateString('tr-TR'),user:user?.name||'',notes:notesNoPhotos,subject:window._ms||'',body:window._mb||'',mailSent:false};
 
   if(AUTH){
     // Railway'e kaydet

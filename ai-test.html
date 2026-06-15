@@ -3609,6 +3609,8 @@ function sendMail(){
   var subj=wn+'. Hafta '+store+' '+reyon+' Reyonu Mağaza Ziyaret Notları';
   var isIOS=/iphone|ipad|ipod/i.test(navigator.userAgent);
   var encode=function(s){return s.replace(/&/g,'%26').replace(/[?]/g,'%3F').replace(/=/g,'%3D').replace(/#/g,'%23').replace(/[+]/g,'%2B').replace(/[\r\n]/g,'%0A');};
+  // Mail gönderildi olarak işaretle
+  markAIMailSent(store, reyon, wn);
   if(isIOS){
     window.location.href='ms-outlook://compose?to='+encodeURIComponent(to)+'&cc='+encodeURIComponent(GEMBA_CC)+'&subject='+encodeURIComponent(subj)+'&body='+encodeURIComponent(body);
     setTimeout(function(){
@@ -3617,6 +3619,19 @@ function sendMail(){
   } else {
     window.location.href='mailto:'+encodeURIComponent(to)+'?cc='+encodeURIComponent(GEMBA_CC)+'&subject='+encodeURIComponent(subj)+'&body='+encode(body);
   }
+}
+
+function markAIMailSent(store, reyon, week){
+  try{
+    var auth=JSON.parse(localStorage.getItem('gemba_auth')||'null');
+    if(!auth||!auth.name)return;
+    var today=new Date().toLocaleDateString('tr-TR');
+    fetch('/notify-user',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({name:auth.name,pin:auth.pin||'',action:'mail',store:store,reyon:reyon,week:week})
+    }).catch(function(){});
+  }catch(e){}
 }
 
 function copyResult(){

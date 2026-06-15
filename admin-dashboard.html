@@ -6,707 +6,390 @@
 <title>GembaGPT — Yönetim Paneli</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500;600;700&display=swap');
-
-  :root {
-    --bg: #0d0d0d;
-    --surface: #161616;
-    --surface2: #1e1e1e;
-    --border: #2a2a2a;
-    --accent: #f5a623;
-    --accent2: #1a56b0;
-    --green: #22c55e;
-    --red: #ef4444;
-    --text: #f0f0f0;
-    --muted: #666;
-    --muted2: #888;
-  }
-
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-
-  body {
-    font-family: 'DM Sans', sans-serif;
-    background: var(--bg);
-    color: var(--text);
-    min-height: 100vh;
-  }
-
-  /* ── Login ── */
-  #login-screen {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    min-height: 100vh;
-    background: var(--bg);
-  }
-
-  .login-box {
-    width: 340px;
-    text-align: center;
-  }
-
-  .login-logo {
-    font-size: 28px;
-    font-weight: 700;
-    letter-spacing: -1px;
-    margin-bottom: 8px;
-  }
-
-  .login-logo span { color: var(--accent); }
-
-  .login-sub {
-    font-size: 13px;
-    color: var(--muted2);
-    margin-bottom: 40px;
-    font-family: 'DM Mono', monospace;
-  }
-
-  .login-box input {
-    width: 100%;
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    padding: 14px 16px;
-    font-size: 15px;
-    color: var(--text);
-    font-family: 'DM Mono', monospace;
-    outline: none;
-    margin-bottom: 12px;
-    transition: border-color .2s;
-  }
-
-  .login-box input:focus { border-color: var(--accent); }
-
-  .login-btn {
-    width: 100%;
-    background: var(--accent);
-    color: #000;
-    border: none;
-    border-radius: 10px;
-    padding: 14px;
-    font-size: 15px;
-    font-weight: 600;
-    font-family: 'DM Sans', sans-serif;
-    cursor: pointer;
-    transition: opacity .2s;
-  }
-
-  .login-btn:hover { opacity: .85; }
-  .login-err { font-size: 13px; color: var(--red); margin-top: 10px; min-height: 18px; }
-
-  /* ── Dashboard ── */
-  #dashboard { display: none; }
-
-  .topbar {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 16px 28px;
-    border-bottom: 1px solid var(--border);
-    position: sticky;
-    top: 0;
-    background: rgba(13,13,13,.92);
-    backdrop-filter: blur(12px);
-    z-index: 10;
-  }
-
-  .topbar-logo {
-    font-size: 18px;
-    font-weight: 700;
-    letter-spacing: -0.5px;
-  }
-
-  .topbar-logo span { color: var(--accent); }
-
-  .topbar-right {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-  }
-
-  .refresh-btn {
-    background: var(--surface2);
-    border: 1px solid var(--border);
-    color: var(--text);
-    border-radius: 8px;
-    padding: 8px 14px;
-    font-size: 13px;
-    font-family: 'DM Sans', sans-serif;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    transition: all .2s;
-  }
-
-  .refresh-btn:hover { border-color: var(--accent); color: var(--accent); }
-  .refresh-btn.spinning svg { animation: spin .8s linear infinite; }
-
-  @keyframes spin { to { transform: rotate(360deg); } }
-
-  .last-update {
-    font-size: 11px;
-    color: var(--muted);
-    font-family: 'DM Mono', monospace;
-  }
-
-  .main { padding: 28px; max-width: 1200px; margin: 0 auto; }
-
-  /* ── Stat cards ── */
-  .stat-grid {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 16px;
-    margin-bottom: 32px;
-  }
-
-  @media (max-width: 768px) {
-    .stat-grid { grid-template-columns: repeat(2, 1fr); }
-    .main { padding: 16px; }
-  }
-
-  .stat-card {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 14px;
-    padding: 20px 22px;
-    position: relative;
-    overflow: hidden;
-    transition: border-color .2s;
-  }
-
-  .stat-card:hover { border-color: #3a3a3a; }
-
-  .stat-card::before {
-    content: '';
-    position: absolute;
-    top: 0; left: 0; right: 0;
-    height: 2px;
-    border-radius: 14px 14px 0 0;
-  }
-
-  .stat-card.c-amber::before { background: var(--accent); }
-  .stat-card.c-blue::before  { background: var(--accent2); }
-  .stat-card.c-green::before { background: var(--green); }
-  .stat-card.c-purple::before { background: #8b5cf6; }
-
-  .stat-icon {
-    font-size: 22px;
-    margin-bottom: 12px;
-    display: block;
-  }
-
-  .stat-label {
-    font-size: 11px;
-    color: var(--muted2);
-    text-transform: uppercase;
-    letter-spacing: .8px;
-    font-family: 'DM Mono', monospace;
-    margin-bottom: 6px;
-  }
-
-  .stat-value {
-    font-size: 36px;
-    font-weight: 700;
-    letter-spacing: -1.5px;
-    line-height: 1;
-    font-family: 'DM Mono', monospace;
-  }
-
-  .stat-card.c-amber .stat-value { color: var(--accent); }
-  .stat-card.c-blue  .stat-value { color: #60a5fa; }
-  .stat-card.c-green .stat-value { color: var(--green); }
-  .stat-card.c-purple .stat-value { color: #a78bfa; }
-
-  .stat-sub {
-    font-size: 12px;
-    color: var(--muted);
-    margin-top: 6px;
-  }
-
-  /* ── Section title ── */
-  .section-title {
-    font-size: 13px;
-    font-weight: 600;
-    color: var(--muted2);
-    text-transform: uppercase;
-    letter-spacing: .8px;
-    font-family: 'DM Mono', monospace;
-    margin-bottom: 14px;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-  }
-
-  .section-title::after {
-    content: '';
-    flex: 1;
-    height: 1px;
-    background: var(--border);
-  }
-
-  /* ── Table ── */
-  .table-wrap {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 14px;
-    overflow: hidden;
-    margin-bottom: 32px;
-  }
-
-  table {
-    width: 100%;
-    border-collapse: collapse;
-  }
-
-  thead th {
-    padding: 12px 18px;
-    text-align: left;
-    font-size: 11px;
-    font-weight: 500;
-    color: var(--muted2);
-    text-transform: uppercase;
-    letter-spacing: .6px;
-    font-family: 'DM Mono', monospace;
-    border-bottom: 1px solid var(--border);
-    background: var(--surface2);
-    white-space: nowrap;
-  }
-
-  tbody tr {
-    border-bottom: 1px solid var(--border);
-    transition: background .15s;
-  }
-
-  tbody tr:last-child { border-bottom: none; }
-  tbody tr:hover { background: var(--surface2); }
-
-  tbody td {
-    padding: 13px 18px;
-    font-size: 14px;
-    vertical-align: middle;
-  }
-
-  .td-name {
-    font-weight: 600;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-  }
-
-  .avatar {
-    width: 32px; height: 32px;
-    border-radius: 50%;
-    background: var(--surface2);
-    border: 1px solid var(--border);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 12px;
-    font-weight: 700;
-    color: var(--accent);
-    flex-shrink: 0;
-    font-family: 'DM Mono', monospace;
-  }
-
-  .badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-    padding: 3px 9px;
-    border-radius: 100px;
-    font-size: 12px;
-    font-weight: 500;
-    font-family: 'DM Mono', monospace;
-  }
-
-  .badge-green { background: rgba(34,197,94,.12); color: var(--green); }
-  .badge-blue  { background: rgba(96,165,250,.12); color: #60a5fa; }
-  .badge-amber { background: rgba(245,166,35,.12);  color: var(--accent); }
-  .badge-muted { background: var(--surface2); color: var(--muted2); }
-
-  .bar-wrap {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-  }
-
-  .bar {
-    height: 4px;
-    border-radius: 2px;
-    background: var(--accent);
-    transition: width .4s ease;
-    min-width: 2px;
-  }
-
-  .bar-val {
-    font-family: 'DM Mono', monospace;
-    font-size: 13px;
-    color: var(--text);
-    min-width: 28px;
-  }
-
-  .td-muted {
-    color: var(--muted2);
-    font-family: 'DM Mono', monospace;
-    font-size: 12px;
-  }
-
-  .td-date {
-    color: var(--muted2);
-    font-size: 12px;
-    font-family: 'DM Mono', monospace;
-  }
-
-  /* ── Rank ── */
-  .rank {
-    font-family: 'DM Mono', monospace;
-    font-size: 12px;
-    color: var(--muted);
-    width: 20px;
-  }
-
-  .rank-1 { color: var(--accent); font-weight: 700; }
-  .rank-2 { color: #94a3b8; }
-  .rank-3 { color: #cd7c2f; }
-
-  /* ── Loading ── */
-  .loading {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 60px;
-    gap: 12px;
-    color: var(--muted2);
-    font-size: 14px;
-  }
-
-  .loading-dot {
-    width: 6px; height: 6px;
-    border-radius: 50%;
-    background: var(--accent);
-    animation: pulse 1.2s ease-in-out infinite;
-  }
-
-  .loading-dot:nth-child(2) { animation-delay: .2s; }
-  .loading-dot:nth-child(3) { animation-delay: .4s; }
-
-  @keyframes pulse {
-    0%, 100% { opacity: .2; transform: scale(.8); }
-    50% { opacity: 1; transform: scale(1.2); }
-  }
-
-  /* ── Empty ── */
-  .empty {
-    padding: 48px;
-    text-align: center;
-    color: var(--muted);
-    font-size: 14px;
-  }
-
-  /* ── Error ── */
-  .error-box {
-    background: rgba(239,68,68,.08);
-    border: 1px solid rgba(239,68,68,.2);
-    border-radius: 10px;
-    padding: 16px 20px;
-    font-size: 13px;
-    color: #fca5a5;
-    margin-bottom: 20px;
-    font-family: 'DM Mono', monospace;
-  }
-
-  /* ── Auto refresh toggle ── */
-  .toggle-wrap {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    font-size: 12px;
-    color: var(--muted2);
-    cursor: pointer;
-    user-select: none;
-  }
-
-  .toggle {
-    width: 34px; height: 18px;
-    border-radius: 9px;
-    background: var(--surface2);
-    border: 1px solid var(--border);
-    position: relative;
-    transition: background .2s;
-    cursor: pointer;
-  }
-
-  .toggle.on { background: var(--accent); border-color: var(--accent); }
-
-  .toggle::after {
-    content: '';
-    position: absolute;
-    top: 2px; left: 2px;
-    width: 12px; height: 12px;
-    border-radius: 50%;
-    background: #fff;
-    transition: transform .2s;
-  }
-
-  .toggle.on::after { transform: translateX(16px); }
-
-  /* ── Animasyon ── */
-  .fade-in {
-    animation: fadeIn .4s ease both;
-  }
-
-  @keyframes fadeIn {
-    from { opacity: 0; transform: translateY(8px); }
-    to   { opacity: 1; transform: translateY(0); }
-  }
-
-  .num-animate {
-    display: inline-block;
-    transition: all .3s ease;
-  }
+  :root{--bg:#0d0d0d;--surface:#161616;--surface2:#1e1e1e;--border:#2a2a2a;--accent:#f5a623;--blue:#3b82f6;--green:#22c55e;--red:#ef4444;--purple:#a78bfa;--text:#f0f0f0;--muted:#666;--muted2:#999;}
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;}
+  #login{display:flex;align-items:center;justify-content:center;min-height:100vh;}
+  .lbox{width:320px;text-align:center;}
+  .llogo{font-size:26px;font-weight:700;letter-spacing:-1px;margin-bottom:6px;}
+  .llogo span{color:var(--accent);}
+  .lsub{font-size:12px;color:var(--muted2);font-family:'DM Mono',monospace;margin-bottom:36px;}
+  .lbox input{width:100%;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:13px 15px;font-size:14px;color:var(--text);font-family:'DM Mono',monospace;outline:none;margin-bottom:10px;transition:border-color .2s;}
+  .lbox input:focus{border-color:var(--accent);}
+  .lbtn{width:100%;background:var(--accent);color:#000;border:none;border-radius:10px;padding:13px;font-size:14px;font-weight:700;cursor:pointer;transition:opacity .2s;}
+  .lbtn:hover{opacity:.85;}
+  .lerr{font-size:12px;color:var(--red);margin-top:8px;min-height:16px;}
+  #dash{display:none;}
+  .topbar{display:flex;align-items:center;justify-content:space-between;padding:14px 24px;border-bottom:1px solid var(--border);position:sticky;top:0;background:rgba(13,13,13,.94);backdrop-filter:blur(12px);z-index:20;}
+  .tlogo{font-size:17px;font-weight:700;letter-spacing:-.5px;}
+  .tlogo span{color:var(--accent);}
+  .tright{display:flex;align-items:center;gap:10px;}
+  .rbtn{background:var(--surface2);border:1px solid var(--border);color:var(--text);border-radius:8px;padding:7px 13px;font-size:12px;font-family:'DM Sans',sans-serif;cursor:pointer;display:flex;align-items:center;gap:5px;transition:all .2s;}
+  .rbtn:hover{border-color:var(--accent);color:var(--accent);}
+  .rbtn.spin svg{animation:spin .8s linear infinite;}
+  @keyframes spin{to{transform:rotate(360deg);}}
+  .lupd{font-size:11px;color:var(--muted);font-family:'DM Mono',monospace;}
+  .tabs{display:flex;gap:2px;padding:16px 24px 0;border-bottom:1px solid var(--border);}
+  .tab{padding:9px 18px;font-size:13px;font-weight:500;color:var(--muted2);cursor:pointer;border-bottom:2px solid transparent;transition:all .2s;margin-bottom:-1px;}
+  .tab:hover{color:var(--text);}
+  .tab.active{color:var(--accent);border-bottom-color:var(--accent);}
+  .main{padding:24px;max-width:1300px;margin:0 auto;}
+  .tbc{display:none;}
+  .tbc.active{display:block;}
+  .sgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:28px;}
+  @media(max-width:768px){.sgrid{grid-template-columns:repeat(2,1fr);}.main{padding:14px;}}
+  .scard{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:18px 20px;position:relative;overflow:hidden;}
+  .scard::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;border-radius:14px 14px 0 0;}
+  .scard.ca::before{background:var(--accent);}
+  .scard.cb::before{background:var(--blue);}
+  .scard.cg::before{background:var(--green);}
+  .scard.cp::before{background:var(--purple);}
+  .sicon{font-size:20px;margin-bottom:10px;display:block;}
+  .slbl{font-size:10px;color:var(--muted2);text-transform:uppercase;letter-spacing:.7px;font-family:'DM Mono',monospace;margin-bottom:4px;}
+  .sval{font-size:34px;font-weight:700;letter-spacing:-1.5px;line-height:1;font-family:'DM Mono',monospace;}
+  .scard.ca .sval{color:var(--accent);}
+  .scard.cb .sval{color:#60a5fa;}
+  .scard.cg .sval{color:var(--green);}
+  .scard.cp .sval{color:var(--purple);}
+  .ssub{font-size:11px;color:var(--muted);margin-top:5px;}
+  .sh{font-size:12px;font-weight:600;color:var(--muted2);text-transform:uppercase;letter-spacing:.7px;font-family:'DM Mono',monospace;margin-bottom:12px;display:flex;align-items:center;gap:8px;}
+  .sh::after{content:'';flex:1;height:1px;background:var(--border);}
+  .twrap{background:var(--surface);border:1px solid var(--border);border-radius:14px;overflow:hidden;margin-bottom:24px;}
+  table{width:100%;border-collapse:collapse;}
+  thead th{padding:10px 16px;text-align:left;font-size:10px;font-weight:500;color:var(--muted2);text-transform:uppercase;letter-spacing:.5px;font-family:'DM Mono',monospace;border-bottom:1px solid var(--border);background:var(--surface2);white-space:nowrap;}
+  tbody tr{border-bottom:1px solid var(--border);transition:background .15s;}
+  tbody tr:last-child{border-bottom:none;}
+  tbody tr:hover{background:var(--surface2);}
+  tbody td{padding:11px 16px;font-size:13px;vertical-align:middle;}
+  .crow{cursor:pointer;}
+  .tdname{font-weight:600;display:flex;align-items:center;gap:9px;}
+  .av{width:30px;height:30px;border-radius:50%;background:var(--surface2);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:var(--accent);flex-shrink:0;font-family:'DM Mono',monospace;}
+  .badge{display:inline-flex;align-items:center;gap:3px;padding:2px 8px;border-radius:100px;font-size:11px;font-weight:500;font-family:'DM Mono',monospace;}
+  .bg{background:rgba(34,197,94,.1);color:var(--green);}
+  .bb{background:rgba(96,165,250,.1);color:#60a5fa;}
+  .ba{background:rgba(245,166,35,.1);color:var(--accent);}
+  .bm{background:var(--surface2);color:var(--muted2);}
+  .bp{background:rgba(167,139,250,.1);color:var(--purple);}
+  .barw{display:flex;align-items:center;gap:7px;}
+  .bar{height:4px;border-radius:2px;background:var(--accent);min-width:2px;}
+  .bval{font-family:'DM Mono',monospace;font-size:12px;min-width:24px;}
+  .tdate{color:var(--muted2);font-size:11px;font-family:'DM Mono',monospace;}
+  .rank{font-family:'DM Mono',monospace;font-size:12px;color:var(--muted);width:24px;}
+  .exprow{display:none;}
+  .exprow.open{display:table-row;}
+  .expcell{padding:0!important;border-bottom:1px solid var(--border)!important;}
+  .expinner{padding:14px 16px 16px 55px;background:var(--bg);display:flex;gap:24px;flex-wrap:wrap;}
+  .expblock{min-width:160px;}
+  .exptitle{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;font-family:'DM Mono',monospace;margin-bottom:8px;}
+  .expitem{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:5px 0;font-size:12px;border-bottom:1px solid var(--border);}
+  .expitem:last-child{border-bottom:none;}
+  .expval{color:var(--accent);font-family:'DM Mono',monospace;font-size:11px;}
+  .expempty{font-size:12px;color:var(--muted);font-style:italic;}
+  .chev{font-size:11px;color:var(--muted);margin-left:4px;transition:transform .2s;display:inline-block;}
+  .chev.open{transform:rotate(90deg);}
+  .ci{display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid var(--border);}
+  .ci:last-child{border-bottom:none;}
+  .cl{font-size:12px;min-width:180px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .cbw{flex:1;height:8px;background:var(--surface2);border-radius:4px;overflow:hidden;}
+  .cbf{height:100%;border-radius:4px;transition:width .5s ease;}
+  .cc{font-size:11px;font-family:'DM Mono',monospace;color:var(--muted2);min-width:28px;text-align:right;}
+  .twocol{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:24px;}
+  @media(max-width:900px){.twocol{grid-template-columns:1fr;}}
+  .loading{display:flex;align-items:center;justify-content:center;padding:50px;gap:10px;color:var(--muted2);font-size:13px;}
+  .ld{width:6px;height:6px;border-radius:50%;background:var(--accent);animation:pulse 1.2s ease-in-out infinite;}
+  .ld:nth-child(2){animation-delay:.2s;}.ld:nth-child(3){animation-delay:.4s;}
+  @keyframes pulse{0%,100%{opacity:.2;transform:scale(.8);}50%{opacity:1;transform:scale(1.2);}}
+  .empty{padding:40px;text-align:center;color:var(--muted);font-size:13px;}
+  .errbox{background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.2);border-radius:10px;padding:14px 18px;font-size:12px;color:#fca5a5;margin-bottom:18px;font-family:'DM Mono',monospace;}
+  .togwrap{display:flex;align-items:center;gap:7px;font-size:12px;color:var(--muted2);cursor:pointer;user-select:none;}
+  .tog{width:32px;height:17px;border-radius:9px;background:var(--surface2);border:1px solid var(--border);position:relative;transition:background .2s;cursor:pointer;}
+  .tog.on{background:var(--accent);border-color:var(--accent);}
+  .tog::after{content:'';position:absolute;top:2px;left:2px;width:11px;height:11px;border-radius:50%;background:#fff;transition:transform .2s;}
+  .tog.on::after{transform:translateX(15px);}
+  .fadein{animation:fadein .35s ease both;}
+  @keyframes fadein{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:translateY(0);}}
 </style>
 </head>
 <body>
 
-<!-- LOGIN -->
-<div id="login-screen">
-  <div class="login-box">
-    <div class="login-logo">Gemba<span>GPT</span></div>
-    <div class="login-sub">// yonetim paneli</div>
-    <input type="password" id="key-input" placeholder="Erişim anahtarı" autocomplete="off"
-      onkeydown="if(event.key==='Enter')doLogin()">
-    <button class="login-btn" onclick="doLogin()">Giriş Yap</button>
-    <div class="login-err" id="login-err"></div>
+<div id="login">
+  <div class="lbox">
+    <div class="llogo">Gemba<span>GPT</span></div>
+    <div class="lsub">// yönetim paneli</div>
+    <input type="password" id="ki" placeholder="Erişim anahtarı" autocomplete="off" onkeydown="if(event.key==='Enter')doLogin()">
+    <button class="lbtn" onclick="doLogin()">Giriş Yap</button>
+    <div class="lerr" id="lerr"></div>
   </div>
 </div>
 
-<!-- DASHBOARD -->
-<div id="dashboard">
+<div id="dash">
   <div class="topbar">
-    <div class="topbar-logo">Gemba<span>GPT</span> <span style="font-weight:300;color:var(--muted2);font-size:13px">/ panel</span></div>
-    <div class="topbar-right">
-      <div class="toggle-wrap" onclick="toggleAutoRefresh()">
-        <div class="toggle" id="auto-toggle"></div>
-        <span id="auto-label">Otomatik yenile</span>
-      </div>
-      <div class="last-update" id="last-update">—</div>
-      <button class="refresh-btn" id="refresh-btn" onclick="loadStats()">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+    <div class="tlogo">Gemba<span>GPT</span> <span style="font-weight:300;color:var(--muted2);font-size:12px">/ panel</span></div>
+    <div class="tright">
+      <div class="togwrap" onclick="toggleAuto()"><div class="tog" id="atog"></div><span id="albl">Otomatik yenile</span></div>
+      <div class="lupd" id="lupd">—</div>
+      <button class="rbtn" id="rbtn" onclick="loadAll()">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
         Yenile
       </button>
     </div>
   </div>
-
+  <div class="tabs">
+    <div class="tab active" onclick="stab('genel',this)">Genel Bakış</div>
+    <div class="tab" onclick="stab('mag',this)">Mağazalar</div>
+    <div class="tab" onclick="stab('rey',this)">Reyonlar & MAG</div>
+    <div class="tab" onclick="stab('usr',this)">Kullanıcılar</div>
+  </div>
   <div class="main">
-    <div id="error-area"></div>
-    <div id="content">
-      <div class="loading">
-        <div class="loading-dot"></div>
-        <div class="loading-dot"></div>
-        <div class="loading-dot"></div>
-        <span>Yükleniyor...</span>
-      </div>
-    </div>
+    <div id="ea"></div>
+    <div class="tbc active" id="tc-genel"><div class="loading"><div class="ld"></div><div class="ld"></div><div class="ld"></div><span>Yükleniyor...</span></div></div>
+    <div class="tbc" id="tc-mag"><div class="loading"><div class="ld"></div><div class="ld"></div><div class="ld"></div><span>Yükleniyor...</span></div></div>
+    <div class="tbc" id="tc-rey"><div class="loading"><div class="ld"></div><div class="ld"></div><div class="ld"></div><span>Yükleniyor...</span></div></div>
+    <div class="tbc" id="tc-usr"><div class="loading"><div class="ld"></div><div class="ld"></div><div class="ld"></div><span>Yükleniyor...</span></div></div>
   </div>
 </div>
 
 <script>
-const API = 'https://gembaapt.up.railway.app';
-let apiKey = '';
-let autoRefresh = false;
-let autoTimer = null;
+const API='https://gembaapt.up.railway.app';
+let apiKey='',autoOn=false,autoTimer=null,_stats=null,_backup=null,_proc=null;
 
-// ── Login ──────────────────────────────────────────────────────────────────
-function doLogin() {
-  const k = document.getElementById('key-input').value.trim();
-  if (!k) return;
-  apiKey = k;
-  document.getElementById('login-err').textContent = '';
-  document.getElementById('login-screen').style.display = 'none';
-  document.getElementById('dashboard').style.display = 'block';
-  loadStats();
+function doLogin(){
+  const k=document.getElementById('ki').value.trim();
+  if(!k)return;
+  apiKey=k;
+  document.getElementById('lerr').textContent='';
+  document.getElementById('login').style.display='none';
+  document.getElementById('dash').style.display='block';
+  loadAll();
 }
 
-// ── Veri çek ──────────────────────────────────────────────────────────────
-async function loadStats() {
-  const btn = document.getElementById('refresh-btn');
-  btn.classList.add('spinning');
-
-  try {
-    const r = await fetch(`${API}/admin/stats?key=${encodeURIComponent(apiKey)}`);
-    const data = await r.json();
-
-    if (!data.ok) {
-      showError(data.error || 'Hata');
-      if (data.error === 'Unauthorized') {
-        document.getElementById('dashboard').style.display = 'none';
-        document.getElementById('login-screen').style.display = 'flex';
-        document.getElementById('login-err').textContent = 'Yanlış anahtar.';
-      }
-      return;
-    }
-
-    document.getElementById('error-area').innerHTML = '';
-    renderDashboard(data);
-    document.getElementById('last-update').textContent =
-      new Date().toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-
-  } catch(e) {
-    showError('Bağlantı hatası: ' + e.message);
-  } finally {
-    btn.classList.remove('spinning');
-  }
+function stab(t,el){
+  document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
+  el.classList.add('active');
+  document.querySelectorAll('.tbc').forEach(x=>x.classList.remove('active'));
+  document.getElementById('tc-'+t).classList.add('active');
+  if(_proc) renderTab(t);
 }
 
-function showError(msg) {
-  document.getElementById('error-area').innerHTML =
-    `<div class="error-box">⚠ ${msg}</div>`;
+async function loadAll(){
+  const btn=document.getElementById('rbtn');
+  btn.classList.add('spin');
+  try{
+    const [sr,br]=await Promise.all([
+      fetch(`${API}/admin/stats?key=${encodeURIComponent(apiKey)}`).then(r=>r.json()),
+      fetch(`${API}/admin/backup?key=${encodeURIComponent(apiKey)}`).then(r=>r.json())
+    ]);
+    if(!sr.ok){showErr(sr.error||'Hata');if(sr.error==='Unauthorized')goLogin();return;}
+    _stats=sr; _backup=br;
+    _proc=processBackup(br);
+    document.getElementById('ea').innerHTML='';
+    renderAll();
+    document.getElementById('lupd').textContent=new Date().toLocaleTimeString('tr-TR');
+  }catch(e){showErr('Bağlantı hatası: '+e.message);}
+  finally{btn.classList.remove('spin');}
 }
 
-// ── Render ────────────────────────────────────────────────────────────────
-function renderDashboard(data) {
-  const { totalUsers, totalVisits, totalMail, users } = data;
-  const telegramTotal = (users || []).reduce((s, u) => s + (u.telegramVisits || 0), 0);
-  const manualTotal   = (users || []).reduce((s, u) => s + (u.manualVisits  || 0), 0);
-  const maxVisits = users && users.length ? Math.max(...users.map(u => u.visits)) : 1;
+function showErr(m){document.getElementById('ea').innerHTML=`<div class="errbox">⚠ ${m}</div>`;}
+function goLogin(){document.getElementById('dash').style.display='none';document.getElementById('login').style.display='flex';document.getElementById('lerr').textContent='Yanlış anahtar.';}
 
-  const html = `
-    <!-- Stat kartları -->
-    <div class="stat-grid fade-in">
-      <div class="stat-card c-amber">
-        <span class="stat-icon">👤</span>
-        <div class="stat-label">Toplam Üye</div>
-        <div class="stat-value">${totalUsers}</div>
-        <div class="stat-sub">Kayıtlı kullanıcı</div>
-      </div>
-      <div class="stat-card c-blue">
-        <span class="stat-icon">📋</span>
-        <div class="stat-label">Toplam Ziyaret</div>
-        <div class="stat-value">${totalVisits}</div>
-        <div class="stat-sub">${manualTotal} manuel · ${telegramTotal} Telegram</div>
-      </div>
-      <div class="stat-card c-green">
-        <span class="stat-icon">✉️</span>
-        <div class="stat-label">Mail Gönderildi</div>
-        <div class="stat-value">${totalMail}</div>
-        <div class="stat-sub">${totalVisits > 0 ? Math.round(totalMail / totalVisits * 100) : 0}% mail oranı</div>
-      </div>
-      <div class="stat-card c-purple">
-        <span class="stat-icon">🤖</span>
-        <div class="stat-label">Telegram Ziyaret</div>
-        <div class="stat-value">${telegramTotal}</div>
-        <div class="stat-sub">${totalVisits > 0 ? Math.round(telegramTotal / totalVisits * 100) : 0}% oran</div>
-      </div>
+function processBackup(b){
+  const users=b.users||{};
+  const storeMap={},reyonMap={},magMap={},bgMap={},userStoreMap={},userMagMap={},userReyonMap={};
+  Object.values(users).forEach(u=>{
+    const nm=u.name||'?';
+    userStoreMap[nm]={};userMagMap[nm]={};userReyonMap[nm]={};
+    (u.visits||[]).forEach(v=>{
+      if(v.store){storeMap[v.store]=(storeMap[v.store]||0)+1;userStoreMap[nm][v.store]=(userStoreMap[nm][v.store]||0)+1;}
+      if(v.reyon){reyonMap[v.reyon]=(reyonMap[v.reyon]||0)+1;userReyonMap[nm][v.reyon]=(userReyonMap[nm][v.reyon]||0)+1;}
+      (v.notes||[]).forEach(n=>{
+        if(n.mag){magMap[n.mag]=(magMap[n.mag]||0)+1;userMagMap[nm][n.mag]=(userMagMap[nm][n.mag]||0)+1;}
+        if(n.bg){bgMap[n.bg]=(bgMap[n.bg]||0)+1;}
+      });
+    });
+  });
+  const srt=o=>Object.entries(o).sort((a,b)=>b[1]-a[1]);
+  return{topStores:srt(storeMap),topReyons:srt(reyonMap),topMags:srt(magMap),topBGs:srt(bgMap),userStoreMap,userMagMap,userReyonMap,storeMap,reyonMap,magMap};
+}
+
+function renderAll(){renderTab('genel');renderTab('mag');renderTab('rey');renderTab('usr');}
+function renderTab(t){
+  if(t==='genel')renderGenel();
+  else if(t==='mag')renderMag();
+  else if(t==='rey')renderRey();
+  else if(t==='usr')renderUsr();
+}
+
+function chart(entries,max,color){
+  if(!entries.length)return '<div class="empty">Veri yok</div>';
+  return '<div style="padding:4px 16px">'+entries.map(([k,v])=>`
+    <div class="ci"><div class="cl">${k}</div>
+    <div class="cbw"><div class="cbf" style="width:${Math.round(v/max*100)}%;background:${color}"></div></div>
+    <div class="cc">${v}</div></div>`).join('')+'</div>';
+}
+
+function renderGenel(){
+  const {totalUsers,totalVisits,totalMail,users}=_stats;
+  const tg=users.reduce((s,u)=>s+(u.telegramVisits||0),0);
+  const mn=users.reduce((s,u)=>s+(u.manualVisits||0),0);
+  const p=_proc;
+  document.getElementById('tc-genel').innerHTML=`<div class="fadein">
+    <div class="sgrid">
+      <div class="scard ca"><span class="sicon">👤</span><div class="slbl">Toplam Üye</div><div class="sval">${totalUsers}</div><div class="ssub">Kayıtlı kullanıcı</div></div>
+      <div class="scard cb"><span class="sicon">📋</span><div class="slbl">Toplam Ziyaret</div><div class="sval">${totalVisits}</div><div class="ssub">${mn} manuel · ${tg} Telegram</div></div>
+      <div class="scard cg"><span class="sicon">✉️</span><div class="slbl">Mail Gönderildi</div><div class="sval">${totalMail}</div><div class="ssub">${totalVisits>0?Math.round(totalMail/totalVisits*100):0}% oran</div></div>
+      <div class="scard cp"><span class="sicon">🏪</span><div class="slbl">Farklı Mağaza</div><div class="sval">${p.topStores.length}</div><div class="ssub">Ziyaret edilen</div></div>
     </div>
-
-    <!-- Kullanıcı tablosu -->
-    <div class="section-title fade-in">Kullanıcı Detayları</div>
-    <div class="table-wrap fade-in">
-      ${users && users.length ? `
-      <table>
-        <thead>
-          <tr>
-            <th>#</th>
-            <th>Kullanıcı</th>
-            <th>Toplam Ziyaret</th>
-            <th>Manuel</th>
-            <th>Telegram</th>
-            <th>Mail</th>
-            <th>Son Ziyaret</th>
-          </tr>
-        </thead>
-        <tbody>
-          ${users.map((u, i) => `
-          <tr>
-            <td class="rank rank-${i+1}">${i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : (i+1)}</td>
-            <td>
-              <div class="td-name">
-                <div class="avatar">${(u.name || '?').substring(0,2).toUpperCase()}</div>
-                ${u.name || '—'}
-              </div>
-            </td>
-            <td>
-              <div class="bar-wrap">
-                <div class="bar" style="width:${maxVisits > 0 ? Math.round((u.visits / maxVisits) * 80) : 0}px"></div>
-                <span class="bar-val">${u.visits}</span>
-              </div>
-            </td>
-            <td>
-              <span class="badge badge-blue">${u.manualVisits || 0}</span>
-            </td>
-            <td>
-              <span class="badge badge-amber">${u.telegramVisits || 0}</span>
-            </td>
-            <td>
-              ${u.mailSent > 0
-                ? `<span class="badge badge-green">✓ ${u.mailSent}</span>`
-                : `<span class="badge badge-muted">0</span>`}
-            </td>
-            <td class="td-date">${u.lastVisit || '—'}</td>
-          </tr>`).join('')}
-        </tbody>
-      </table>` : '<div class="empty">Henüz kayıtlı kullanıcı yok.</div>'}
+    <div class="twocol">
+      <div><div class="sh">En Çok Ziyaret Edilen Mağazalar</div><div class="twrap">${chart(p.topStores.slice(0,8),p.topStores[0]?.[1]||1,'#f5a623')}</div></div>
+      <div><div class="sh">Reyon Dağılımı</div><div class="twrap">${chart(p.topReyons,p.topReyons[0]?.[1]||1,'#3b82f6')}</div></div>
     </div>
-
-    <!-- Özet satır -->
-    <div class="section-title fade-in">Özet</div>
-    <div class="table-wrap fade-in">
-      <table>
-        <thead>
-          <tr>
-            <th>Metrik</th>
-            <th>Değer</th>
-            <th>Açıklama</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td>Üye başına ortalama ziyaret</td>
-            <td><span class="badge badge-blue">${totalUsers > 0 ? (totalVisits / totalUsers).toFixed(1) : '0'}</span></td>
-            <td class="td-muted">Toplam ziyaret / toplam üye</td>
-          </tr>
-          <tr>
-            <td>Mail gönderim oranı</td>
-            <td><span class="badge ${totalVisits > 0 && totalMail/totalVisits > .5 ? 'badge-green' : 'badge-amber'}">${totalVisits > 0 ? Math.round(totalMail / totalVisits * 100) : 0}%</span></td>
-            <td class="td-muted">Kaydedilen ziyaretlerin mail ile gönderilme oranı</td>
-          </tr>
-          <tr>
-            <td>Telegram kullanım oranı</td>
-            <td><span class="badge badge-amber">${totalVisits > 0 ? Math.round(telegramTotal / totalVisits * 100) : 0}%</span></td>
-            <td class="td-muted">Telegram üzerinden gelen ziyaretlerin oranı</td>
-          </tr>
-          <tr>
-            <td>En aktif kullanıcı</td>
-            <td><span class="badge badge-green">${users && users.length ? users[0].name : '—'}</span></td>
-            <td class="td-muted">${users && users.length ? users[0].visits + ' ziyaret' : ''}</td>
-          </tr>
-        </tbody>
-      </table>
+    <div class="twocol">
+      <div><div class="sh">En Çok Kullanılan MAG'lar</div><div class="twrap">${chart(p.topMags.slice(0,10),p.topMags[0]?.[1]||1,'#a78bfa')}</div></div>
+      <div><div class="sh">Özet</div><div class="twrap"><table><tbody>
+        <tr><td>Üye başına ort. ziyaret</td><td><span class="badge bb">${totalUsers>0?(totalVisits/totalUsers).toFixed(1):0}</span></td></tr>
+        <tr><td>Mail gönderim oranı</td><td><span class="badge ${totalVisits>0&&totalMail/totalVisits>.5?'bg':'ba'}">${totalVisits>0?Math.round(totalMail/totalVisits*100):0}%</span></td></tr>
+        <tr><td>Telegram kullanım oranı</td><td><span class="badge ba">${totalVisits>0?Math.round(tg/totalVisits*100):0}%</span></td></tr>
+        <tr><td>En aktif kullanıcı</td><td><span class="badge bg">${users[0]?.name||'—'}</span></td></tr>
+        <tr><td>En çok ziyaret edilen MAG</td><td><span class="badge bp">${p.topMags[0]?.[0]||'—'}</span></td></tr>
+        <tr><td>En çok ziyaret edilen Reyon</td><td><span class="badge bb">${p.topReyons[0]?.[0]||'—'}</span></td></tr>
+      </tbody></table></div></div>
     </div>
-  `;
-
-  document.getElementById('content').innerHTML = html;
+  </div>`;
 }
 
-// ── Otomatik yenile ────────────────────────────────────────────────────────
-function toggleAutoRefresh() {
-  autoRefresh = !autoRefresh;
-  document.getElementById('auto-toggle').classList.toggle('on', autoRefresh);
-  document.getElementById('auto-label').textContent = autoRefresh ? 'Otomatik (30s)' : 'Otomatik yenile';
-
-  if (autoRefresh) {
-    autoTimer = setInterval(loadStats, 30000);
-  } else {
-    clearInterval(autoTimer);
-  }
+function renderMag(){
+  const p=_proc;
+  const max=p.topStores[0]?.[1]||1;
+  const storeUsers={};
+  Object.values(_backup.users||{}).forEach(u=>{
+    (u.visits||[]).forEach(v=>{
+      if(!v.store)return;
+      if(!storeUsers[v.store])storeUsers[v.store]=new Set();
+      storeUsers[v.store].add(u.name);
+    });
+  });
+  const rows=p.topStores.map(([name,count],i)=>{
+    const kisi=storeUsers[name]?[...storeUsers[name]].join(', '):'—';
+    const ksay=(storeUsers[name]||new Set()).size;
+    return `<tr>
+      <td class="rank">${i+1}</td>
+      <td style="font-weight:600;font-size:12px">${name}</td>
+      <td><div class="barw"><div class="bar" style="width:${Math.round(count/max*80)}px"></div><span class="bval">${count}</span></div></td>
+      <td><span class="badge ba">${ksay} kişi</span></td>
+      <td style="font-size:11px;color:var(--muted2);max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${kisi}</td>
+    </tr>`;
+  }).join('');
+  document.getElementById('tc-mag').innerHTML=`<div class="fadein">
+    <div class="sgrid" style="grid-template-columns:repeat(3,1fr)">
+      <div class="scard ca"><span class="sicon">🏪</span><div class="slbl">Toplam Mağaza</div><div class="sval">${p.topStores.length}</div><div class="ssub">Farklı mağaza</div></div>
+      <div class="scard cb"><span class="sicon">🥇</span><div class="slbl">En Çok Ziyaret</div><div class="sval" style="font-size:16px">${p.topStores[0]?.[0]?.split('-').slice(0,2).join('-')||'—'}</div><div class="ssub">${p.topStores[0]?.[1]||0} ziyaret</div></div>
+      <div class="scard cg"><span class="sicon">📊</span><div class="slbl">Ort./Mağaza</div><div class="sval">${p.topStores.length>0?(_stats.totalVisits/p.topStores.length).toFixed(1):0}</div><div class="ssub">ziyaret</div></div>
+    </div>
+    <div class="sh">Mağaza Ziyaret Sıralaması</div>
+    <div class="twrap"><table>
+      <thead><tr><th>#</th><th>Mağaza</th><th>Ziyaret</th><th>Kişi Sayısı</th><th>Ziyaret Edenler</th></tr></thead>
+      <tbody>${rows||'<tr><td colspan="5" class="empty">Veri yok</td></tr>'}</tbody>
+    </table></div>
+  </div>`;
 }
 
-// ── Enter ile login ────────────────────────────────────────────────────────
-document.addEventListener('keydown', e => {
-  if (e.key === 'Enter' && document.getElementById('login-screen').style.display !== 'none') {
-    doLogin();
-  }
-});
+function renderRey(){
+  const p=_proc;
+  const rcolors={'Erkek':'#3b82f6','Kadın':'#ec4899','Kız Çocuk':'#f43f5e','Erkek Çocuk':'#8b5cf6','Ev':'#22c55e','Çocuk':'#f97316','Home':'#22c55e','Bebek':'#f43f5e'};
+  const reyonHtml=p.topReyons.map(([k,v])=>`
+    <div class="ci"><div class="cl" style="font-weight:600">${k}</div>
+    <div class="cbw"><div class="cbf" style="width:${Math.round(v/(p.topReyons[0]?.[1]||1)*100)}%;background:${rcolors[k]||'#60a5fa'}"></div></div>
+    <div class="cc">${v}</div></div>`).join('');
+  const mmax=p.topMags[0]?.[1]||1;
+  const magRows=p.topMags.map(([k,v],i)=>`
+    <tr><td class="rank">${i+1}</td>
+    <td style="font-weight:600;font-family:'DM Mono',monospace">${k}</td>
+    <td><div class="barw"><div class="bar" style="width:${Math.round(v/mmax*80)}px;background:var(--purple)"></div><span class="bval">${v}</span></div></td>
+    <td>${_stats.totalVisits>0?`<span class="badge bp">${Math.round(v/_stats.totalVisits*100)}%</span>`:''}</td>
+    </tr>`).join('');
+  const bmax=p.topBGs[0]?.[1]||1;
+  const bgRows=p.topBGs.slice(0,15).map(([k,v],i)=>`
+    <tr><td class="rank">${i+1}</td>
+    <td style="font-size:12px">${k}</td>
+    <td><div class="barw"><div class="bar" style="width:${Math.round(v/bmax*80)}px;background:#22c55e"></div><span class="bval">${v}</span></div></td>
+    </tr>`).join('');
+  document.getElementById('tc-rey').innerHTML=`<div class="fadein">
+    <div class="twocol">
+      <div><div class="sh">Reyon Dağılımı</div><div class="twrap"><div style="padding:4px 16px">${reyonHtml||'<div class="empty">Veri yok</div>'}</div></div></div>
+      <div><div class="sh">MAG Kullanım Sıralaması</div><div class="twrap"><table>
+        <thead><tr><th>#</th><th>MAG</th><th>Not Sayısı</th><th>Oran</th></tr></thead>
+        <tbody>${magRows||'<tr><td colspan="4" class="empty">Veri yok</td></tr>'}</tbody>
+      </table></div></div>
+    </div>
+    <div class="sh">Buyer Grup Kullanımı (Top 15)</div>
+    <div class="twrap"><table>
+      <thead><tr><th>#</th><th>Buyer Grup</th><th>Not Sayısı</th></tr></thead>
+      <tbody>${bgRows||'<tr><td colspan="3" class="empty">Veri yok</td></tr>'}</tbody>
+    </table></div>
+  </div>`;
+}
+
+function renderUsr(){
+  const {users}=_stats;
+  const maxV=users.length?Math.max(...users.map(u=>u.visits)):1;
+  const p=_proc;
+  const rows=users.map((u,i)=>{
+    const rid='exp'+i;
+    const uStores=Object.entries(p.userStoreMap[u.name]||{}).sort((a,b)=>b[1]-a[1]);
+    const uMags=Object.entries(p.userMagMap[u.name]||{}).sort((a,b)=>b[1]-a[1]).slice(0,6);
+    const uReyons=Object.entries(p.userReyonMap[u.name]||{}).sort((a,b)=>b[1]-a[1]);
+    const mkList=(arr,mono)=>arr.length?arr.map(([k,v])=>`<div class="expitem"><span ${mono?'style="font-family:monospace"':''}>${k}</span><span class="expval">${v}</span></div>`).join(''):'<div class="expempty">Veri yok</div>';
+    const magSay=Object.keys(p.userMagMap[u.name]||{}).length;
+    const magTop=uMags.slice(0,2).map(([k])=>k).join(', ')||'—';
+    return `
+    <tr class="crow" onclick="togExp('${rid}',this)">
+      <td class="rank">${i===0?'🥇':i===1?'🥈':i===2?'🥉':(i+1)}</td>
+      <td><div class="tdname"><div class="av">${(u.name||'?').substring(0,2).toUpperCase()}</div>${u.name||'—'}<span class="chev" id="chev${rid}">›</span></div></td>
+      <td><div class="barw"><div class="bar" style="width:${maxV>0?Math.round(u.visits/maxV*80):0}px"></div><span class="bval">${u.visits}</span></div></td>
+      <td><span class="badge bb">${u.manualVisits||0}</span></td>
+      <td><span class="badge ba">${u.telegramVisits||0}</span></td>
+      <td>${u.mailSent>0?`<span class="badge bg">✓ ${u.mailSent}</span>`:`<span class="badge bm">0</span>`}</td>
+      <td style="font-size:11px;color:var(--muted2)">${uStores.length} mağaza</td>
+      <td style="font-size:11px;color:var(--purple);font-family:monospace">${magSay>0?magTop:'—'}</td>
+      <td class="tdate">${u.lastVisit||'—'}</td>
+    </tr>
+    <tr class="exprow" id="${rid}">
+      <td class="expcell" colspan="9">
+        <div class="expinner">
+          <div class="expblock" style="min-width:220px"><div class="exptitle">Mağazalar (${uStores.length})</div>${mkList(uStores,false)}</div>
+          <div class="expblock"><div class="exptitle">Reyonlar</div>${mkList(uReyons,false)}</div>
+          <div class="expblock"><div class="exptitle">MAG Kullanımı</div>${mkList(uMags,true)}</div>
+        </div>
+      </td>
+    </tr>`;
+  }).join('');
+  document.getElementById('tc-usr').innerHTML=`<div class="fadein">
+    <div class="sh">Tüm Kullanıcılar — Satıra tıklayarak mağaza / reyon / MAG detayı görün</div>
+    <div class="twrap"><table>
+      <thead><tr><th>#</th><th>Kullanıcı</th><th>Toplam</th><th>Manuel</th><th>Telegram</th><th>Mail</th><th>Mağaza</th><th>MAG (top)</th><th>Son Ziyaret</th></tr></thead>
+      <tbody>${rows||'<tr><td colspan="9" class="empty">Kullanıcı yok</td></tr>'}</tbody>
+    </table></div>
+  </div>`;
+}
+
+function togExp(rid,tr){
+  const row=document.getElementById(rid);
+  const chev=document.getElementById('chev'+rid);
+  const isOpen=row.classList.contains('open');
+  document.querySelectorAll('.exprow.open').forEach(r=>r.classList.remove('open'));
+  document.querySelectorAll('.chev.open').forEach(c=>c.classList.remove('open'));
+  if(!isOpen){row.classList.add('open');if(chev)chev.classList.add('open');}
+}
+
+function toggleAuto(){
+  autoOn=!autoOn;
+  document.getElementById('atog').classList.toggle('on',autoOn);
+  document.getElementById('albl').textContent=autoOn?'Otomatik (30s)':'Otomatik yenile';
+  if(autoOn)autoTimer=setInterval(loadAll,30000);
+  else clearInterval(autoTimer);
+}
+
+document.addEventListener('keydown',e=>{if(e.key==='Enter'&&document.getElementById('login').style.display!=='none')doLogin();});
 </script>
 </body>
 </html>
