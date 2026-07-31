@@ -270,6 +270,27 @@ app.get('/admin/cleanup', (req, res) => {
 });
 
 
+// ── Ziyaret Sil ──────────────────────────────────────────────────────────────
+app.delete('/admin/visit', (req, res) => {
+  const key = req.query.key;
+  const BACKUP_KEY = process.env.BACKUP_KEY || 'gemba2024';
+  if(key !== BACKUP_KEY) return res.json({ok:false, error:'Unauthorized'});
+
+  const {userKey, visitId} = req.body||{};
+  if(!userKey || visitId===undefined) return res.json({ok:false, error:'Eksik parametre'});
+
+  const data = loadData();
+  const user = data.users[userKey];
+  if(!user) return res.json({ok:false, error:'Kullanıcı bulunamadı'});
+
+  const before = (user.visits||[]).length;
+  user.visits = (user.visits||[]).filter(v => v.id !== visitId);
+  if(user.visits.length === before) return res.json({ok:false, error:'Ziyaret bulunamadı'});
+
+  saveData(data);
+  res.json({ok:true});
+});
+
 // ── İstatistikler ────────────────────────────────────────────────────────────
 app.get('/admin/stats', (req, res) => {
   const key = req.query.key;
