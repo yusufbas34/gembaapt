@@ -310,11 +310,12 @@ function renderRey(){
     <div class="cbw"><div class="cbf" style="width:${Math.round(v/(p.topReyons[0]?.[1]||1)*100)}%;background:${rcolors[k]||'#60a5fa'}"></div></div>
     <div class="cc">${v}</div></div>`).join('');
   const mmax=p.topMags[0]?.[1]||1;
+  const totalMagNotes=p.topMags.reduce((s,[,v])=>s+v,0);
   const magRows=p.topMags.map(([k,v],i)=>`
     <tr><td class="rank">${i+1}</td>
     <td style="font-weight:600;font-family:'DM Mono',monospace">${k}</td>
     <td><div class="barw"><div class="bar" style="width:${Math.round(v/mmax*80)}px;background:var(--purple)"></div><span class="bval">${v}</span></div></td>
-    <td>${_stats.totalVisits>0?`<span class="badge bp">${Math.round(v/_stats.totalVisits*100)}%</span>`:''}</td>
+    <td>${totalMagNotes>0?`<span class="badge bp">${Math.round(v/totalMagNotes*100)}%</span>`:''}</td>
     </tr>`).join('');
   const bmax=p.topBGs[0]?.[1]||1;
   const bgRows=p.topBGs.slice(0,15).map(([k,v],i)=>`
@@ -326,7 +327,7 @@ function renderRey(){
     <div class="twocol">
       <div><div class="sh">Reyon Dağılımı</div><div class="twrap"><div style="padding:4px 16px">${reyonHtml||'<div class="empty">Veri yok</div>'}</div></div></div>
       <div><div class="sh">MAG Kullanım Sıralaması</div><div class="twrap"><table>
-        <thead><tr><th>#</th><th>MAG</th><th>Not Sayısı</th><th>Oran</th></tr></thead>
+        <thead><tr><th>#</th><th>MAG</th><th>Geri Bildirim Sayısı</th><th>Oran</th></tr></thead>
         <tbody>${magRows||'<tr><td colspan="4" class="empty">Veri yok</td></tr>'}</tbody>
       </table></div></div>
     </div>
@@ -375,7 +376,7 @@ function renderUsr(){
   document.getElementById('tc-usr').innerHTML=`<div class="fadein">
     <div class="sh">Tüm Kullanıcılar — Satıra tıklayarak mağaza / reyon / MAG detayı görün</div>
     <div class="twrap"><table>
-      <thead><tr><th>#</th><th>Kullanıcı</th><th>Toplam</th><th>Manuel</th><th>Telegram</th><th>Mail</th><th>Mağaza</th><th>MAG (top)</th><th>Son Ziyaret</th></tr></thead>
+      <thead><tr><th>#</th><th>Kullanıcı</th><th>Toplam Ziyaret</th><th>Manuel</th><th>Telegram</th><th>Mail</th><th>Mağaza</th><th>MAG (top)</th><th>Son Ziyaret</th></tr></thead>
       <tbody>${rows||'<tr><td colspan="9" class="empty">Kullanıcı yok</td></tr>'}</tbody>
     </table></div>
   </div>`;
@@ -383,7 +384,6 @@ function renderUsr(){
 
 function renderZiy(){
   const users=_backup.users||{};
-  // Tüm ziyaretleri düz listeye çevir
   const all=[];
   Object.entries(users).forEach(([uk,u])=>{
     (u.visits||[]).forEach(v=>{
@@ -392,17 +392,14 @@ function renderZiy(){
     });
   });
   all.sort((a,b)=>b.visitId-a.visitId);
-
   const uniqueUsers=[...new Set(all.map(x=>x.userName))].sort();
   const uniqueMags=[...new Set(all.flatMap(x=>x.mags.split(', ')))].filter(m=>m!=='—').sort();
-
   const filterHtml=`<div class="frow">
     <select id="f-user" onchange="applyFilter()"><option value="">Tüm Kullanıcılar</option>${uniqueUsers.map(u=>`<option value="${u}">${u}</option>`).join('')}</select>
     <select id="f-mag" onchange="applyFilter()"><option value="">Tüm MAG'lar</option>${uniqueMags.map(m=>`<option value="${m}">${m}</option>`).join('')}</select>
     <input id="f-store" placeholder="Mağaza ara..." oninput="applyFilter()" style="width:180px">
     <span class="vcount" id="vcount">${all.length} ziyaret</span>
   </div>`;
-
   window._ziyAll=all;
   document.getElementById('tc-ziy').innerHTML=`<div class="fadein">${filterHtml}<div class="twrap"><table>
     <thead><tr><th>#</th><th>Kullanıcı</th><th>Tarih</th><th>Mağaza</th><th>Reyon</th><th>MAG</th><th>Not</th><th>Kaynak</th><th></th></tr></thead>
@@ -447,7 +444,7 @@ async function deleteVisit(userKey,visitId){
     if(row)row.remove();
     window._ziyAll=window._ziyAll.filter(x=>x.visitId!==visitId);
     document.getElementById('vcount').textContent=document.querySelectorAll('#ziy-body tr').length+' ziyaret';
-  } else{
+  }else{
     alert('Silinemedi: '+(r.error||'Hata'));
   }
 }
