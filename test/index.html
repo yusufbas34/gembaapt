@@ -258,17 +258,14 @@ textarea{resize:none;line-height:1.5}
         <div class="pvphotos" id="pvp"></div>
       </div>
     </div>
-    <div id="degCard" style="display:none;margin:12px 20px 0">
-      <div style="background:var(--bg2);border:0.5px solid var(--border2);border-radius:12px;padding:16px">
-        <div style="display:flex;align-items:center;gap:10px">
-          <input type="checkbox" id="degChk" onchange="toggleDeg()" style="width:18px;height:18px;cursor:pointer">
-          <label for="degChk" style="font-size:14px;font-weight:600;cursor:pointer">Değerlendirme</label>
-        </div>
-        <div id="degPanel" style="display:none;margin-top:12px">
-          <div style="font-size:13px;color:var(--text2);margin-bottom:12px">Ziyareti yapılan mağazanın müşteri odaklılığını 10 üzerinden değerlendirebilir misiniz?</div>
-          <div id="degPicker" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px"></div>
-          <button onclick="submitDeg()" id="degBtn" style="display:none;width:100%;background:#1a1a18;color:#fff;border:none;border-radius:12px;padding:14px;font-size:15px;font-family:DM Sans,sans-serif;cursor:pointer">Değerlendir</button>
-        </div>
+    <div id="degPopup" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:9997;align-items:flex-end">
+      <div style="width:100%;background:#fff;border-radius:24px 24px 0 0;padding:24px 20px 44px;font-family:DM Sans,sans-serif">
+        <div style="width:36px;height:4px;background:#e5e5e5;border-radius:2px;margin:0 auto 20px"></div>
+        <div style="font-size:20px;font-weight:700;color:#1a1a18;text-align:center;margin-bottom:8px">⭐ Değerlendirme</div>
+        <div style="font-size:14px;color:#6b6b67;text-align:center;line-height:1.6;margin-bottom:22px">Ziyareti yapılan mağazanın müşteri takıntılılığını 10 üzerinden değerlendirebilir misiniz?</div>
+        <div id="degPicker" style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-bottom:22px"></div>
+        <button onclick="submitDeg()" id="degBtn" style="display:none;width:100%;background:#1a1a18;color:#fff;border:none;border-radius:12px;padding:16px;font-size:16px;font-weight:600;font-family:DM Sans,sans-serif;cursor:pointer;margin-bottom:10px">Değerlendir</button>
+        <button onclick="skipDeg()" style="width:100%;background:none;border:1px solid #e5e5e5;border-radius:12px;padding:14px;font-size:15px;color:#6b6b67;font-family:DM Sans,sans-serif;cursor:pointer">Atla</button>
       </div>
     </div>
     <div style="height:90px"></div>
@@ -577,7 +574,7 @@ function goHome(){
   if(notes.length&&!confirm('Ana sayfaya dönmek istediğinize emin misiniz?'))return;
   notes=[];reyon='';inlinePhotos=[];editingNoteId=null;lastMAG='';
   window._indexCurrentVisitId=null;window._indexRatingDone=false;_degScore=null;
-  var degCard=document.getElementById('degCard');if(degCard)degCard.style.display='none';
+  var degPopup=document.getElementById('degPopup');if(degPopup)degPopup.style.display='none';
   document.querySelectorAll('.chip').forEach(c=>c.classList.remove('sel'));
   closeSD();
   var si=document.getElementById('storeInput');if(si){si.value='';si.dataset.value='';si.readOnly=true;}
@@ -607,7 +604,7 @@ function goP2(){
   showAB(2);scr();renderNotes();
 }
 function goP1(){closeSD();document.getElementById('p2').style.display='none';document.getElementById('p3').style.display='none';document.getElementById('p1').style.display='block';showAB(1);scr()}
-function goP2fromP3(){var degCard=document.getElementById('degCard');if(degCard)degCard.style.display='none';document.getElementById('p3').style.display='none';document.getElementById('p2').style.display='block';showAB(2);scr();renderNotes();}
+function goP2fromP3(){var degPopup=document.getElementById('degPopup');if(degPopup)degPopup.style.display='none';document.getElementById('p3').style.display='none';document.getElementById('p2').style.display='block';showAB(2);scr();renderNotes();}
 function goP3(){if(!notes.length){toast('En az bir geri bildirim ekleyin.','warn');return}buildPV();document.getElementById('p2').style.display='none';document.getElementById('p3').style.display='block';showAB(3);scr()}
 function scr(){document.getElementById('scr').scrollTo({top:0,behavior:'smooth'})}
 
@@ -930,19 +927,8 @@ async function smartSendMail(){
     // Ziyareti otomatik kaydet (visit ID için)
     await autoSaveVisitForMail();
     openMailFallback();
-    markMailSent();
-    // Değerlendirme kartını göster
-    if(!window._indexRatingDone){
-      _degScore=null;
-      var degChk=document.getElementById('degChk');
-      if(degChk)degChk.checked=false;
-      var degPanel=document.getElementById('degPanel');
-      if(degPanel)degPanel.style.display='none';
-      var degBtn=document.getElementById('degBtn');
-      if(degBtn)degBtn.style.display='none';
-      var degCard=document.getElementById('degCard');
-      if(degCard)degCard.style.display='block';
-    }
+    // Değerlendirme popup'ını göster
+    if(!window._indexRatingDone) setTimeout(openDegPopup,600);
   }finally{btn.textContent='✉ Mail Gönder';btn.disabled=false;}
 }
 
@@ -955,6 +941,7 @@ async function autoSaveVisitForMail(){
   window._indexCurrentVisitId=visitId;
   const notesNoPhotos=notes.map(n=>({...n,photos:[]}));
   const visit={id:visitId,store,reyon,week:wn,date:new Date().toLocaleDateString('tr-TR'),user:user?.name||'',notes:notesNoPhotos,subject:window._ms||'',body:window._mb||'',mailSent:true};
+  let saved=false;
   if(AUTH){
     try{
       const r=await fetch(RAILWAY_URL+'/visits/save',{
@@ -962,9 +949,17 @@ async function autoSaveVisitForMail(){
         body:JSON.stringify({name:AUTH.name,pin:AUTH.pin,visit})
       });
       const d=await r.json();
-      if(d.ok) AUTH.visits=d.visits||[];
+      if(d.ok){AUTH.visits=d.visits||[];saved=true;}
     }catch(e){}
   }
+  if(!saved){
+    const all=JSON.parse(localStorage.getItem('gemba_history')||'[]');
+    all.unshift(visit);if(all.length>30)all.splice(30);
+    try{localStorage.setItem('gemba_history',JSON.stringify(all));}catch(e){}
+  }
+  notify('visit',{store,reyon,week:wn});
+  toast('✓ Ziyaret kaydedildi!');
+  renderHistory();
 }
 
 async function markMailSent(){
@@ -1039,12 +1034,18 @@ function openMailFallback(){
 function copyAll(){navigator.clipboard.writeText('Konu: '+(window._ms||'')+'\n\n'+(window._mb||'')).then(()=>{const t=document.createElement('div');t.textContent='Kopyalandı!';t.style.cssText='position:fixed;bottom:90px;left:50%;transform:translateX(-50%);background:#1a1a18;color:#fff;padding:10px 22px;border-radius:100px;font-size:14px;font-family:DM Sans,sans-serif;z-index:999;pointer-events:none';document.body.appendChild(t);setTimeout(()=>t.remove(),2200);});}
 
 var _degScore=null;
-function toggleDeg(){
-  var chk=document.getElementById('degChk');
-  var panel=document.getElementById('degPanel');
-  if(!panel)return;
-  if(chk&&chk.checked){panel.style.display='block';renderDegPicker();}
-  else{panel.style.display='none';}
+function openDegPopup(){
+  _degScore=null;
+  var btn=document.getElementById('degBtn');
+  if(btn)btn.style.display='none';
+  renderDegPicker();
+  var p=document.getElementById('degPopup');
+  if(p)p.style.display='flex';
+}
+function skipDeg(){
+  var p=document.getElementById('degPopup');
+  if(p)p.style.display='none';
+  window._indexRatingDone=true;
 }
 function renderDegPicker(){
   var el=document.getElementById('degPicker');
@@ -1055,7 +1056,7 @@ function renderDegPicker(){
       var btn=document.createElement('button');
       btn.textContent=n;
       btn.onclick=function(){selDeg(n);};
-      btn.style.cssText='width:36px;height:36px;border-radius:50%;border:1.5px solid #ddd;background:#fff;font-size:14px;font-weight:600;cursor:pointer;font-family:DM Sans,sans-serif;';
+      btn.style.cssText='width:44px;height:44px;border-radius:50%;border:1.5px solid #ddd;background:#fff;color:#1a1a18;font-size:16px;font-weight:600;cursor:pointer;font-family:DM Sans,sans-serif;';
       btn.id='dg'+n;
       el.appendChild(btn);
     })(i);
@@ -1080,9 +1081,7 @@ function submitDeg(){
   Object.values(magMap).forEach(function(m){if(m.mag)body+='📦 MAG: '+m.mag+'\n\n';Object.values(m.bgs).forEach(function(g){body+='  👔 '+g.bg+'\n';Object.values(g.kls).forEach(function(k){if(k.kl)body+='  🏷 '+k.kl+'\n';k.items.forEach(function(i){body+='      • '+i+'\n';});});body+='\n';});body+='━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n';});
   body+='İyi çalışmalar dilerim,\n'+user.name+'\nLC Waikiki';
   body+='\n\n⭐ Müşteri Odaklılık Puanı: '+_degScore+'/10';
-  var mags=[...new Set(notesNoPhotos.filter(function(n){return n.mag;}).map(function(n){return n.mag;}))];
-  var toSet=new Set();mags.forEach(function(m){if(magMailMap[m])toSet.add(magMailMap[m]);});
-  var to=[...toSet].filter(Boolean).join(';');
+  var to=getMailTo()||window._to||'';
   var subj=window._ms||(wn+'. Hafta '+store+' '+reyon+' Reyonu Mağaza Ziyaret Notları');
   var isIOS=/iphone|ipad|ipod/i.test(navigator.userAgent);
   if(isIOS){
@@ -1100,8 +1099,8 @@ function submitDeg(){
       }).catch(function(){});
     }
   }catch(e){}
-  var degCard=document.getElementById('degCard');
-  if(degCard)degCard.style.display='none';
+  var p=document.getElementById('degPopup');
+  if(p)p.style.display='none';
   window._indexRatingDone=true;
   var t=document.createElement('div');t.textContent='✓ Değerlendirme ile mail açıldı!';t.style.cssText='position:fixed;bottom:90px;left:50%;transform:translateX(-50%);background:#16a34a;color:#fff;padding:10px 22px;border-radius:100px;font-size:14px;font-family:DM Sans,sans-serif;z-index:999;pointer-events:none';document.body.appendChild(t);setTimeout(function(){t.remove();},2200);
 }
@@ -1530,12 +1529,12 @@ function goToApp(type){
     <div id="loginForm">
       <div style="margin-bottom:14px">
         <label style="font-size:13px;color:#6b6b67;display:block;margin-bottom:6px">Ad Soyad</label>
-        <input type="text" id="loginName" placeholder="Adınızı girin..." autocomplete="name"
+        <input type="text" id="loginName" placeholder="Adınızı girin..." autocomplete="off"
           style="width:100%;padding:14px 16px;border:0.5px solid rgba(0,0,0,0.16);border-radius:12px;font-size:16px;font-family:DM Sans,sans-serif;outline:none;color:#1a1a18"/>
       </div>
       <div style="margin-bottom:8px">
         <label style="font-size:13px;color:#6b6b67;display:block;margin-bottom:6px">PIN <span style="color:#aeaea9;font-size:11px">(4 haneli)</span></label>
-        <input type="password" id="loginPin" placeholder="●●●●" maxlength="4" inputmode="numeric"
+        <input type="password" id="loginPin" placeholder="●●●●" maxlength="4" inputmode="numeric" autocomplete="one-time-code"
           style="width:100%;padding:14px 16px;border:0.5px solid rgba(0,0,0,0.16);border-radius:12px;font-size:20px;font-family:DM Sans,sans-serif;outline:none;letter-spacing:8px;color:#1a1a18"/>
       </div>
       <div id="loginError" style="font-size:12px;color:#e03e3e;margin-bottom:12px;display:none;padding:0 4px"></div>
@@ -1552,12 +1551,12 @@ function goToApp(type){
       <div style="font-size:14px;color:#6b6b67;margin-bottom:16px;text-align:center">Yeni hesap oluştur</div>
       <div style="margin-bottom:14px">
         <label style="font-size:13px;color:#6b6b67;display:block;margin-bottom:6px">Ad Soyad</label>
-        <input type="text" id="regName" placeholder="Adınızı girin..." autocomplete="name"
+        <input type="text" id="regName" placeholder="Adınızı girin..." autocomplete="off"
           style="width:100%;padding:14px 16px;border:0.5px solid rgba(0,0,0,0.16);border-radius:12px;font-size:16px;font-family:DM Sans,sans-serif;outline:none;color:#1a1a18"/>
       </div>
       <div style="margin-bottom:8px">
         <label style="font-size:13px;color:#6b6b67;display:block;margin-bottom:6px">PIN belirle <span style="color:#aeaea9;font-size:11px">(4 haneli sayı)</span></label>
-        <input type="password" id="regPin" placeholder="●●●●" maxlength="4" inputmode="numeric"
+        <input type="password" id="regPin" placeholder="●●●●" maxlength="4" inputmode="numeric" autocomplete="new-password"
           style="width:100%;padding:14px 16px;border:0.5px solid rgba(0,0,0,0.16);border-radius:12px;font-size:20px;font-family:DM Sans,sans-serif;outline:none;letter-spacing:8px;color:#1a1a18"/>
       </div>
       <div id="regError" style="font-size:12px;color:#e03e3e;margin-bottom:12px;display:none;padding:0 4px"></div>

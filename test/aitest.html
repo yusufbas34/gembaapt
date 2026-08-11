@@ -184,15 +184,14 @@ textarea{resize:vertical;line-height:1.6}
     <button class="btn bs" onclick="restart()">← Yeni Analiz</button>
     <button class="btn bp" onclick="sendMail()">Mail Gönder</button>
     <button class="btn bs" onclick="copyResult()">Kopyala</button>
-    <div id="degCard" class="card" style="display:none;margin-top:12px">
-      <div style="display:flex;align-items:center;gap:10px">
-        <input type="checkbox" id="degChk" onchange="toggleDeg()" style="width:18px;height:18px;cursor:pointer">
-        <label for="degChk" style="font-size:14px;font-weight:600;cursor:pointer">Değerlendirme</label>
-      </div>
-      <div id="degPanel" style="display:none;margin-top:12px">
-        <div style="font-size:13px;color:var(--text2);margin-bottom:12px">Ziyareti yapılan mağazanın müşteri takıntılılığını 10 üzerinden değerlendirebilir misiniz?</div>
-        <div id="degPicker" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px"></div>
-        <button class="btn bp" id="degBtn" onclick="submitDeg()" style="display:none">Değerlendir</button>
+    <div id="degPopup" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:9997;align-items:flex-end">
+      <div style="width:100%;background:var(--card,#fff);border-radius:24px 24px 0 0;padding:24px 20px 44px">
+        <div style="width:36px;height:4px;background:var(--bd2,#e5e5e5);border-radius:2px;margin:0 auto 20px"></div>
+        <div style="font-size:20px;font-weight:700;text-align:center;margin-bottom:8px">⭐ Değerlendirme</div>
+        <div style="font-size:14px;color:var(--text2);text-align:center;line-height:1.6;margin-bottom:22px">Ziyareti yapılan mağazanın müşteri takıntılılığını 10 üzerinden değerlendirebilir misiniz?</div>
+        <div id="degPicker" style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-bottom:22px"></div>
+        <button class="btn bp" id="degBtn" onclick="submitDeg()" style="display:none;width:100%;margin-bottom:10px">Değerlendir</button>
+        <button class="btn bs" onclick="skipDeg()" style="width:100%">Atla</button>
       </div>
     </div>
   </div>
@@ -3634,16 +3633,8 @@ function sendMail(){
   } else {
     window.location.href='mailto:'+encodeURIComponent(to)+'?cc='+encodeURIComponent(GEMBA_CC)+'&subject='+encodeURIComponent(subj)+'&body='+encode(body);
   }
-  // Değerlendirme bölümünü göster (daha önce yapılmadıysa)
-  if(!window._aiRatingDone){
-    _degScore=null;
-    var degChk=document.getElementById('degChk');
-    if(degChk) degChk.checked=false;
-    var degPanel=document.getElementById('degPanel');
-    if(degPanel) degPanel.style.display='none';
-    var degCard=document.getElementById('degCard');
-    if(degCard) degCard.style.display='block';
-  }
+  // Değerlendirme popup'ını göster (daha önce yapılmadıysa)
+  if(!window._aiRatingDone) setTimeout(openDegPopup,600);
 }
 
 function markAIMailSent(store, reyon, week){
@@ -3666,26 +3657,25 @@ function copyResult(){
 /* ═══ DEĞERLENDİRME ═══ */
 var _degScore=null;
 
-function toggleDeg(){
-  var chk=document.getElementById('degChk');
-  var panel=document.getElementById('degPanel');
-  if(!chk||!panel) return;
-  if(chk.checked){
-    panel.style.display='block';
-    renderDegPicker();
-  } else {
-    panel.style.display='none';
-    _degScore=null;
-    var btn=document.getElementById('degBtn');
-    if(btn) btn.style.display='none';
-  }
+function openDegPopup(){
+  _degScore=null;
+  var btn=document.getElementById('degBtn');
+  if(btn) btn.style.display='none';
+  renderDegPicker();
+  var p=document.getElementById('degPopup');
+  if(p) p.style.display='flex';
+}
+function skipDeg(){
+  var p=document.getElementById('degPopup');
+  if(p) p.style.display='none';
+  window._aiRatingDone=true;
 }
 
 function renderDegPicker(){
   var html='';
   for(var i=1;i<=10;i++){
     var sel=_degScore===i;
-    var style='width:38px;height:38px;border-radius:50%;border:1.5px solid '+(sel?'var(--acc)':'var(--bd2)')+';background:'+(sel?'var(--acc)':'transparent')+';color:'+(sel?'#fff':'var(--text1)')+';font-size:15px;font-weight:600;cursor:pointer;';
+    var style='width:44px;height:44px;border-radius:50%;font-family:inherit;border:1.5px solid '+(sel?'var(--acc)':'var(--bd2)')+';background:'+(sel?'var(--acc)':'transparent')+';color:'+(sel?'#fff':'var(--text1)')+';font-size:15px;font-weight:600;cursor:pointer;';
     html+='<button onclick="selDeg('+i+')" style="'+style+'">'+i+'</button>';
   }
   document.getElementById('degPicker').innerHTML=html;
@@ -3728,8 +3718,8 @@ function submitDeg(){
       }).catch(function(){});
     }
   }catch(e){}
-  var degCard=document.getElementById('degCard');
-  if(degCard) degCard.style.display='none';
+  var p=document.getElementById('degPopup');
+  if(p) p.style.display='none';
   window._aiRatingDone=true;
   toast('✓ Değerlendirme ile mail açıldı!');
 }
@@ -3751,8 +3741,8 @@ function restart(){
   document.getElementById('s1').className='stp act';
   document.getElementById('s2').className='stp';
   document.getElementById('s3').className='stp';
-  var degCard=document.getElementById('degCard');
-  if(degCard) degCard.style.display='none';
+  var p=document.getElementById('degPopup');
+  if(p) p.style.display='none';
 }
 
 

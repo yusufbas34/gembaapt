@@ -127,9 +127,9 @@ tr:hover td{background:var(--bg);}
 
   <!-- Stats -->
   <div class="stats" id="statsRow">
-    <div class="stat"><div class="stat-val" id="sTotalVisit">—</div><div class="stat-lbl">Toplam Ziyaret</div></div>
-    <div class="stat"><div class="stat-val" id="sRated">—</div><div class="stat-lbl">Puanlanan</div></div>
-    <div class="stat"><div class="stat-val" id="sAvg">—</div><div class="stat-lbl">Ort. Puan</div></div>
+    <div class="stat"><div class="stat-val" id="sTotalNote">—</div><div class="stat-lbl">Geri Bildirim</div></div>
+    <div class="stat"><div class="stat-val" id="sStores">—</div><div class="stat-lbl">Mağaza</div></div>
+    <div class="stat"><div class="stat-val" id="sMags">—</div><div class="stat-lbl">MAG</div></div>
     <div class="stat"><div class="stat-val" id="sUsers">—</div><div class="stat-lbl">Kullanıcı</div></div>
   </div>
 
@@ -137,50 +137,33 @@ tr:hover td{background:var(--bg);}
   <div class="card">
     <div class="search-wrap">
       <span class="search-icon">🔍</span>
-      <input type="text" id="fSearch" placeholder="Mağaza adı veya kullanıcı ara…" oninput="applyFilters()">
+      <input type="text" id="fSearch" placeholder="Geri bildirim metni, mağaza veya kullanıcı ara…" oninput="applyFilters()">
     </div>
 
     <div class="filters">
       <div>
-        <label>Kullanıcı</label>
-        <select id="fUser" onchange="applyFilters()"><option value="">Tümü</option></select>
-      </div>
-      <div>
-        <label>Reyon</label>
-        <select id="fReyon" onchange="applyFilters()"><option value="">Tümü</option></select>
-      </div>
-      <div>
-        <label>Puan Durumu</label>
-        <select id="fRated" onchange="applyFilters()">
-          <option value="">Tümü</option>
-          <option value="rated">Puanlananlar</option>
-          <option value="unrated">Puansızlar</option>
-        </select>
-      </div>
-      <div>
-        <label>Min. Puan</label>
-        <select id="fMinScore" onchange="applyFilters()">
-          <option value="">Tümü</option>
-          <option value="1">1+</option>
-          <option value="3">3+</option>
-          <option value="5">5+</option>
-          <option value="7">7+</option>
-          <option value="9">9+</option>
-        </select>
-      </div>
-      <div>
-        <label>Max. Puan</label>
-        <select id="fMaxScore" onchange="applyFilters()">
-          <option value="">Tümü</option>
-          <option value="3">≤ 3</option>
-          <option value="5">≤ 5</option>
-          <option value="7">≤ 7</option>
-          <option value="9">≤ 9</option>
-        </select>
-      </div>
-      <div>
         <label>Hafta</label>
         <select id="fWeek" onchange="applyFilters()"><option value="">Tümü</option></select>
+      </div>
+      <div>
+        <label>MAG</label>
+        <select id="fMag" onchange="applyFilters()"><option value="">Tümü</option></select>
+      </div>
+      <div>
+        <label>Buyer Grup</label>
+        <select id="fBg" onchange="applyFilters()"><option value="">Tümü</option></select>
+      </div>
+      <div>
+        <label>Klasman</label>
+        <select id="fKl" onchange="applyFilters()"><option value="">Tümü</option></select>
+      </div>
+      <div>
+        <label>Mağaza</label>
+        <select id="fStore" onchange="applyFilters()"><option value="">Tümü</option></select>
+      </div>
+      <div>
+        <label>Kullanıcı</label>
+        <select id="fUser" onchange="applyFilters()"><option value="">Tümü</option></select>
       </div>
     </div>
 
@@ -193,19 +176,20 @@ tr:hover td{background:var(--bg);}
   <!-- Table -->
   <div class="card">
     <div class="top-bar">
-      <h2>Ziyaret Listesi</h2>
+      <h2>Geri Bildirimler</h2>
     </div>
     <div class="tbl-wrap">
       <table id="visitTable">
         <thead>
           <tr>
             <th onclick="sortBy('date')">Tarih <span class="arr" id="arr-date"></span></th>
-            <th onclick="sortBy('user')">Kullanıcı <span class="arr" id="arr-user"></span></th>
-            <th onclick="sortBy('store')">Mağaza <span class="arr" id="arr-store"></span></th>
-            <th onclick="sortBy('reyon')">Reyon <span class="arr" id="arr-reyon"></span></th>
             <th onclick="sortBy('week')">Hf <span class="arr" id="arr-week"></span></th>
-            <th onclick="sortBy('rating')">Puan <span class="arr" id="arr-rating"></span></th>
-            <th>Not</th>
+            <th onclick="sortBy('mag')">MAG <span class="arr" id="arr-mag"></span></th>
+            <th onclick="sortBy('bg')">Buyer Grup <span class="arr" id="arr-bg"></span></th>
+            <th onclick="sortBy('kl')">Klasman <span class="arr" id="arr-kl"></span></th>
+            <th>Geri Bildirim</th>
+            <th onclick="sortBy('store')">Mağaza <span class="arr" id="arr-store"></span></th>
+            <th onclick="sortBy('user')">Kullanıcı <span class="arr" id="arr-user"></span></th>
           </tr>
         </thead>
         <tbody id="visitBody"></tbody>
@@ -223,6 +207,7 @@ tr:hover td{background:var(--bg);}
 
 <script>
 var ALL_VISITS = [];
+var ROWS = [];
 var FILTERED = [];
 var PAGE = 1;
 var PAGE_SIZE = 25;
@@ -262,6 +247,7 @@ function doLogin(){
       document.getElementById('mainBox').style.display='block';
       document.getElementById('loggedAs').textContent=name+' olarak giriş yapıldı';
       ALL_VISITS=d.visits||[];
+      buildRows();
       buildFilterOptions();
       applyFilters();
     } else {
@@ -281,6 +267,7 @@ function loadData(){
   }).then(function(r){return r.json();}).then(function(d){
     if(d&&d.ok){
       ALL_VISITS=d.visits||[];
+      buildRows();
       buildFilterOptions();
       applyFilters();
       toast('✓ Güncellendi');
@@ -288,17 +275,41 @@ function loadData(){
   }).catch(function(){toast('Bağlantı hatası');});
 }
 
-function buildFilterOptions(){
-  var users=new Set(),reyons=new Set(),weeks=new Set();
+// Ziyaretleri tek tek geri bildirim satırlarına düzleştir
+function buildRows(){
+  ROWS=[];
   ALL_VISITS.forEach(function(v){
-    if(v.user) users.add(v.user);
-    if(v.reyon) reyons.add(v.reyon);
-    if(v.week) weeks.add(v.week);
+    (v.notes||[]).forEach(function(n){
+      (String(n.tx||'').split('\n')).forEach(function(line){
+        var t=line.trim();
+        if(!t) return;
+        ROWS.push({
+          id:v.id, date:v.date||'', week:v.week||'', user:v.user||'',
+          store:v.store||'', reyon:v.reyon||'',
+          mag:n.mag||'', bg:n.bg||'', kl:n.kl||'', tx:t
+        });
+      });
+    });
+  });
+}
+
+function buildFilterOptions(){
+  var users=new Set(),weeks=new Set(),mags=new Set(),bgs=new Set(),kls=new Set(),stores=new Set();
+  ROWS.forEach(function(r){
+    if(r.user) users.add(r.user);
+    if(r.week) weeks.add(r.week);
+    if(r.mag) mags.add(r.mag);
+    if(r.bg) bgs.add(r.bg);
+    if(r.kl) kls.add(r.kl);
+    if(r.store) stores.add(r.store);
   });
 
   fillSelect('fUser', Array.from(users).sort());
-  fillSelect('fReyon', Array.from(reyons).sort());
   fillSelect('fWeek', Array.from(weeks).sort(function(a,b){return b-a;}));
+  fillSelect('fMag', Array.from(mags).sort());
+  fillSelect('fBg', Array.from(bgs).sort());
+  fillSelect('fKl', Array.from(kls).sort());
+  fillSelect('fStore', Array.from(stores).sort());
 }
 
 function fillSelect(id, arr){
@@ -316,31 +327,29 @@ function fillSelect(id, arr){
 function applyFilters(){
   var search=(document.getElementById('fSearch').value||'').toLowerCase().trim();
   var fUser=document.getElementById('fUser').value;
-  var fReyon=document.getElementById('fReyon').value;
-  var fRated=document.getElementById('fRated').value;
-  var fMin=document.getElementById('fMinScore').value;
-  var fMax=document.getElementById('fMaxScore').value;
   var fWeek=document.getElementById('fWeek').value;
+  var fMag=document.getElementById('fMag').value;
+  var fBg=document.getElementById('fBg').value;
+  var fKl=document.getElementById('fKl').value;
+  var fStore=document.getElementById('fStore').value;
 
-  FILTERED=ALL_VISITS.filter(function(v){
+  FILTERED=ROWS.filter(function(r){
     if(search&&!(
-      (v.store||'').toLowerCase().includes(search)||
-      (v.user||'').toLowerCase().includes(search)
+      (r.tx||'').toLowerCase().includes(search)||
+      (r.store||'').toLowerCase().includes(search)||
+      (r.user||'').toLowerCase().includes(search)
     )) return false;
-    if(fUser&&v.user!==fUser) return false;
-    if(fReyon&&v.reyon!==fReyon) return false;
-    if(fRated==='rated'&&!v.rating) return false;
-    if(fRated==='unrated'&&v.rating) return false;
-    if(fMin&&(v.rating||0)<parseInt(fMin)) return false;
-    if(fMax&&v.rating&&v.rating>parseInt(fMax)) return false;
-    if(fWeek&&String(v.week)!==String(fWeek)) return false;
+    if(fUser&&r.user!==fUser) return false;
+    if(fWeek&&String(r.week)!==String(fWeek)) return false;
+    if(fMag&&r.mag!==fMag) return false;
+    if(fBg&&r.bg!==fBg) return false;
+    if(fKl&&r.kl!==fKl) return false;
+    if(fStore&&r.store!==fStore) return false;
     return true;
   });
 
-  // Sort
   FILTERED.sort(function(a,b){
     var av=a[SORT_KEY]||'',bv=b[SORT_KEY]||'';
-    if(SORT_KEY==='rating'){av=a.rating||0;bv=b.rating||0;}
     if(SORT_KEY==='week'){av=a.week||0;bv=b.week||0;}
     if(SORT_KEY==='date'){av=a.id||0;bv=b.id||0;}
     if(av<bv) return SORT_ASC?-1:1;
@@ -356,8 +365,7 @@ function applyFilters(){
 function sortBy(key){
   if(SORT_KEY===key) SORT_ASC=!SORT_ASC;
   else{SORT_KEY=key;SORT_ASC=false;}
-  // Update arrow indicators
-  ['date','user','store','reyon','week','rating'].forEach(function(k){
+  ['date','week','mag','bg','kl','store','user'].forEach(function(k){
     var el=document.getElementById('arr-'+k);
     if(el) el.textContent=k===SORT_KEY?(SORT_ASC?'↑':'↓'):'';
   });
@@ -365,17 +373,20 @@ function sortBy(key){
 }
 
 function updateStats(){
-  var rated=FILTERED.filter(function(v){return v.rating;});
-  var avg=rated.length?Math.round(rated.reduce(function(s,v){return s+v.rating;},0)/rated.length*10)/10:0;
-  var users=new Set(FILTERED.map(function(v){return v.user;})).size;
+  var stores=new Set(),mags=new Set(),users=new Set();
+  FILTERED.forEach(function(r){
+    if(r.store) stores.add(r.store);
+    if(r.mag) mags.add(r.mag);
+    if(r.user) users.add(r.user);
+  });
 
-  document.getElementById('sTotalVisit').textContent=ALL_VISITS.length;
-  document.getElementById('sRated').textContent=rated.length;
-  document.getElementById('sAvg').textContent=avg||'—';
-  document.getElementById('sUsers').textContent=users;
+  document.getElementById('sTotalNote').textContent=FILTERED.length;
+  document.getElementById('sStores').textContent=stores.size;
+  document.getElementById('sMags').textContent=mags.size;
+  document.getElementById('sUsers').textContent=users.size;
   document.getElementById('resultCount').textContent=
-    FILTERED.length===ALL_VISITS.length?FILTERED.length+' kayıt'
-    :FILTERED.length+' / '+ALL_VISITS.length+' kayıt';
+    FILTERED.length===ROWS.length?FILTERED.length+' geri bildirim'
+    :FILTERED.length+' / '+ROWS.length+' geri bildirim';
 }
 
 function renderTable(){
@@ -392,21 +403,16 @@ function renderTable(){
   }
   empty.style.display='none';
 
-  tbody.innerHTML=page.map(function(v){
-    var scoreHtml='<span class="score-pill score-none">—</span>';
-    if(v.rating){
-      var cls=v.rating>=7?'score-hi':v.rating>=4?'score-mid':'score-lo';
-      scoreHtml='<span class="score-pill '+cls+'">'+v.rating+'</span>';
-    }
-    var mailBadge=v.mailSent?'<span class="badge bg-green">✓ Mail</span>':'';
+  tbody.innerHTML=page.map(function(r){
     return '<tr>'
-      +'<td style="white-space:nowrap;font-size:12px;color:var(--text2)">'+escHtml(v.date||'')+'</td>'
-      +'<td style="font-weight:600">'+escHtml(v.user||'')+'</td>'
-      +'<td>'+escHtml(v.store||'')+'</td>'
-      +'<td><span class="badge bg-gray">'+escHtml(v.reyon||'')+'</span></td>'
-      +'<td style="text-align:center;color:var(--text2)">'+escHtml(String(v.week||''))+'</td>'
-      +'<td style="text-align:center">'+scoreHtml+'</td>'
-      +'<td style="font-size:12px;color:var(--text2)">'+v.noteCount+' not'+mailBadge+'</td>'
+      +'<td style="white-space:nowrap;font-size:12px;color:var(--text2)">'+escHtml(r.date)+'</td>'
+      +'<td style="text-align:center;color:var(--text2)">'+escHtml(String(r.week))+'</td>'
+      +'<td>'+(r.mag?'<span class="badge bg-gray">'+escHtml(r.mag)+'</span>':'')+'</td>'
+      +'<td style="font-size:12px">'+escHtml(r.bg)+'</td>'
+      +'<td style="font-size:12px;color:var(--text2)">'+escHtml(r.kl)+'</td>'
+      +'<td style="min-width:240px">'+escHtml(r.tx)+'</td>'
+      +'<td style="font-size:12px">'+escHtml(r.store)+'</td>'
+      +'<td style="font-size:12px;font-weight:600">'+escHtml(r.user)+'</td>'
       +'</tr>';
   }).join('');
 
@@ -437,11 +443,11 @@ function goPage(n){
 function clearFilters(){
   document.getElementById('fSearch').value='';
   document.getElementById('fUser').value='';
-  document.getElementById('fReyon').value='';
-  document.getElementById('fRated').value='';
-  document.getElementById('fMinScore').value='';
-  document.getElementById('fMaxScore').value='';
   document.getElementById('fWeek').value='';
+  document.getElementById('fMag').value='';
+  document.getElementById('fBg').value='';
+  document.getElementById('fKl').value='';
+  document.getElementById('fStore').value='';
   applyFilters();
 }
 
