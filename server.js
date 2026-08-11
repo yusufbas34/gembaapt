@@ -285,6 +285,9 @@ app.post('/ratings/all', (req, res) => {
         rating: v.rating||null,
         ratedAt: v.ratedAt||null,
         noteCount: (v.notes||[]).length,
+        notes: (v.notes||[]).map(function(n){
+          return {mag:n.mag||'', bg:n.bg||'', kl:n.kl||'', tx:n.tx||''};
+        }),
         mailSent: v.mailSent||false,
         source: v.source||'web'
       });
