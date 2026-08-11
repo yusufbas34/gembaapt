@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+<title>Değerlendirmeler – GembaGPT</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --bg:#f2f4f8;--card:#fff;--text1:#1a1d23;--text2:#6b7280;--text3:#9ca3af;
+  --acc:#1a1a18;--bd:#e5e7eb;--bd2:#d1d5db;--green:#16a34a;--red:#dc2626;
+  --yellow:#ca8a04;--radius:14px;--shadow:0 2px 12px rgba(0,0,0,.07);
+}
+@media(prefers-color-scheme:dark){
+  :root{--bg:#12141a;--card:#1e2028;--text1:#e8eaf0;--text2:#9ca3af;--text3:#6b7280;--bd:#2d3040;--bd2:#3a3e52;}
+}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text1);min-height:100vh;padding:20px 16px 80px;}
+.hdr{display:flex;align-items:center;gap:10px;margin-bottom:20px;}
+.hdr-icon{width:36px;height:36px;background:#1a1a18;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;}
+.hdr h1{font-size:19px;font-weight:700;letter-spacing:-.4px;}
+.hdr .sub{font-size:12px;color:var(--text2);}
+.card{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);padding:18px;margin-bottom:14px;}
+label{display:block;font-size:12px;font-weight:600;color:var(--text2);margin-bottom:5px;text-transform:uppercase;letter-spacing:.05em;}
+input[type=text],input[type=password],input[type=number],select{
+  width:100%;padding:10px 12px;border:1.5px solid var(--bd2);border-radius:8px;
+  font-family:inherit;font-size:14px;background:var(--card);color:var(--text1);
+  outline:none;transition:border .15s;
+}
+input:focus,select:focus{border-color:var(--acc);}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:11px 18px;border-radius:10px;font-family:inherit;font-size:14px;font-weight:600;cursor:pointer;border:none;transition:opacity .15s;}
+.btn:active{opacity:.8;}
+.bp{background:#1a1a18;color:#fff;width:100%;margin-top:12px;}
+.err{color:var(--red);font-size:13px;margin-top:6px;min-height:16px;}
+#loginBox{max-width:400px;margin:0 auto;}
+#mainBox{display:none;}
+
+/* Filters */
+.filters{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;}
+@media(min-width:600px){.filters{grid-template-columns:repeat(4,1fr);}}
+.filter-full{grid-column:1/-1;}
+.filter-row{display:flex;gap:10px;align-items:flex-end;margin-bottom:12px;}
+.filter-row>*{flex:1;}
+.filter-btn{background:transparent;border:1.5px solid var(--bd2);border-radius:8px;padding:10px 14px;font-family:inherit;font-size:13px;font-weight:600;cursor:pointer;color:var(--text2);white-space:nowrap;flex-shrink:0;}
+.filter-btn.act{background:#1a1a18;border-color:#1a1a18;color:#fff;}
+
+/* Stats row */
+.stats{display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap;}
+.stat{flex:1;min-width:80px;background:var(--card);border-radius:12px;box-shadow:var(--shadow);padding:14px 12px;text-align:center;}
+.stat-val{font-size:22px;font-weight:700;line-height:1;}
+.stat-lbl{font-size:11px;color:var(--text2);margin-top:4px;}
+
+/* Table */
+.tbl-wrap{overflow-x:auto;}
+table{width:100%;border-collapse:collapse;font-size:13px;min-width:560px;}
+th{text-align:left;padding:9px 10px;color:var(--text2);font-weight:600;border-bottom:1.5px solid var(--bd);cursor:pointer;white-space:nowrap;user-select:none;}
+th:hover{color:var(--text1);}
+th .arr{font-size:10px;margin-left:3px;opacity:.5;}
+td{padding:8px 10px;border-bottom:1px solid var(--bd);vertical-align:middle;}
+tr:last-child td{border-bottom:none;}
+tr:hover td{background:var(--bg);}
+.badge{display:inline-block;padding:3px 9px;border-radius:100px;font-size:11px;font-weight:600;}
+.bg-green{background:#dcfce7;color:#15803d;}
+.bg-yellow{background:#fef9c3;color:#854d0e;}
+.bg-red{background:#fee2e2;color:#991b1b;}
+.bg-gray{background:#f3f4f6;color:#6b7280;}
+.score-pill{display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:50%;font-size:13px;font-weight:700;border:2px solid currentColor;}
+.score-hi{color:#15803d;border-color:#86efac;}
+.score-mid{color:#b45309;border-color:#fcd34d;}
+.score-lo{color:#991b1b;border-color:#fca5a5;}
+.score-none{color:var(--text3);border-color:var(--bd2);font-size:11px;}
+.empty{text-align:center;padding:40px 20px;color:var(--text2);}
+.empty-icon{font-size:36px;margin-bottom:10px;}
+
+/* Search */
+.search-wrap{position:relative;margin-bottom:14px;}
+.search-wrap input{padding-left:36px;}
+.search-icon{position:absolute;left:11px;top:50%;transform:translateY(-50%);color:var(--text3);font-size:16px;pointer-events:none;}
+
+/* Pagination */
+.pager{display:flex;align-items:center;justify-content:center;gap:8px;margin-top:16px;flex-wrap:wrap;}
+.pager-btn{padding:7px 14px;border-radius:8px;border:1.5px solid var(--bd2);background:none;font-family:inherit;font-size:13px;cursor:pointer;color:var(--text2);}
+.pager-btn.act{background:#1a1a18;border-color:#1a1a18;color:#fff;}
+.pager-btn:disabled{opacity:.4;cursor:default;}
+.pager-info{font-size:12px;color:var(--text2);}
+
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#1a1a18;color:#fff;padding:10px 20px;border-radius:30px;font-size:13px;font-weight:600;opacity:0;pointer-events:none;transition:opacity .25s;z-index:999;}
+.toast.show{opacity:1;}
+.refresh-btn{background:transparent;border:1.5px solid var(--bd2);border-radius:8px;padding:8px 14px;font-family:inherit;font-size:13px;font-weight:600;cursor:pointer;color:var(--text2);display:flex;align-items:center;gap:5px;}
+.refresh-btn:hover{border-color:#1a1a18;color:#1a1a18;}
+.top-bar{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;gap:10px;flex-wrap:wrap;}
+.top-bar h2{font-size:16px;font-weight:700;}
+</style>
+</head>
+<body>
+
+<div id="loginBox">
+  <div class="hdr" style="margin-bottom:24px;">
+    <div class="hdr-icon">📊</div>
+    <div><div class="hdr h1" style="font-size:18px;font-weight:700;">Değerlendirmeler</div><div class="sub">Mağaza ziyaret geri bildirimleri</div></div>
+  </div>
+  <div class="card">
+    <div style="margin-bottom:14px">
+      <label>Ad Soyad</label>
+      <input type="text" id="lName" placeholder="Adınız Soyadınız" autocomplete="name">
+    </div>
+    <div>
+      <label>PIN</label>
+      <input type="password" id="lPin" placeholder="••••" inputmode="numeric" maxlength="6">
+    </div>
+    <div class="err" id="lErr"></div>
+    <button class="btn bp" onclick="doLogin()">Giriş Yap</button>
+  </div>
+</div>
+
+<div id="mainBox">
+  <div class="hdr">
+    <div class="hdr-icon">📊</div>
+    <div>
+      <div style="font-size:18px;font-weight:700;">Değerlendirmeler</div>
+      <div style="font-size:12px;color:var(--text2);" id="loggedAs"></div>
+    </div>
+    <div style="margin-left:auto;">
+      <button class="refresh-btn" onclick="loadData()">↻ Yenile</button>
+    </div>
+  </div>
+
+  <!-- Stats -->
+  <div class="stats" id="statsRow">
+    <div class="stat"><div class="stat-val" id="sTotalVisit">—</div><div class="stat-lbl">Toplam Ziyaret</div></div>
+    <div class="stat"><div class="stat-val" id="sRated">—</div><div class="stat-lbl">Puanlanan</div></div>
+    <div class="stat"><div class="stat-val" id="sAvg">—</div><div class="stat-lbl">Ort. Puan</div></div>
+    <div class="stat"><div class="stat-val" id="sUsers">—</div><div class="stat-lbl">Kullanıcı</div></div>
+  </div>
+
+  <!-- Filters -->
+  <div class="card">
+    <div class="search-wrap">
+      <span class="search-icon">🔍</span>
+      <input type="text" id="fSearch" placeholder="Mağaza adı veya kullanıcı ara…" oninput="applyFilters()">
+    </div>
+
+    <div class="filters">
+      <div>
+        <label>Kullanıcı</label>
+        <select id="fUser" onchange="applyFilters()"><option value="">Tümü</option></select>
+      </div>
+      <div>
+        <label>Reyon</label>
+        <select id="fReyon" onchange="applyFilters()"><option value="">Tümü</option></select>
+      </div>
+      <div>
+        <label>Puan Durumu</label>
+        <select id="fRated" onchange="applyFilters()">
+          <option value="">Tümü</option>
+          <option value="rated">Puanlananlar</option>
+          <option value="unrated">Puansızlar</option>
+        </select>
+      </div>
+      <div>
+        <label>Min. Puan</label>
+        <select id="fMinScore" onchange="applyFilters()">
+          <option value="">Tümü</option>
+          <option value="1">1+</option>
+          <option value="3">3+</option>
+          <option value="5">5+</option>
+          <option value="7">7+</option>
+          <option value="9">9+</option>
+        </select>
+      </div>
+      <div>
+        <label>Max. Puan</label>
+        <select id="fMaxScore" onchange="applyFilters()">
+          <option value="">Tümü</option>
+          <option value="3">≤ 3</option>
+          <option value="5">≤ 5</option>
+          <option value="7">≤ 7</option>
+          <option value="9">≤ 9</option>
+        </select>
+      </div>
+      <div>
+        <label>Hafta</label>
+        <select id="fWeek" onchange="applyFilters()"><option value="">Tümü</option></select>
+      </div>
+    </div>
+
+    <div style="display:flex;gap:8px;flex-wrap:wrap;">
+      <button class="filter-btn" onclick="clearFilters()">✕ Filtreleri Temizle</button>
+      <span id="resultCount" style="font-size:12px;color:var(--text2);display:flex;align-items:center;"></span>
+    </div>
+  </div>
+
+  <!-- Table -->
+  <div class="card">
+    <div class="top-bar">
+      <h2>Ziyaret Listesi</h2>
+    </div>
+    <div class="tbl-wrap">
+      <table id="visitTable">
+        <thead>
+          <tr>
+            <th onclick="sortBy('date')">Tarih <span class="arr" id="arr-date"></span></th>
+            <th onclick="sortBy('user')">Kullanıcı <span class="arr" id="arr-user"></span></th>
+            <th onclick="sortBy('store')">Mağaza <span class="arr" id="arr-store"></span></th>
+            <th onclick="sortBy('reyon')">Reyon <span class="arr" id="arr-reyon"></span></th>
+            <th onclick="sortBy('week')">Hf <span class="arr" id="arr-week"></span></th>
+            <th onclick="sortBy('rating')">Puan <span class="arr" id="arr-rating"></span></th>
+            <th>Not</th>
+          </tr>
+        </thead>
+        <tbody id="visitBody"></tbody>
+      </table>
+    </div>
+    <div id="emptyState" class="empty" style="display:none;">
+      <div class="empty-icon">📋</div>
+      <div>Kayıt bulunamadı</div>
+    </div>
+    <div class="pager" id="pager"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+var ALL_VISITS = [];
+var FILTERED = [];
+var PAGE = 1;
+var PAGE_SIZE = 25;
+var SORT_KEY = 'date';
+var SORT_ASC = false;
+var AUTH = null;
+
+function toast(msg){
+  var el=document.getElementById('toast');
+  el.textContent=msg;el.classList.add('show');
+  setTimeout(function(){el.classList.remove('show');},2200);
+}
+
+function doLogin(){
+  var name=document.getElementById('lName').value.trim();
+  var pin=document.getElementById('lPin').value.trim();
+  if(!name||!pin){document.getElementById('lErr').textContent='Ad ve PIN gerekli.';return;}
+  document.getElementById('lErr').textContent='';
+
+  // Önce gemba_auth'dan dene
+  var stored=null;
+  try{stored=JSON.parse(localStorage.getItem('gemba_auth')||'null');}catch(e){}
+  if(stored&&stored.name&&stored.pin){
+    name=stored.name; pin=stored.pin;
+    document.getElementById('lName').value=name;
+    document.getElementById('lPin').value=pin;
+  }
+
+  fetch('/ratings/all',{
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({name:name,pin:pin})
+  }).then(function(r){return r.json();}).then(function(d){
+    if(d&&d.ok){
+      AUTH={name:name,pin:pin};
+      document.getElementById('loginBox').style.display='none';
+      document.getElementById('mainBox').style.display='block';
+      document.getElementById('loggedAs').textContent=name+' olarak giriş yapıldı';
+      ALL_VISITS=d.visits||[];
+      buildFilterOptions();
+      applyFilters();
+    } else {
+      document.getElementById('lErr').textContent='PIN hatalı veya kullanıcı bulunamadı.';
+    }
+  }).catch(function(){
+    document.getElementById('lErr').textContent='Sunucuya ulaşılamadı.';
+  });
+}
+
+function loadData(){
+  if(!AUTH) return;
+  fetch('/ratings/all',{
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({name:AUTH.name,pin:AUTH.pin})
+  }).then(function(r){return r.json();}).then(function(d){
+    if(d&&d.ok){
+      ALL_VISITS=d.visits||[];
+      buildFilterOptions();
+      applyFilters();
+      toast('✓ Güncellendi');
+    }
+  }).catch(function(){toast('Bağlantı hatası');});
+}
+
+function buildFilterOptions(){
+  var users=new Set(),reyons=new Set(),weeks=new Set();
+  ALL_VISITS.forEach(function(v){
+    if(v.user) users.add(v.user);
+    if(v.reyon) reyons.add(v.reyon);
+    if(v.week) weeks.add(v.week);
+  });
+
+  fillSelect('fUser', Array.from(users).sort());
+  fillSelect('fReyon', Array.from(reyons).sort());
+  fillSelect('fWeek', Array.from(weeks).sort(function(a,b){return b-a;}));
+}
+
+function fillSelect(id, arr){
+  var sel=document.getElementById(id);
+  var cur=sel.value;
+  while(sel.options.length>1) sel.remove(1);
+  arr.forEach(function(v){
+    var o=document.createElement('option');
+    o.value=v; o.textContent=v;
+    sel.appendChild(o);
+  });
+  sel.value=cur;
+}
+
+function applyFilters(){
+  var search=(document.getElementById('fSearch').value||'').toLowerCase().trim();
+  var fUser=document.getElementById('fUser').value;
+  var fReyon=document.getElementById('fReyon').value;
+  var fRated=document.getElementById('fRated').value;
+  var fMin=document.getElementById('fMinScore').value;
+  var fMax=document.getElementById('fMaxScore').value;
+  var fWeek=document.getElementById('fWeek').value;
+
+  FILTERED=ALL_VISITS.filter(function(v){
+    if(search&&!(
+      (v.store||'').toLowerCase().includes(search)||
+      (v.user||'').toLowerCase().includes(search)
+    )) return false;
+    if(fUser&&v.user!==fUser) return false;
+    if(fReyon&&v.reyon!==fReyon) return false;
+    if(fRated==='rated'&&!v.rating) return false;
+    if(fRated==='unrated'&&v.rating) return false;
+    if(fMin&&(v.rating||0)<parseInt(fMin)) return false;
+    if(fMax&&v.rating&&v.rating>parseInt(fMax)) return false;
+    if(fWeek&&String(v.week)!==String(fWeek)) return false;
+    return true;
+  });
+
+  // Sort
+  FILTERED.sort(function(a,b){
+    var av=a[SORT_KEY]||'',bv=b[SORT_KEY]||'';
+    if(SORT_KEY==='rating'){av=a.rating||0;bv=b.rating||0;}
+    if(SORT_KEY==='week'){av=a.week||0;bv=b.week||0;}
+    if(SORT_KEY==='date'){av=a.id||0;bv=b.id||0;}
+    if(av<bv) return SORT_ASC?-1:1;
+    if(av>bv) return SORT_ASC?1:-1;
+    return 0;
+  });
+
+  PAGE=1;
+  updateStats();
+  renderTable();
+}
+
+function sortBy(key){
+  if(SORT_KEY===key) SORT_ASC=!SORT_ASC;
+  else{SORT_KEY=key;SORT_ASC=false;}
+  // Update arrow indicators
+  ['date','user','store','reyon','week','rating'].forEach(function(k){
+    var el=document.getElementById('arr-'+k);
+    if(el) el.textContent=k===SORT_KEY?(SORT_ASC?'↑':'↓'):'';
+  });
+  applyFilters();
+}
+
+function updateStats(){
+  var rated=FILTERED.filter(function(v){return v.rating;});
+  var avg=rated.length?Math.round(rated.reduce(function(s,v){return s+v.rating;},0)/rated.length*10)/10:0;
+  var users=new Set(FILTERED.map(function(v){return v.user;})).size;
+
+  document.getElementById('sTotalVisit').textContent=ALL_VISITS.length;
+  document.getElementById('sRated').textContent=rated.length;
+  document.getElementById('sAvg').textContent=avg||'—';
+  document.getElementById('sUsers').textContent=users;
+  document.getElementById('resultCount').textContent=
+    FILTERED.length===ALL_VISITS.length?FILTERED.length+' kayıt'
+    :FILTERED.length+' / '+ALL_VISITS.length+' kayıt';
+}
+
+function renderTable(){
+  var tbody=document.getElementById('visitBody');
+  var empty=document.getElementById('emptyState');
+  var start=(PAGE-1)*PAGE_SIZE;
+  var page=FILTERED.slice(start, start+PAGE_SIZE);
+
+  if(!FILTERED.length){
+    tbody.innerHTML='';
+    empty.style.display='block';
+    document.getElementById('pager').innerHTML='';
+    return;
+  }
+  empty.style.display='none';
+
+  tbody.innerHTML=page.map(function(v){
+    var scoreHtml='<span class="score-pill score-none">—</span>';
+    if(v.rating){
+      var cls=v.rating>=7?'score-hi':v.rating>=4?'score-mid':'score-lo';
+      scoreHtml='<span class="score-pill '+cls+'">'+v.rating+'</span>';
+    }
+    var mailBadge=v.mailSent?'<span class="badge bg-green">✓ Mail</span>':'';
+    return '<tr>'
+      +'<td style="white-space:nowrap;font-size:12px;color:var(--text2)">'+escHtml(v.date||'')+'</td>'
+      +'<td style="font-weight:600">'+escHtml(v.user||'')+'</td>'
+      +'<td>'+escHtml(v.store||'')+'</td>'
+      +'<td><span class="badge bg-gray">'+escHtml(v.reyon||'')+'</span></td>'
+      +'<td style="text-align:center;color:var(--text2)">'+escHtml(String(v.week||''))+'</td>'
+      +'<td style="text-align:center">'+scoreHtml+'</td>'
+      +'<td style="font-size:12px;color:var(--text2)">'+v.noteCount+' not'+mailBadge+'</td>'
+      +'</tr>';
+  }).join('');
+
+  renderPager();
+}
+
+function renderPager(){
+  var total=Math.ceil(FILTERED.length/PAGE_SIZE);
+  if(total<=1){document.getElementById('pager').innerHTML='';return;}
+  var html='<button class="pager-btn" onclick="goPage('+(PAGE-1)+')" '+(PAGE<=1?'disabled':'')+'>‹</button>';
+  var start=Math.max(1,PAGE-2), end=Math.min(total,start+4);
+  for(var i=start;i<=end;i++){
+    html+='<button class="pager-btn'+(i===PAGE?' act':'')+'" onclick="goPage('+i+')">'+i+'</button>';
+  }
+  html+='<button class="pager-btn" onclick="goPage('+(PAGE+1)+')" '+(PAGE>=total?'disabled':'')+'>›</button>';
+  html+='<span class="pager-info">'+PAGE+' / '+total+'</span>';
+  document.getElementById('pager').innerHTML=html;
+}
+
+function goPage(n){
+  var total=Math.ceil(FILTERED.length/PAGE_SIZE);
+  if(n<1||n>total) return;
+  PAGE=n;
+  renderTable();
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+function clearFilters(){
+  document.getElementById('fSearch').value='';
+  document.getElementById('fUser').value='';
+  document.getElementById('fReyon').value='';
+  document.getElementById('fRated').value='';
+  document.getElementById('fMinScore').value='';
+  document.getElementById('fMaxScore').value='';
+  document.getElementById('fWeek').value='';
+  applyFilters();
+}
+
+function escHtml(s){
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+// Enter tuşu
+document.getElementById('lPin').addEventListener('keydown',function(e){if(e.key==='Enter') doLogin();});
+document.getElementById('lName').addEventListener('keydown',function(e){if(e.key==='Enter') document.getElementById('lPin').focus();});
+
+// Kaydedilmiş oturum varsa otomatik doldur
+(function(){
+  try{
+    var a=JSON.parse(localStorage.getItem('gemba_auth')||'null');
+    if(a&&a.name) document.getElementById('lName').value=a.name;
+  }catch(e){}
+})();
+</script>
+</body>
+</html>
