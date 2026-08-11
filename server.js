@@ -242,6 +242,59 @@ JSON döndür:
 
 
 
+// Rating kaydet
+app.post('/visits/save-rating', (req, res) => {
+  const {name, pin, visitId, score} = req.body||{};
+  if(!name||!pin||visitId==null||!score) return res.json({ok:false, error:'Eksik bilgi'});
+
+  const data = loadData();
+  const key = name.trim().toLowerCase().replace(/\s+/g,'_');
+  const user = data.users[key];
+  if(!user||user.pin!==pin) return res.json({ok:false, error:'Yetkisiz'});
+
+  const visit = (user.visits||[]).find(v => v.id === visitId);
+  if(!visit) return res.json({ok:false, error:'Ziyaret bulunamadı'});
+
+  visit.rating = score;
+  visit.ratedAt = new Date().toISOString();
+  saveData(data);
+  res.json({ok:true});
+});
+
+// Tüm değerlendirmeleri listele (giriş yapan herhangi bir kullanıcı görebilir)
+app.post('/ratings/all', (req, res) => {
+  const {name, pin} = req.body||{};
+  if(!name||!pin) return res.json({ok:false, error:'Eksik bilgi'});
+
+  const data = loadData();
+  const key = name.trim().toLowerCase().replace(/\s+/g,'_');
+  const user = data.users[key];
+  if(!user||user.pin!==pin) return res.json({ok:false, error:'Yetkisiz'});
+
+  const allVisits = [];
+  Object.keys(data.users||{}).forEach(function(uk){
+    const u = data.users[uk];
+    (u.visits||[]).forEach(function(v){
+      allVisits.push({
+        id: v.id,
+        user: u.name,
+        store: v.store||'',
+        reyon: v.reyon||'',
+        week: v.week||'',
+        date: v.date||'',
+        rating: v.rating||null,
+        ratedAt: v.ratedAt||null,
+        noteCount: (v.notes||[]).length,
+        mailSent: v.mailSent||false,
+        source: v.source||'web'
+      });
+    });
+  });
+
+  allVisits.sort((a,b) => (b.id||0) - (a.id||0));
+  res.json({ok:true, visits: allVisits});
+});
+
 // Cleanup - duplicate ziyaretleri temizle
 app.get('/admin/cleanup', (req, res) => {
   const key = req.query.key;
@@ -269,27 +322,6 @@ app.get('/admin/cleanup', (req, res) => {
   res.json({ok:true, removed: totalRemoved});
 });
 
-
-// ── Ziyaret Sil ──────────────────────────────────────────────────────────────
-app.delete('/admin/visit', (req, res) => {
-  const key = req.query.key;
-  const BACKUP_KEY = process.env.BACKUP_KEY || 'gemba2024';
-  if(key !== BACKUP_KEY) return res.json({ok:false, error:'Unauthorized'});
-
-  const {userKey, visitId} = req.body||{};
-  if(!userKey || visitId===undefined) return res.json({ok:false, error:'Eksik parametre'});
-
-  const data = loadData();
-  const user = data.users[userKey];
-  if(!user) return res.json({ok:false, error:'Kullanıcı bulunamadı'});
-
-  const before = (user.visits||[]).length;
-  user.visits = (user.visits||[]).filter(v => v.id !== visitId);
-  if(user.visits.length === before) return res.json({ok:false, error:'Ziyaret bulunamadı'});
-
-  saveData(data);
-  res.json({ok:true});
-});
 
 // ── İstatistikler ────────────────────────────────────────────────────────────
 app.get('/admin/stats', (req, res) => {
