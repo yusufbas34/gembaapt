@@ -147,19 +147,23 @@ tr:hover td{background:var(--bg);}
       </div>
       <div>
         <label>MAG</label>
-        <select id="fMag" onchange="applyFilters()"><option value="">Tümü</option></select>
+        <input type="text" id="fMag" list="dlMag" placeholder="Tümü — yazarak ara" oninput="applyFilters()">
+        <datalist id="dlMag"></datalist>
       </div>
       <div>
         <label>Buyer Grup</label>
-        <select id="fBg" onchange="applyFilters()"><option value="">Tümü</option></select>
+        <input type="text" id="fBg" list="dlBg" placeholder="Tümü — yazarak ara" oninput="applyFilters()">
+        <datalist id="dlBg"></datalist>
       </div>
       <div>
         <label>Klasman</label>
-        <select id="fKl" onchange="applyFilters()"><option value="">Tümü</option></select>
+        <input type="text" id="fKl" list="dlKl" placeholder="Tümü — yazarak ara" oninput="applyFilters()">
+        <datalist id="dlKl"></datalist>
       </div>
       <div>
         <label>Mağaza</label>
-        <select id="fStore" onchange="applyFilters()"><option value="">Tümü</option></select>
+        <input type="text" id="fStore" list="dlStore" placeholder="Tümü — yazarak ara" oninput="applyFilters()">
+        <datalist id="dlStore"></datalist>
       </div>
       <div>
         <label>Kullanıcı</label>
@@ -291,25 +295,87 @@ function buildRows(){
       });
     });
   });
+  buildValSets();
 }
 
 function buildFilterOptions(){
-  var users=new Set(),weeks=new Set(),mags=new Set(),bgs=new Set(),kls=new Set(),stores=new Set();
+  var users=new Set(),weeks=new Set();
   ROWS.forEach(function(r){
     if(r.user) users.add(r.user);
     if(r.week) weeks.add(r.week);
-    if(r.mag) mags.add(r.mag);
-    if(r.bg) bgs.add(r.bg);
-    if(r.kl) kls.add(r.kl);
-    if(r.store) stores.add(r.store);
   });
-
   fillSelect('fUser', Array.from(users).sort());
   fillSelect('fWeek', Array.from(weeks).sort(function(a,b){return b-a;}));
-  fillSelect('fMag', Array.from(mags).sort());
-  fillSelect('fBg', Array.from(bgs).sort());
-  fillSelect('fKl', Array.from(kls).sort());
-  fillSelect('fStore', Array.from(stores).sort());
+  refreshDatalists();
+}
+
+// Sütundaki tüm mevcut değerler (tam eşleşme tespiti için)
+var VALSETS={};
+function buildValSets(){
+  VALSETS={mag:new Set(),bg:new Set(),kl:new Set(),store:new Set()};
+  ROWS.forEach(function(r){
+    ['mag','bg','kl','store'].forEach(function(k){
+      if(r[k]) VALSETS[k].add(String(r[k]).toLowerCase());
+    });
+  });
+}
+
+// Yazılan değer listede birebir varsa tam eşleşme, değilse
+// (kullanıcı hâlâ yazıyorsa) içerir mantığı uygulanır.
+function matchVal(rowVal, filterVal, key){
+  if(!filterVal) return true;
+  var f=String(filterVal).toLowerCase().trim();
+  if(!f) return true;
+  var r=String(rowVal||'').toLowerCase();
+  if(key&&VALSETS[key]&&VALSETS[key].has(f)) return r===f;
+  return r.indexOf(f)>=0;
+}
+
+function distinct(rows, key){
+  var s=new Set();
+  rows.forEach(function(r){ if(r[key]) s.add(r[key]); });
+  return Array.from(s).sort();
+}
+
+function fillDatalist(id, arr){
+  var dl=document.getElementById(id);
+  if(!dl) return;
+  dl.innerHTML=arr.map(function(v){
+    return '<option value="'+String(v).replace(/"/g,'&quot;')+'"></option>';
+  }).join('');
+}
+
+// Kademeli seçenekler: MAG seçilirse ona ait buyer gruplar,
+// buyer grup seçilirse ona ait klasmanlar; MAG seçilip buyer grup
+// seçilmezse o MAG'a ait tüm klasmanlar listelenir.
+function refreshDatalists(){
+  var v=readFilters();
+  var base=ROWS.filter(function(r){
+    return matchVal(r.week,v.week)&&matchVal(r.user,v.user);
+  });
+
+  fillDatalist('dlStore', distinct(base,'store'));
+
+  var afterStore=base.filter(function(r){ return matchVal(r.store,v.store,'store'); });
+  fillDatalist('dlMag', distinct(afterStore,'mag'));
+
+  var afterMag=afterStore.filter(function(r){ return matchVal(r.mag,v.mag,'mag'); });
+  fillDatalist('dlBg', distinct(afterMag,'bg'));
+
+  var afterBg=afterMag.filter(function(r){ return matchVal(r.bg,v.bg,'bg'); });
+  fillDatalist('dlKl', distinct(afterBg,'kl'));
+}
+
+function readFilters(){
+  return {
+    search:(document.getElementById('fSearch').value||'').toLowerCase().trim(),
+    user:document.getElementById('fUser').value,
+    week:document.getElementById('fWeek').value,
+    mag:document.getElementById('fMag').value,
+    bg:document.getElementById('fBg').value,
+    kl:document.getElementById('fKl').value,
+    store:document.getElementById('fStore').value
+  };
 }
 
 function fillSelect(id, arr){
@@ -325,26 +391,21 @@ function fillSelect(id, arr){
 }
 
 function applyFilters(){
-  var search=(document.getElementById('fSearch').value||'').toLowerCase().trim();
-  var fUser=document.getElementById('fUser').value;
-  var fWeek=document.getElementById('fWeek').value;
-  var fMag=document.getElementById('fMag').value;
-  var fBg=document.getElementById('fBg').value;
-  var fKl=document.getElementById('fKl').value;
-  var fStore=document.getElementById('fStore').value;
+  var v=readFilters();
+  refreshDatalists();
 
   FILTERED=ROWS.filter(function(r){
-    if(search&&!(
-      (r.tx||'').toLowerCase().includes(search)||
-      (r.store||'').toLowerCase().includes(search)||
-      (r.user||'').toLowerCase().includes(search)
+    if(v.search&&!(
+      (r.tx||'').toLowerCase().includes(v.search)||
+      (r.store||'').toLowerCase().includes(v.search)||
+      (r.user||'').toLowerCase().includes(v.search)
     )) return false;
-    if(fUser&&r.user!==fUser) return false;
-    if(fWeek&&String(r.week)!==String(fWeek)) return false;
-    if(fMag&&r.mag!==fMag) return false;
-    if(fBg&&r.bg!==fBg) return false;
-    if(fKl&&r.kl!==fKl) return false;
-    if(fStore&&r.store!==fStore) return false;
+    if(v.user&&r.user!==v.user) return false;
+    if(v.week&&String(r.week)!==String(v.week)) return false;
+    if(!matchVal(r.mag,v.mag,'mag')) return false;
+    if(!matchVal(r.bg,v.bg,'bg')) return false;
+    if(!matchVal(r.kl,v.kl,'kl')) return false;
+    if(!matchVal(r.store,v.store,'store')) return false;
     return true;
   });
 

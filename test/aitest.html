@@ -3616,15 +3616,31 @@ function sendMail(){
   var store=window._aiMailStore||'';
   var reyon=window._aiMailReyon||'';
   var wn=window._aiMailWn||0;
+  // Ziyareti kaydet (stable ID — sunucu mükerrerleri önler)
+  saveAnalysisVisit();
+  markAIMailSent(store, reyon, wn);
+  // Önce değerlendirmeyi sor, maili sonra aç
+  if(!window._aiRatingDone) openDegPopup();
+  else openAIMail();
+}
+
+// Maili açar; score verilirse puan satırı başa kalın olarak eklenir
+function openAIMail(score){
+  var store=window._aiMailStore||'';
+  var reyon=window._aiMailReyon||'';
+  var wn=window._aiMailWn||0;
   var body=window._aiMailBody||'';
+  if(score){
+    var boldFn=typeof toBold==='function'?toBold:function(s){return s;};
+    var line=boldFn('⭐ '+store+' mağazasında yapılan ziyarete ait müşteri odaklılık puanı: '+score+'/10');
+    // "Merhabalar," satırından hemen sonra ekle
+    var idx=body.indexOf('\n\n');
+    body=idx>0 ? body.slice(0,idx+2)+line+'\n\n'+body.slice(idx+2) : line+'\n\n'+body;
+  }
   var to=getMailTo();
   var subj=wn+'. Hafta '+store+' '+reyon+' Reyonu Mağaza Ziyaret Notları';
   var isIOS=/iphone|ipad|ipod/i.test(navigator.userAgent);
   var encode=function(s){return s.replace(/&/g,'%26').replace(/[?]/g,'%3F').replace(/=/g,'%3D').replace(/#/g,'%23').replace(/[+]/g,'%2B').replace(/[\r\n]/g,'%0A');};
-  // Ziyareti kaydet (stable ID — sunucu mükerrerleri önler)
-  saveAnalysisVisit();
-  // Mail gönderildi olarak işaretle
-  markAIMailSent(store, reyon, wn);
   if(isIOS){
     window.location.href='ms-outlook://compose?to='+encodeURIComponent(to)+'&cc='+encodeURIComponent(GEMBA_CC)+'&subject='+encodeURIComponent(subj)+'&body='+encodeURIComponent(body);
     setTimeout(function(){
@@ -3633,8 +3649,6 @@ function sendMail(){
   } else {
     window.location.href='mailto:'+encodeURIComponent(to)+'?cc='+encodeURIComponent(GEMBA_CC)+'&subject='+encodeURIComponent(subj)+'&body='+encode(body);
   }
-  // Değerlendirme popup'ını göster (daha önce yapılmadıysa)
-  if(!window._aiRatingDone) setTimeout(openDegPopup,600);
 }
 
 function markAIMailSent(store, reyon, week){
@@ -3669,6 +3683,7 @@ function skipDeg(){
   var p=document.getElementById('degPopup');
   if(p) p.style.display='none';
   window._aiRatingDone=true;
+  openAIMail();
 }
 
 function renderDegPicker(){
@@ -3690,23 +3705,7 @@ function selDeg(n){
 
 function submitDeg(){
   if(!_degScore) return;
-  var scoreText='\n\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n📊 Müşteri Takıntılılığı Puanı: '+_degScore+' / 10';
-  var body=(window._aiMailBody||'')+scoreText;
-  var store=window._aiMailStore||'';
-  var reyon=window._aiMailReyon||'';
-  var wn=window._aiMailWn||0;
-  var to=getMailTo();
-  var subj=wn+'. Hafta '+store+' '+reyon+' Reyonu Mağaza Ziyaret Notları';
-  var isIOS=/iphone|ipad|ipod/i.test(navigator.userAgent);
-  var encode=function(s){return s.replace(/&/g,'%26').replace(/[?]/g,'%3F').replace(/=/g,'%3D').replace(/#/g,'%23').replace(/[+]/g,'%2B').replace(/[\r\n]/g,'%0A');};
-  if(isIOS){
-    window.location.href='ms-outlook://compose?to='+encodeURIComponent(to)+'&cc='+encodeURIComponent(GEMBA_CC)+'&subject='+encodeURIComponent(subj)+'&body='+encodeURIComponent(body);
-    setTimeout(function(){
-      window.location.href='mailto:'+encodeURIComponent(to)+'?cc='+encodeURIComponent(GEMBA_CC)+'&subject='+encodeURIComponent(subj)+'&body='+encode(body);
-    },1500);
-  } else {
-    window.location.href='mailto:'+encodeURIComponent(to)+'?cc='+encodeURIComponent(GEMBA_CC)+'&subject='+encodeURIComponent(subj)+'&body='+encode(body);
-  }
+  var score=_degScore;
   // Puanı sunucuya kaydet
   try{
     var auth=JSON.parse(localStorage.getItem('gemba_auth')||'null');
@@ -3714,14 +3713,15 @@ function submitDeg(){
       fetch('/visits/save-rating',{
         method:'POST',
         headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({name:auth.name,pin:auth.pin,visitId:window._aiCurrentVisitId,score:_degScore})
+        body:JSON.stringify({name:auth.name,pin:auth.pin,visitId:window._aiCurrentVisitId,score:score})
       }).catch(function(){});
     }
   }catch(e){}
   var p=document.getElementById('degPopup');
   if(p) p.style.display='none';
   window._aiRatingDone=true;
-  toast('✓ Değerlendirme ile mail açıldı!');
+  // Puanı içeren maili aç
+  openAIMail(score);
 }
 
 function backToInput(){

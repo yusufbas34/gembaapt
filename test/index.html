@@ -926,9 +926,9 @@ async function smartSendMail(){
     notify('mail',{store:getStore(),reyon,week:gwn(new Date())});
     // Ziyareti otomatik kaydet (visit ID için)
     await autoSaveVisitForMail();
-    openMailFallback();
-    // Değerlendirme popup'ını göster
-    if(!window._indexRatingDone) setTimeout(openDegPopup,600);
+    // Önce değerlendirmeyi sor, maili sonra aç
+    if(!window._indexRatingDone) openDegPopup();
+    else openMailFallback();
   }finally{btn.textContent='✉ Mail Gönder';btn.disabled=false;}
 }
 
@@ -1001,11 +1001,13 @@ function showOutlookWarning(){
   });
 }
 
-function openMailFallback(){
+function openMailFallback(score){
   const store=getStore(),user=getUser()||{name:''},wn=gwn(new Date());
   let magMap={};
   notes.forEach(n=>{const mk=n.mag||'__noMag__';if(!magMap[mk])magMap[mk]={mag:n.mag,bgs:{}};const bgk=n.bg;if(!magMap[mk].bgs[bgk])magMap[mk].bgs[bgk]={bg:n.bg,kls:{}};const klk=n.kl||'__noKl__';if(!magMap[mk].bgs[bgk].kls[klk])magMap[mk].bgs[bgk].kls[klk]={kl:n.kl,items:[]};n.tx.split('\n').filter(l=>l.trim()).forEach(l=>magMap[mk].bgs[bgk].kls[klk].items.push(l.trim()));});
-  let body='Merhabalar,\n\n'+wn+'. Hafta '+store+' mağazasına ait ziyaret notlarım aşağıdaki gibidir.\n\n';
+  let body='Merhabalar,\n\n';
+  if(score) body+=toBold('⭐ '+store+' mağazasında yapılan ziyarete ait müşteri odaklılık puanı: '+score+'/10')+'\n\n';
+  body+=wn+'. Hafta '+store+' mağazasına ait ziyaret notlarım aşağıdaki gibidir.\n\n';
   Object.values(magMap).forEach(m=>{
     if(m.mag)body+='📦 '+toBold('MAG: '+m.mag)+'\n\n';
     Object.values(m.bgs).forEach(g=>{body+='  👔 '+toBold(g.bg)+'\n';Object.values(g.kls).forEach(k=>{if(k.kl)body+='  🏷 '+k.kl+'\n';k.items.forEach(i=>body+='      • '+i+'\n');});body+='\n';});
@@ -1046,6 +1048,7 @@ function skipDeg(){
   var p=document.getElementById('degPopup');
   if(p)p.style.display='none';
   window._indexRatingDone=true;
+  openMailFallback();
 }
 function renderDegPicker(){
   var el=document.getElementById('degPicker');
@@ -1073,36 +1076,21 @@ function selDeg(n){
 }
 function submitDeg(){
   if(!_degScore)return;
-  var store=getStore(),user=getUser()||{name:''},wn=gwn(new Date());
-  var notesNoPhotos=notes.map(function(n){return Object.assign({},n,{photos:[]});});
-  var body='Merhabalar,\n\n'+wn+'. Hafta '+store+' mağazasına ait ziyaret notlarım aşağıdaki gibidir.\n\n';
-  var magMap={};
-  notesNoPhotos.forEach(function(n){var mk=n.mag||'__noMag__';if(!magMap[mk])magMap[mk]={mag:n.mag,bgs:{}};var bgk=n.bg;if(!magMap[mk].bgs[bgk])magMap[mk].bgs[bgk]={bg:n.bg,kls:{}};var klk=n.kl||'__noKl__';if(!magMap[mk].bgs[bgk].kls[klk])magMap[mk].bgs[bgk].kls[klk]={kl:n.kl,items:[]};(n.tx||'').split('\n').filter(function(l){return l.trim();}).forEach(function(l){magMap[mk].bgs[bgk].kls[klk].items.push(l.trim());});});
-  Object.values(magMap).forEach(function(m){if(m.mag)body+='📦 MAG: '+m.mag+'\n\n';Object.values(m.bgs).forEach(function(g){body+='  👔 '+g.bg+'\n';Object.values(g.kls).forEach(function(k){if(k.kl)body+='  🏷 '+k.kl+'\n';k.items.forEach(function(i){body+='      • '+i+'\n';});});body+='\n';});body+='━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n';});
-  body+='İyi çalışmalar dilerim,\n'+user.name+'\nLC Waikiki';
-  body+='\n\n⭐ Müşteri Odaklılık Puanı: '+_degScore+'/10';
-  var to=getMailTo()||window._to||'';
-  var subj=window._ms||(wn+'. Hafta '+store+' '+reyon+' Reyonu Mağaza Ziyaret Notları');
-  var isIOS=/iphone|ipad|ipod/i.test(navigator.userAgent);
-  if(isIOS){
-    window.location.href='ms-outlook://compose?to='+encodeURIComponent(to)+'&cc='+encodeURIComponent(GEMBA_CC)+'&subject='+encodeURIComponent(subj)+'&body='+encodeURIComponent(body);
-    setTimeout(function(){window.location.href='mailto:'+encodeURIComponent(to)+'?cc='+encodeURIComponent(GEMBA_CC)+'&subject='+encodeURIComponent(subj)+'&body='+safeMailEncode(body);},1500);
-  }else{
-    window.location.href='mailto:'+encodeURIComponent(to)+'?cc='+encodeURIComponent(GEMBA_CC)+'&subject='+encodeURIComponent(subj)+'&body='+safeMailEncode(body);
-  }
-  // Sunucuya kaydet
+  var score=_degScore;
+  // Puanı sunucuya kaydet
   try{
     if(AUTH&&AUTH.name&&AUTH.pin&&window._indexCurrentVisitId){
       fetch(RAILWAY_URL+'/visits/save-rating',{
         method:'POST',headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({name:AUTH.name,pin:AUTH.pin,visitId:window._indexCurrentVisitId,score:_degScore})
+        body:JSON.stringify({name:AUTH.name,pin:AUTH.pin,visitId:window._indexCurrentVisitId,score:score})
       }).catch(function(){});
     }
   }catch(e){}
   var p=document.getElementById('degPopup');
   if(p)p.style.display='none';
   window._indexRatingDone=true;
-  var t=document.createElement('div');t.textContent='✓ Değerlendirme ile mail açıldı!';t.style.cssText='position:fixed;bottom:90px;left:50%;transform:translateX(-50%);background:#16a34a;color:#fff;padding:10px 22px;border-radius:100px;font-size:14px;font-family:DM Sans,sans-serif;z-index:999;pointer-events:none';document.body.appendChild(t);setTimeout(function(){t.remove();},2200);
+  // Puanı içeren maili aç
+  openMailFallback(score);
 }
 
 showAB(1);loadUser();

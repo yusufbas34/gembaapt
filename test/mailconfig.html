@@ -54,6 +54,11 @@ td input.changed{border-color:var(--acc);}
 .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#1a1d23;color:#fff;padding:10px 20px;border-radius:30px;font-size:13px;font-weight:600;opacity:0;pointer-events:none;transition:opacity .25s;z-index:999;}
 .toast.show{opacity:1;}
 .err{color:var(--red);font-size:13px;margin-top:8px;min-height:18px;}
+.rey-bar{display:flex;gap:8px;flex-wrap:wrap;}
+.rey-btn{background:transparent;border:1.5px solid var(--bd2);border-radius:10px;padding:9px 14px;font-family:inherit;font-size:13px;font-weight:600;cursor:pointer;color:var(--text1);transition:background .15s,border .15s;}
+.rey-btn:hover{border-color:var(--acc);}
+.rey-btn.act{background:var(--acc);border-color:var(--acc);color:#fff;}
+.rey-count{display:inline-block;margin-left:5px;font-size:11px;opacity:.7;}
 .info-box{background:rgba(79,110,247,.08);border:1px solid rgba(79,110,247,.25);border-radius:10px;padding:12px 14px;font-size:12px;color:var(--text2);margin-top:12px;line-height:1.6;}
 </style>
 </head>
@@ -89,6 +94,8 @@ td input.changed{border-color:var(--acc);}
   </div>
 
   <div class="card">
+    <div id="reyonBar" class="rey-bar"></div>
+    <div id="reyonLbl" style="font-size:12px;color:var(--text2);margin:10px 0 4px"></div>
     <div class="tbl-wrap">
       <table id="cfgTable">
         <thead>
@@ -112,6 +119,17 @@ td input.changed{border-color:var(--acc);}
 <div class="toast" id="toast"></div>
 
 <script>
+// Reyon → MAG kodları (index.html MAG_MAP ile aynı)
+var REYON_MAGS={
+  'Kadın':['BGA','BGAS','BGAT','BGC','BGCS','BGCT','BGE+','BGEA','BGEJ','BGEM','BGG','BGH','BGJW','BGK','BGQ','BGQM','BGR','BGRD','BGSH','BGSL','BGSP','BGSY','BGSİ','BGWL','BGXE','BGXJ','BGXN','BGZ','BGZ+','BGZA'],
+  'Erkek':['BUC','BUB','BUL','BUXL','BUMH','BUCF','BUGA','BUJD','BUJW','BUK','BUR','BUS','BUSP'],
+  'Kız Çocuk':['CK1A','CK1E','CK1G','CK1K','CK1S','CK1Y','CK4A','CK4E','CK4K','CK4R','CK4S','CKB','CKBK','CKBR'],
+  'Erkek Çocuk':['CU1A','CU1E','CU1G','CU1K','CU1S','CU1Y','CU4+','CU4A','CU4E','CU4K','CU4R','CU4S','CU4V','CUB','CUBK','CUBR'],
+  'Ev':['EVBA','EVHA','EVKO','EVLI','EVMS','EVMU','EVSA','EVW','EVYA','EVYT']
+};
+var REYON_ICONS={'Kadın':'👗','Erkek':'👔','Kız Çocuk':'👧','Erkek Çocuk':'👦','Ev':'🏠'};
+var CUR_REYON='Erkek';
+
 var DEFAULT_MAP={
   'BUK':'ERKEKAKSESUAR@Lcwaikiki.com',
   'BUGA':'BUCASUALBPADTEAM@Lcwaikiki.com',
@@ -135,13 +153,34 @@ var DEFAULT_MAP={
   'CU1K':'KIDSACCESSORIESMANAGEMENTTEAM@Lcwaikiki.com;KIDSACCESSORIESTEAM@Lcwaikiki.com'
 };
 
+// Tüm MAG kodları için tam harita — tanımsız olanlar boş kalır
 function getCurrentMap(){
-  var map=Object.assign({},DEFAULT_MAP);
+  var map={};
+  Object.keys(REYON_MAGS).forEach(function(rey){
+    REYON_MAGS[rey].forEach(function(mag){ map[mag]=''; });
+  });
+  Object.assign(map, DEFAULT_MAP);
   try{
     var saved=JSON.parse(localStorage.getItem('gemba_mail_config')||'null');
     if(saved&&typeof saved==='object') Object.assign(map,saved);
   }catch(e){}
   return map;
+}
+
+function selReyon(rey){
+  CUR_REYON=rey;
+  renderReyonBar();
+  renderTable();
+}
+
+function renderReyonBar(){
+  var el=document.getElementById('reyonBar');
+  if(!el) return;
+  el.innerHTML=Object.keys(REYON_MAGS).map(function(rey){
+    var act=rey===CUR_REYON?' act':'';
+    return '<button class="rey-btn'+act+'" onclick="selReyon(\''+rey+'\')">'
+      +(REYON_ICONS[rey]||'')+' '+rey+' <span class="rey-count">'+REYON_MAGS[rey].length+'</span></button>';
+  }).join('');
 }
 
 function toast(msg){
@@ -163,6 +202,7 @@ function doLogin(){
     if(d&&d.ok){
       document.getElementById('loginBox').style.display='none';
       document.getElementById('configBox').style.display='block';
+      renderReyonBar();
       renderTable();
     } else {
       document.getElementById('lErr').textContent='Giriş başarısız. PIN hatalı.';
@@ -176,16 +216,35 @@ function renderTable(){
   var map=getCurrentMap();
   var tbody=document.getElementById('cfgBody');
   tbody.innerHTML='';
-  Object.keys(map).forEach(function(mag){
-    addRowWithValues(mag,map[mag],DEFAULT_MAP[mag]);
+  var mags=REYON_MAGS[CUR_REYON]||[];
+  mags.forEach(function(mag){
+    addRowWithValues(mag,map[mag]||'',DEFAULT_MAP[mag]);
   });
+  // Bu reyona ait olmayan ama elle eklenmiş MAG'ler
+  var known={};
+  Object.keys(REYON_MAGS).forEach(function(r){
+    REYON_MAGS[r].forEach(function(m){ known[m]=1; });
+  });
+  Object.keys(map).forEach(function(mag){
+    if(!known[mag]) addRowWithValues(mag,map[mag]||'',DEFAULT_MAP[mag]);
+  });
+  var lbl=document.getElementById('reyonLbl');
+  if(lbl) lbl.textContent=CUR_REYON+' — '+mags.length+' MAG';
+}
+
+function isKnownMag(mag){
+  var found=false;
+  Object.keys(REYON_MAGS).forEach(function(r){
+    if(REYON_MAGS[r].indexOf(mag)>=0) found=true;
+  });
+  return found;
 }
 
 function addRowWithValues(mag,mail,defaultMail){
   var tbody=document.getElementById('cfgBody');
   var tr=document.createElement('tr');
-  var isChanged=defaultMail!==undefined&&mail!==defaultMail;
-  tr.innerHTML='<td><input type="text" class="mag-inp" value="'+escHtml(mag)+'" style="width:80px;font-family:monospace;font-weight:600;font-size:12px"'+( mag&&DEFAULT_MAP[mag]?' readonly':'')+' placeholder="MAG"></td>'
+  var isChanged=mail!==(defaultMail||'');
+  tr.innerHTML='<td><input type="text" class="mag-inp" value="'+escHtml(mag)+'" style="width:80px;font-family:monospace;font-weight:600;font-size:12px"'+( mag&&isKnownMag(mag)?' readonly':'')+' placeholder="MAG"></td>'
     +'<td><input type="text" class="mail-inp'+(isChanged?' changed':'')+'" value="'+escHtml(mail)+'" placeholder="mail@lcwaikiki.com" oninput="markChanged(this,\''+escHtml(mag)+'\')"></td>'
     +'<td><button class="ic-btn" onclick="removeRow(this)" title="Sil">✕</button></td>';
   tbody.appendChild(tr);
@@ -216,8 +275,14 @@ function markChanged(input,mag){
 }
 
 function saveConfig(){
-  var rows=document.querySelectorAll('#cfgBody tr');
+  // Mevcut kayıtlı ayarları koru — tabloda yalnızca seçili reyon görünüyor
   var overrides={};
+  try{
+    var saved=JSON.parse(localStorage.getItem('gemba_mail_config')||'null');
+    if(saved&&typeof saved==='object') overrides=saved;
+  }catch(e){}
+
+  var rows=document.querySelectorAll('#cfgBody tr');
   rows.forEach(function(tr){
     var magInp=tr.querySelector('.mag-inp');
     var mailInp=tr.querySelector('.mail-inp');
@@ -225,8 +290,8 @@ function saveConfig(){
     var mag=magInp.value.trim().toUpperCase();
     var mail=mailInp.value.trim();
     if(!mag) return;
-    if(DEFAULT_MAP[mag]&&mail===DEFAULT_MAP[mag]) return; // unchanged
-    overrides[mag]=mail;
+    if(mail===(DEFAULT_MAP[mag]||'')) delete overrides[mag]; // varsayılana eşit
+    else overrides[mag]=mail;
   });
   if(Object.keys(overrides).length===0){
     localStorage.removeItem('gemba_mail_config');
