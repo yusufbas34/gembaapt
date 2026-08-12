@@ -202,6 +202,11 @@ textarea{resize:vertical;line-height:1.6}
   <div class="card" style="margin-bottom:10px">
     <div class="lbl" style="margin-bottom:8px">Reyon</div>
     <div class="chips" id="kwReyonBar"></div>
+    <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap">
+      <button class="btn bs" style="flex:1;min-width:150px" onclick="autoGenKW(false)">⚡ Bu reyonu doldur</button>
+      <button class="btn bs" style="flex:1;min-width:150px" onclick="autoGenKW(true)">⚡ Tüm reyonları doldur</button>
+    </div>
+    <div style="font-size:11px;color:var(--text3);margin-top:6px">Eksik klasmanlara 3-5 tahmini kelime ekler, mevcut kurallara dokunmaz. Sonra <strong>Kaydet</strong>'e basın.</div>
   </div>
   <div class="card" style="padding:0;overflow:hidden"><div id="kwlist"></div></div>
   <button class="btn bs" onclick="addRule()">+ Yeni Kural</button>
@@ -3397,9 +3402,11 @@ function buildResults(all,kwRes,aiRes){
 }
 
 async function callAI(mag,fbs,kwRes,mags,reyon){
+  // MAG'in BG/KL tanımını da gönder — sunucu tüm reyonları böyle tanıyor
+  var md=magDef(mag,reyon);
   var r=await fetch('/ai/analyze',{
     method:'POST',headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({mag:mag,feedbacks:fbs,kwResults:kwRes,mags:mags,reyon:reyon})
+    body:JSON.stringify({mag:mag,feedbacks:fbs,kwResults:kwRes,mags:mags,reyon:reyon,magData:md||null})
   });
   var d=await r.json();
   if(!d.ok) throw new Error(d.error||'AI hatası');
@@ -3871,6 +3878,125 @@ function renderKwReyonBar(){
       +(KW_REYON_ICONS[rey]||'')+' '+rey
       +' <span style="opacity:.6;font-size:11px">'+(counts[rey]||0)+'</span></div>';
   }).join('');
+}
+
+/* ═══ OTOMATİK KELİME ÖNERİSİ ═══ */
+// Klasman adlarındaki teknik/kalıp kelimeler — anahtar kelime olmaz
+var KW_STOP={key:1,basic:1,cl:1,bl:1,orme:1,'örme':1,dokuma:1,triko:1,'trİko':1,
+  icgym:1,'içgym':1,lisans:1,'lİsans':1,standart:1,'dışı':1,disi:1,genel:1,line:1,
+  kategori:1,'ürün':1,urun:1,'aksesuar':1,keten:1,z4:1,set:1};
+
+// Kısaltma ve ASCII yazımları doğal Türkçeye çevir
+var KW_FIX={'t-shirt':'tişört','tshirt':'tişört','t':'','shirt':'tişört',
+  'k.kol':'kısa kol','u.kol':'uzun kol','k.paça':'kısa paça','u.paça':'uzun paça',
+  'sort':'şort','canta':'çanta','cuzdan':'cüzdan','gomlek':'gömlek','sapka':'şapka',
+  'corap':'çorap','kaskol':'kaşkol','hirka':'hırka','suveter':'süveter','yuzme':'yüzme',
+  'pestamal':'peştamal','bermuda':'bermuda','pijama':'pijama','bere':'bere',
+  'eldiven':'eldiven','kemer':'kemer','havlu':'havlu','bornoz':'bornoz','mont':'mont',
+  'kaban':'kaban','parka':'parka','yelek':'yelek','ceket':'ceket','elbise':'elbise',
+  'etek':'etek','tunik':'tunik','bluz':'bluz','kazak':'kazak','sweat':'sweat',
+  'atlet':'atlet','fanila':'fanila','boxer':'boxer','slip':'slip','babet':'babet',
+  'bot':'bot','sandalet':'sandalet','terlik':'terlik','panduf':'panduf','taki':'takı',
+  'atki':'atkı','fular':'fular','papyon':'papyon','kravat':'kravat','roller':'roller',
+  'chino':'chino','jean':'jean','pantolon':'pantolon','ayakkabi':'ayakkabı',
+  'ayakkabisi':'ayakkabı','buyuk':'büyük','kucuk':'küçük','takim':'takım',
+  'kol':'kol','paca':'paça','uzun':'uzun','kisa':'kısa','okul':'okul',
+  'beslenme':'beslenme','cantasi':'çanta','kalem':'kalem','kutusu':'kutu',
+  'hasir':'hasır','sal':'şal','kulaklik':'kulaklık','tayt':'tayt',
+  'taytli':'taytlı','gunluk':'günlük','klasik':'klasik','yagmurluk':'yağmurluk',
+  'suveter':'süveter','tulum':'tulum','sapkasi':'şapka','yuzuk':'yüzük',
+  'bisiklet':'bisiklet','yaka':'yaka','polo':'polo','baskili':'baskılı',
+  'cizgili':'çizgili','ekoseli':'ekoseli','sweatshirt':'sweat',
+  'cantasi':'çanta','fanila':'fanila','eldiven':'eldiven','kaskolu':'kaşkol',
+  'ayakkabisi':'ayakkabı','sortu':'şort','gomlegi':'gömlek','cocuk':'çocuk',
+  'kiz':'kız','buyuk':'büyük','patik':'patik','soket':'soket','babet':'babet'};
+
+// Küçültme: İ→i ve JS'in bıraktığı birleşik noktayı temizle.
+// I→ı çevrilmez; veri ASCII yazımlar içeriyor (TRIKO, ELDIVEN, FANILA).
+function kwLower(s){
+  return String(s||'')
+    .replace(/İ/g,'i')
+    .toLowerCase()
+    .replace(/̇/g,'');
+}
+
+// Bölmeden önce sabitlenmesi gereken çok parçalı ifadeler
+function kwPhraseFix(s){
+  return s
+    .replace(/t\s*-\s*shirt/g,'tişört')
+    .replace(/k\.kol/g,'kısa kol')
+    .replace(/u\.kol/g,'uzun kol')
+    .replace(/k\.paça/g,'kısa paça')
+    .replace(/u\.paça/g,'uzun paça');
+}
+
+function kwCleanWord(w){
+  w=kwLower(w).replace(/[()]/g,'').trim();
+  if(KW_FIX.hasOwnProperty(w)) return KW_FIX[w];
+  return w;
+}
+
+// Klasman adından 3-5 tahmini anahtar kelime üret
+function kwSuggest(kl, bg){
+  var raw=kwPhraseFix(kwLower(kl)).replace(/[\/\-]/g,' ').split(/[\s,]+/);
+  var words=[];
+  raw.forEach(function(w){
+    var c=kwCleanWord(w);
+    if(!c || c.length<2) return;
+    if(KW_STOP[c]) return;
+    c.split(' ').forEach(function(p){ if(p && words.indexOf(p)<0) words.push(p); });
+  });
+  var out=[];
+  // Ana ürün adı (en uzun anlamlı kelime) öncelikli
+  words.forEach(function(w){ if(out.indexOf(w)<0) out.push(w); });
+  // 2 kelimelik tamlama da ekle (ör. "kısa kol")
+  if(words.length>=2){
+    var pair=words[0]+' '+words[1];
+    if(out.indexOf(pair)<0) out.push(pair);
+  }
+  // Yetersizse buyer gruptan tamamla
+  if(out.length<3 && bg){
+    kwLower(bg).split(/[\s,\/\-]+/).forEach(function(w){
+      var c=kwCleanWord(w);
+      if(c && c.length>2 && !KW_STOP[c] && out.indexOf(c)<0) out.push(c);
+    });
+  }
+  return out.slice(0,5);
+}
+
+// Seçili reyonda kuralı olmayan tüm MAG/BG/klasmanlar için kural üret
+function genRulesForReyon(rey){
+  var src=AI_MAG_MAP[rey];
+  if(!src) return 0;
+  var have={};
+  (KW||[]).forEach(function(r){
+    have[(r.mag||'')+'|'+(r.bg||'')+'|'+(r.kl||'')]=1;
+  });
+  var added=0;
+  Object.keys(src).forEach(function(mag){
+    var md=src[mag]||{};
+    Object.keys(md.kl||{}).forEach(function(bg){
+      (md.kl[bg]||[]).forEach(function(kl){
+        var k=mag+'|'+bg+'|'+kl;
+        if(have[k]) return;
+        have[k]=1;
+        KW.push({mag:mag,bg:bg,kl:kl,kw:kwSuggest(kl,bg)});
+        added++;
+      });
+    });
+  });
+  return added;
+}
+
+function autoGenKW(all){
+  var reys=all?Object.keys(AI_MAG_MAP):[KW_REYON];
+  var label=all?'TÜM reyonlar':KW_REYON;
+  if(!confirm(label+' için eksik klasman kuralları 3-5 tahmini kelimeyle oluşturulacak.\n\nMevcut kurallara dokunulmaz. Devam edilsin mi?')) return;
+  var total=0;
+  reys.forEach(function(r){ total+=genRulesForReyon(r); });
+  renderKW();
+  if(total) toast('✓ '+total+' kural oluşturuldu — Kaydet\'e basın');
+  else toast('Eksik kural bulunamadı');
 }
 
 function togAcc(id){

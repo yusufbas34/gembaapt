@@ -142,7 +142,7 @@ app.post('/notify-user', (req, res) => {
 
 // ── AI Analiz endpoint ──────────────────────────────────────────────────────
 app.post('/ai/analyze', async (req, res) => {
-  const {mag, feedbacks, kwResults} = req.body||{};
+  const {mag, feedbacks, kwResults, magData: clientMagData} = req.body||{};
   if(!mag||!feedbacks) return res.json({ok:false, error:'Eksik bilgi'});
 
   const ANTHROPIC_KEY = process.env.ANTHROPIC_API_KEY;
@@ -165,10 +165,13 @@ app.post('/ai/analyze', async (req, res) => {
     "BUSP":{bg:["PİJAMA"],kl:{"PİJAMA":["İÇGYM ÖRME PİJAMA TAKIM K.KOL-K.PAÇA","İÇGYM ÖRME PİJAMA TAKIM K.KOL-U.PAÇA","İÇGYM ÖRME PİJAMA TAKIM U.KOL-U.PAÇA","İÇGYM ÖRME PİJAMA TEK ALT KISA","İÇGYM ÖRME PİJAMA TEK ALT UZUN","İÇGYM ÖRME PİJAMA TEK ÜST","İÇGYM TERMAL ÜST","PİJAMA TERMAL ALT"]}}
   };
 
-  const magData = erkekMAG[mag];
-  if(!magData) return res.json({ok:false, error:'Geçersiz MAG'});
+  // İstemci kendi MAG tanımını gönderir (tüm reyonlar); yoksa yerel tabloya düş
+  const magData = (clientMagData && Array.isArray(clientMagData.bg) && clientMagData.bg.length)
+    ? clientMagData
+    : erkekMAG[mag];
+  if(!magData) return res.json({ok:false, error:'Geçersiz MAG: '+mag});
 
-  const bgList = magData.bg.join(', ');
+  const bgList = (magData.bg||[]).join(', ');
   let klSummary = '';
   Object.keys(magData.kl||{}).forEach(bg => {
     klSummary += bg + ': [' + magData.kl[bg].join(', ') + ']\n';
@@ -224,20 +227,35 @@ JSON döndür:
       },
       body: JSON.stringify({
         model: 'claude-sonnet-4-20250514',
-        max_tokens: 1000,
+        // Her geri bildirim ~120 token; kısa limit JSON'u yarıda kesiyordu
+        max_tokens: Math.min(8000, 600 + feedbacks.length*140),
         messages: [{role:'user', content: prompt}]
       })
     });
 
     const data = await response.json();
+    if(data.error) return res.json({ok:false, error: data.error.message||'API hatası'});
     const text = data.content&&data.content[0] ? data.content[0].text : '';
-    const clean = text.replace(/```json|```/g,'').trim();
-    const results = JSON.parse(clean);
+    const results = parseJsonArray(text);
     res.json({ok:true, results});
   } catch(e) {
     res.json({ok:false, error: e.message});
   }
 });
+
+// AI yanıtını dayanıklı biçimde çözümle (kesilmiş JSON'u kurtarır)
+function parseJsonArray(text){
+  let s = String(text||'').replace(/```json|```/g,'').trim();
+  const start = s.indexOf('[');
+  if(start > 0) s = s.slice(start);
+  try { return JSON.parse(s); } catch(e){}
+  // Yanıt yarıda kesilmişse son tam nesneye kadar kırp
+  const last = s.lastIndexOf('}');
+  if(last > 0){
+    try { return JSON.parse(s.slice(0, last+1) + ']'); } catch(e){}
+  }
+  throw new Error('AI yanıtı çözümlenemedi');
+}
 
 
 
@@ -1032,6 +1050,29 @@ app.get('/models/load', (req, res) => {
 
 // ── Backup / Restore ─────────────────────────────────────────────────────────
 const BACKUP_KEY = process.env.BACKUP_KEY || '122333';
+
+// Panelden ziyaret sil: DELETE /admin/visit?key=...  body:{userKey, visitId}
+app.delete('/admin/visit', (req, res) => {
+  if(req.query.key !== BACKUP_KEY) return res.json({ok:false, error:'Yetkisiz'});
+  const {userKey, visitId} = req.body||{};
+  if(!userKey || visitId===undefined || visitId===null){
+    return res.json({ok:false, error:'Eksik bilgi'});
+  }
+
+  const data = loadData();
+  const user = (data.users||{})[userKey];
+  if(!user) return res.json({ok:false, error:'Kullanıcı bulunamadı'});
+
+  const before = (user.visits||[]).length;
+  // id string/number olabilir — gevşek karşılaştır
+  user.visits = (user.visits||[]).filter(v => String(v.id) !== String(visitId));
+  if(user.visits.length === before){
+    return res.json({ok:false, error:'Ziyaret bulunamadı'});
+  }
+
+  saveData(data);
+  res.json({ok:true, removed: before - user.visits.length, visits: user.visits.length});
+});
 
 // Backup indir: /admin/backup?key=122333
 app.get('/admin/backup', (req, res) => {
