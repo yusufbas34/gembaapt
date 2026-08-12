@@ -44,6 +44,59 @@ input:focus,select:focus{border-color:var(--acc);}
 .filter-btn{background:transparent;border:1.5px solid var(--bd2);border-radius:8px;padding:10px 14px;font-family:inherit;font-size:13px;font-weight:600;cursor:pointer;color:var(--text2);white-space:nowrap;flex-shrink:0;}
 .filter-btn.act{background:#1a1a18;border-color:#1a1a18;color:#fff;}
 
+/* Combobox (aramalı, çoklu seçim) */
+.cbx{position:relative;}
+.cbx-btn{
+  width:100%;display:flex;align-items:center;gap:6px;text-align:left;
+  padding:10px 12px;border:1.5px solid var(--bd2);border-radius:8px;
+  background:var(--card);color:var(--text1);font-family:inherit;font-size:14px;
+  cursor:pointer;transition:border .15s;
+}
+.cbx-btn:hover{border-color:var(--acc);}
+.cbx.open .cbx-btn{border-color:var(--acc);}
+.cbx-btn .cbx-txt{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.cbx-btn .cbx-txt.ph{color:var(--text3);}
+.cbx-btn .cbx-n{background:var(--acc);color:#fff;border-radius:100px;font-size:11px;font-weight:700;padding:1px 7px;flex-shrink:0;}
+.cbx-btn .cbx-car{color:var(--text3);font-size:10px;flex-shrink:0;}
+.cbx-pop{
+  display:none;position:absolute;z-index:50;top:calc(100% + 4px);left:0;right:0;
+  background:var(--card);border:1.5px solid var(--bd2);border-radius:10px;
+  box-shadow:0 8px 28px rgba(0,0,0,.22);overflow:hidden;
+}
+.cbx.open .cbx-pop{display:block;}
+.cbx-search{padding:8px;border-bottom:1px solid var(--bd);}
+.cbx-search input{width:100%;padding:8px 10px;font-size:13px;border:1.5px solid var(--bd2);border-radius:7px;background:var(--bg);color:var(--text1);font-family:inherit;outline:none;}
+.cbx-search input:focus{border-color:var(--acc);}
+.cbx-list{max-height:230px;overflow-y:auto;}
+.cbx-opt{
+  display:flex;align-items:center;gap:9px;padding:8px 11px;font-size:13px;
+  cursor:pointer;border-bottom:1px solid var(--bd);
+}
+.cbx-opt:last-child{border-bottom:none;}
+.cbx-opt:hover{background:var(--bg);}
+.cbx-box{
+  width:16px;height:16px;border:1.5px solid var(--bd2);border-radius:4px;flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;font-size:11px;color:#fff;
+}
+.cbx-opt.sel .cbx-box{background:var(--acc);border-color:var(--acc);}
+.cbx-opt .cbx-lbl{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.cbx-opt .cbx-cnt{font-size:11px;color:var(--text3);flex-shrink:0;}
+.cbx-foot{display:flex;gap:6px;padding:8px;border-top:1px solid var(--bd);}
+.cbx-foot button{flex:1;padding:7px;font-size:12px;font-weight:600;font-family:inherit;border-radius:7px;border:1.5px solid var(--bd2);background:transparent;color:var(--text2);cursor:pointer;}
+.cbx-foot button:hover{border-color:var(--acc);color:var(--text1);}
+.cbx-none{padding:16px 12px;text-align:center;font-size:12px;color:var(--text3);}
+
+/* Seçili filtre etiketleri */
+.chip-row{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px;}
+.chip-row:empty{display:none;}
+.fchip{
+  display:inline-flex;align-items:center;gap:6px;background:var(--bg);
+  border:1px solid var(--bd2);border-radius:100px;padding:4px 6px 4px 11px;font-size:12px;
+}
+.fchip b{font-weight:600;color:var(--text2);font-size:11px;text-transform:uppercase;}
+.fchip button{background:none;border:none;color:var(--text3);cursor:pointer;font-size:14px;line-height:1;padding:0 3px;}
+.fchip button:hover{color:var(--red);}
+
 /* Stats row */
 .stats{display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap;}
 .stat{flex:1;min-width:80px;background:var(--card);border-radius:12px;box-shadow:var(--shadow);padding:14px 12px;text-align:center;}
@@ -140,38 +193,11 @@ tr:hover td{background:var(--bg);}
       <input type="text" id="fSearch" placeholder="Geri bildirim metni, mağaza veya kullanıcı ara…" oninput="applyFilters()">
     </div>
 
-    <div class="filters">
-      <div>
-        <label>Hafta</label>
-        <select id="fWeek" onchange="applyFilters()"><option value="">Tümü</option></select>
-      </div>
-      <div>
-        <label>MAG</label>
-        <input type="text" id="fMag" list="dlMag" placeholder="Tümü — yazarak ara" oninput="applyFilters()">
-        <datalist id="dlMag"></datalist>
-      </div>
-      <div>
-        <label>Buyer Grup</label>
-        <input type="text" id="fBg" list="dlBg" placeholder="Tümü — yazarak ara" oninput="applyFilters()">
-        <datalist id="dlBg"></datalist>
-      </div>
-      <div>
-        <label>Klasman</label>
-        <input type="text" id="fKl" list="dlKl" placeholder="Tümü — yazarak ara" oninput="applyFilters()">
-        <datalist id="dlKl"></datalist>
-      </div>
-      <div>
-        <label>Mağaza</label>
-        <input type="text" id="fStore" list="dlStore" placeholder="Tümü — yazarak ara" oninput="applyFilters()">
-        <datalist id="dlStore"></datalist>
-      </div>
-      <div>
-        <label>Kullanıcı</label>
-        <select id="fUser" onchange="applyFilters()"><option value="">Tümü</option></select>
-      </div>
-    </div>
+    <div class="filters" id="filterGrid"></div>
 
-    <div style="display:flex;gap:8px;flex-wrap:wrap;">
+    <div id="chipRow" class="chip-row"></div>
+
+    <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
       <button class="filter-btn" onclick="clearFilters()">✕ Filtreleri Temizle</button>
       <span id="resultCount" style="font-size:12px;color:var(--text2);display:flex;align-items:center;"></span>
     </div>
@@ -295,119 +321,184 @@ function buildRows(){
       });
     });
   });
-  buildValSets();
 }
+
+// ═══ FİLTRE TANIMLARI ═══
+var FIELDS=[
+  {key:'week',  label:'Hafta',      num:true},
+  {key:'mag',   label:'MAG'},
+  {key:'bg',    label:'Buyer Grup'},
+  {key:'kl',    label:'Klasman'},
+  {key:'store', label:'Mağaza'},
+  {key:'user',  label:'Kullanıcı'}
+];
+var FILT={week:[],mag:[],bg:[],kl:[],store:[],user:[]};
+var CBX_SEARCH={};
+var OPEN_KEY=null;
 
 function buildFilterOptions(){
-  var users=new Set(),weeks=new Set();
+  var grid=document.getElementById('filterGrid');
+  grid.innerHTML=FIELDS.map(function(f){
+    return '<div><label>'+f.label+'</label>'
+      +'<div class="cbx" id="cbx-'+f.key+'">'
+      +'<button type="button" class="cbx-btn" onclick="cbxToggle(\''+f.key+'\')">'
+      +'<span class="cbx-txt ph" id="cbxtxt-'+f.key+'">Tümü</span>'
+      +'<span class="cbx-car">▼</span></button>'
+      +'<div class="cbx-pop">'
+      +'<div class="cbx-search"><input type="text" id="cbxq-'+f.key+'" placeholder="Ara…" oninput="cbxSearch(\''+f.key+'\',this.value)"></div>'
+      +'<div class="cbx-list" id="cbxlist-'+f.key+'"></div>'
+      +'<div class="cbx-foot">'
+      +'<button type="button" onclick="cbxClear(\''+f.key+'\')">Temizle</button>'
+      +'<button type="button" onclick="cbxClose()">Kapat</button>'
+      +'</div></div></div></div>';
+  }).join('');
+  OPEN_KEY=null;
+  refreshAllLabels();
+}
+
+// Bir alanın seçenekleri, DİĞER tüm filtreler uygulandıktan sonra
+// kalan satırlardan üretilir. Böylece MAG seçilince yalnızca ona ait
+// buyer gruplar, buyer grup seçilince ona ait klasmanlar listelenir.
+function rowMatches(r, exceptKey){
+  for(var i=0;i<FIELDS.length;i++){
+    var k=FIELDS[i].key;
+    if(k===exceptKey) continue;
+    var sel=FILT[k];
+    if(sel.length && sel.indexOf(String(r[k]))<0) return false;
+  }
+  return true;
+}
+
+function optionsFor(key){
+  var f=FIELDS.filter(function(x){return x.key===key;})[0];
+  var counts={};
   ROWS.forEach(function(r){
-    if(r.user) users.add(r.user);
-    if(r.week) weeks.add(r.week);
+    if(!r[key]) return;
+    if(!rowMatches(r,key)) return;
+    var v=String(r[key]);
+    counts[v]=(counts[v]||0)+1;
   });
-  fillSelect('fUser', Array.from(users).sort());
-  fillSelect('fWeek', Array.from(weeks).sort(function(a,b){return b-a;}));
-  refreshDatalists();
+  // Seçili olanlar listede kalsın (sayı 0 olsa bile)
+  FILT[key].forEach(function(v){ if(!(v in counts)) counts[v]=0; });
+  var arr=Object.keys(counts);
+  arr.sort(f&&f.num
+    ? function(a,b){return Number(b)-Number(a);}
+    : function(a,b){return a.localeCompare(b,'tr');});
+  return arr.map(function(v){return {val:v,count:counts[v]};});
 }
 
-// Sütundaki tüm mevcut değerler (tam eşleşme tespiti için)
-var VALSETS={};
-function buildValSets(){
-  VALSETS={mag:new Set(),bg:new Set(),kl:new Set(),store:new Set()};
-  ROWS.forEach(function(r){
-    ['mag','bg','kl','store'].forEach(function(k){
-      if(r[k]) VALSETS[k].add(String(r[k]).toLowerCase());
-    });
+function cbxRender(key){
+  var list=document.getElementById('cbxlist-'+key);
+  if(!list) return;
+  var q=(CBX_SEARCH[key]||'').toLowerCase().trim();
+  var opts=optionsFor(key).filter(function(o){
+    return !q || o.val.toLowerCase().indexOf(q)>=0;
   });
-}
-
-// Yazılan değer listede birebir varsa tam eşleşme, değilse
-// (kullanıcı hâlâ yazıyorsa) içerir mantığı uygulanır.
-function matchVal(rowVal, filterVal, key){
-  if(!filterVal) return true;
-  var f=String(filterVal).toLowerCase().trim();
-  if(!f) return true;
-  var r=String(rowVal||'').toLowerCase();
-  if(key&&VALSETS[key]&&VALSETS[key].has(f)) return r===f;
-  return r.indexOf(f)>=0;
-}
-
-function distinct(rows, key){
-  var s=new Set();
-  rows.forEach(function(r){ if(r[key]) s.add(r[key]); });
-  return Array.from(s).sort();
-}
-
-function fillDatalist(id, arr){
-  var dl=document.getElementById(id);
-  if(!dl) return;
-  dl.innerHTML=arr.map(function(v){
-    return '<option value="'+String(v).replace(/"/g,'&quot;')+'"></option>';
+  if(!opts.length){ list.innerHTML='<div class="cbx-none">Sonuç yok</div>'; return; }
+  list.innerHTML=opts.map(function(o){
+    var sel=FILT[key].indexOf(o.val)>=0;
+    return '<div class="cbx-opt'+(sel?' sel':'')+'" onclick="cbxPick(\''+key+'\',this.dataset.v)" data-v="'+escAttr(o.val)+'">'
+      +'<span class="cbx-box">'+(sel?'✓':'')+'</span>'
+      +'<span class="cbx-lbl">'+escHtml(o.val)+'</span>'
+      +'<span class="cbx-cnt">'+o.count+'</span></div>';
   }).join('');
 }
 
-// Kademeli seçenekler: MAG seçilirse ona ait buyer gruplar,
-// buyer grup seçilirse ona ait klasmanlar; MAG seçilip buyer grup
-// seçilmezse o MAG'a ait tüm klasmanlar listelenir.
-function refreshDatalists(){
-  var v=readFilters();
-  var base=ROWS.filter(function(r){
-    return matchVal(r.week,v.week)&&matchVal(r.user,v.user);
-  });
-
-  fillDatalist('dlStore', distinct(base,'store'));
-
-  var afterStore=base.filter(function(r){ return matchVal(r.store,v.store,'store'); });
-  fillDatalist('dlMag', distinct(afterStore,'mag'));
-
-  var afterMag=afterStore.filter(function(r){ return matchVal(r.mag,v.mag,'mag'); });
-  fillDatalist('dlBg', distinct(afterMag,'bg'));
-
-  var afterBg=afterMag.filter(function(r){ return matchVal(r.bg,v.bg,'bg'); });
-  fillDatalist('dlKl', distinct(afterBg,'kl'));
+function cbxLabel(key){
+  var txt=document.getElementById('cbxtxt-'+key);
+  var btn=txt&&txt.parentNode;
+  if(!txt) return;
+  var sel=FILT[key];
+  var old=btn.querySelector('.cbx-n');
+  if(old) old.remove();
+  if(!sel.length){ txt.textContent='Tümü'; txt.className='cbx-txt ph'; return; }
+  txt.className='cbx-txt';
+  txt.textContent=sel.length===1?sel[0]:sel.join(', ');
+  if(sel.length>1){
+    var n=document.createElement('span');
+    n.className='cbx-n'; n.textContent=sel.length;
+    btn.insertBefore(n, btn.querySelector('.cbx-car'));
+  }
 }
 
-function readFilters(){
-  return {
-    search:(document.getElementById('fSearch').value||'').toLowerCase().trim(),
-    user:document.getElementById('fUser').value,
-    week:document.getElementById('fWeek').value,
-    mag:document.getElementById('fMag').value,
-    bg:document.getElementById('fBg').value,
-    kl:document.getElementById('fKl').value,
-    store:document.getElementById('fStore').value
-  };
+function cbxToggle(key){
+  if(OPEN_KEY===key){ cbxClose(); return; }
+  cbxClose();
+  OPEN_KEY=key;
+  var el=document.getElementById('cbx-'+key);
+  if(el) el.classList.add('open');
+  CBX_SEARCH[key]='';
+  var q=document.getElementById('cbxq-'+key);
+  if(q){ q.value=''; setTimeout(function(){q.focus();},30); }
+  cbxRender(key);
 }
 
-function fillSelect(id, arr){
-  var sel=document.getElementById(id);
-  var cur=sel.value;
-  while(sel.options.length>1) sel.remove(1);
-  arr.forEach(function(v){
-    var o=document.createElement('option');
-    o.value=v; o.textContent=v;
-    sel.appendChild(o);
+function cbxClose(){
+  if(!OPEN_KEY) return;
+  var el=document.getElementById('cbx-'+OPEN_KEY);
+  if(el) el.classList.remove('open');
+  OPEN_KEY=null;
+}
+
+function cbxSearch(key,val){ CBX_SEARCH[key]=val; cbxRender(key); }
+
+function cbxPick(key,val){
+  var i=FILT[key].indexOf(val);
+  if(i>=0) FILT[key].splice(i,1);
+  else FILT[key].push(val);
+  cbxRender(key);
+  cbxLabel(key);
+  applyFilters();
+}
+
+function cbxClear(key){
+  FILT[key]=[];
+  cbxRender(key);
+  cbxLabel(key);
+  applyFilters();
+}
+
+function removeChip(key,val){
+  var i=FILT[key].indexOf(val);
+  if(i>=0) FILT[key].splice(i,1);
+  cbxLabel(key);
+  applyFilters();
+}
+
+function renderChips(){
+  var row=document.getElementById('chipRow');
+  var html='';
+  FIELDS.forEach(function(f){
+    FILT[f.key].forEach(function(v){
+      html+='<span class="fchip"><b>'+f.label+'</b> '+escHtml(v)
+        +'<button onclick="removeChip(\''+f.key+'\',this.dataset.v)" data-v="'+escAttr(v)+'" title="Kaldır">✕</button></span>';
+    });
   });
-  sel.value=cur;
+  row.innerHTML=html;
+}
+
+function refreshAllLabels(){
+  FIELDS.forEach(function(f){ cbxLabel(f.key); });
+}
+
+function escAttr(s){
+  return String(s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 }
 
 function applyFilters(){
-  var v=readFilters();
-  refreshDatalists();
+  var search=(document.getElementById('fSearch').value||'').toLowerCase().trim();
 
   FILTERED=ROWS.filter(function(r){
-    if(v.search&&!(
-      (r.tx||'').toLowerCase().includes(v.search)||
-      (r.store||'').toLowerCase().includes(v.search)||
-      (r.user||'').toLowerCase().includes(v.search)
+    if(search&&!(
+      (r.tx||'').toLowerCase().includes(search)||
+      (r.store||'').toLowerCase().includes(search)||
+      (r.user||'').toLowerCase().includes(search)
     )) return false;
-    if(v.user&&r.user!==v.user) return false;
-    if(v.week&&String(r.week)!==String(v.week)) return false;
-    if(!matchVal(r.mag,v.mag,'mag')) return false;
-    if(!matchVal(r.bg,v.bg,'bg')) return false;
-    if(!matchVal(r.kl,v.kl,'kl')) return false;
-    if(!matchVal(r.store,v.store,'store')) return false;
-    return true;
+    return rowMatches(r,null);
   });
+
+  renderChips();
+  if(OPEN_KEY) cbxRender(OPEN_KEY);
 
   FILTERED.sort(function(a,b){
     var av=a[SORT_KEY]||'',bv=b[SORT_KEY]||'';
@@ -503,18 +594,25 @@ function goPage(n){
 
 function clearFilters(){
   document.getElementById('fSearch').value='';
-  document.getElementById('fUser').value='';
-  document.getElementById('fWeek').value='';
-  document.getElementById('fMag').value='';
-  document.getElementById('fBg').value='';
-  document.getElementById('fKl').value='';
-  document.getElementById('fStore').value='';
+  FIELDS.forEach(function(f){ FILT[f.key]=[]; });
+  cbxClose();
+  refreshAllLabels();
   applyFilters();
 }
 
 function escHtml(s){
   return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 }
+
+// Dışarı tıklayınca açık dropdown'ı kapat
+document.addEventListener('click',function(e){
+  if(!OPEN_KEY) return;
+  var el=document.getElementById('cbx-'+OPEN_KEY);
+  if(el&&!el.contains(e.target)) cbxClose();
+});
+document.addEventListener('keydown',function(e){
+  if(e.key==='Escape') cbxClose();
+});
 
 // Enter tuşu
 document.getElementById('lPin').addEventListener('keydown',function(e){if(e.key==='Enter') doLogin();});

@@ -3632,10 +3632,10 @@ function openAIMail(score){
   var body=window._aiMailBody||'';
   if(score){
     var boldFn=typeof toBold==='function'?toBold:function(s){return s;};
-    var line=boldFn('⭐ '+store+' mağazasında yapılan ziyarete ait müşteri odaklılık puanı: '+score+'/10');
-    // "Merhabalar," satırından hemen sonra ekle
-    var idx=body.indexOf('\n\n');
-    body=idx>0 ? body.slice(0,idx+2)+line+'\n\n'+body.slice(idx+2) : line+'\n\n'+body;
+    var line='⭐ '+boldFn(store+' mağazasında yapılan ziyarete ait müşteri odaklılık puanı: '+score+'/10');
+    // İmzadan hemen önce ekle
+    var idx=body.lastIndexOf('İyi çalışmalar dilerim,');
+    body=idx>=0 ? body.slice(0,idx)+line+'\n\n'+body.slice(idx) : body+'\n\n'+line;
   }
   var to=getMailTo();
   var subj=wn+'. Hafta '+store+' '+reyon+' Reyonu Mağaza Ziyaret Notları';

@@ -1005,14 +1005,13 @@ function openMailFallback(score){
   const store=getStore(),user=getUser()||{name:''},wn=gwn(new Date());
   let magMap={};
   notes.forEach(n=>{const mk=n.mag||'__noMag__';if(!magMap[mk])magMap[mk]={mag:n.mag,bgs:{}};const bgk=n.bg;if(!magMap[mk].bgs[bgk])magMap[mk].bgs[bgk]={bg:n.bg,kls:{}};const klk=n.kl||'__noKl__';if(!magMap[mk].bgs[bgk].kls[klk])magMap[mk].bgs[bgk].kls[klk]={kl:n.kl,items:[]};n.tx.split('\n').filter(l=>l.trim()).forEach(l=>magMap[mk].bgs[bgk].kls[klk].items.push(l.trim()));});
-  let body='Merhabalar,\n\n';
-  if(score) body+=toBold('⭐ '+store+' mağazasında yapılan ziyarete ait müşteri odaklılık puanı: '+score+'/10')+'\n\n';
-  body+=wn+'. Hafta '+store+' mağazasına ait ziyaret notlarım aşağıdaki gibidir.\n\n';
+  let body='Merhabalar,\n\n'+wn+'. Hafta '+store+' mağazasına ait ziyaret notlarım aşağıdaki gibidir.\n\n';
   Object.values(magMap).forEach(m=>{
     if(m.mag)body+='📦 '+toBold('MAG: '+m.mag)+'\n\n';
     Object.values(m.bgs).forEach(g=>{body+='  👔 '+toBold(g.bg)+'\n';Object.values(g.kls).forEach(k=>{if(k.kl)body+='  🏷 '+k.kl+'\n';k.items.forEach(i=>body+='      • '+i+'\n');});body+='\n';});
     body+='━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n';
   });
+  if(score) body+='⭐ '+toBold(store+' mağazasında yapılan ziyarete ait müşteri odaklılık puanı: '+score+'/10')+'\n\n';
   body+='İyi çalışmalar dilerim,\n'+toBold(user.name)+'\nLC Waikiki';
   // Her zaman güncel hesapla, window._to boş olabilir
   const {to:calcTo}=getMailRecipients();
