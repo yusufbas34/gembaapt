@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+<title>Mail Yapılandırması – GembaGPT</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --bg:#f2f4f8;--card:#fff;--text1:#1a1d23;--text2:#6b7280;
+  --acc:#4f6ef7;--acc2:#3d5ce0;--bd:#e5e7eb;--bd2:#d1d5db;
+  --red:#ef4444;--green:#22c55e;
+  --radius:14px;--shadow:0 2px 12px rgba(0,0,0,.08);
+}
+@media(prefers-color-scheme:dark){
+  :root{--bg:#12141a;--card:#1e2028;--text1:#e8eaf0;--text2:#9ca3af;--bd:#2d3040;--bd2:#3a3e52;}
+}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text1);min-height:100vh;padding:20px 16px 60px;}
+h1{font-size:20px;font-weight:700;margin-bottom:6px;}
+.sub{font-size:13px;color:var(--text2);margin-bottom:24px;}
+.card{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);padding:20px;}
+label{display:block;font-size:13px;font-weight:600;color:var(--text2);margin-bottom:6px;}
+input[type=text],input[type=password]{
+  width:100%;padding:10px 12px;border:1.5px solid var(--bd2);border-radius:8px;
+  font-family:inherit;font-size:14px;background:var(--card);color:var(--text1);
+  outline:none;transition:border .15s;
+}
+input[type=text]:focus,input[type=password]:focus{border-color:var(--acc);}
+.btn{
+  display:inline-flex;align-items:center;justify-content:center;gap:6px;
+  padding:11px 20px;border-radius:10px;font-family:inherit;font-size:14px;
+  font-weight:600;cursor:pointer;border:none;transition:opacity .15s,background .15s;
+}
+.btn:active{opacity:.85;}
+.bp{background:var(--acc);color:#fff;width:100%;margin-top:14px;}
+.bs{background:transparent;border:1.5px solid var(--bd2);color:var(--text1);}
+.br{background:transparent;border:1.5px solid var(--red);color:var(--red);}
+#loginBox{max-width:400px;margin:0 auto;}
+#configBox{display:none;}
+.tbl-wrap{overflow-x:auto;margin-top:16px;}
+table{width:100%;border-collapse:collapse;font-size:13px;}
+th{text-align:left;padding:8px 10px;color:var(--text2);font-weight:600;border-bottom:1.5px solid var(--bd);white-space:nowrap;}
+td{padding:6px 8px;border-bottom:1px solid var(--bd);}
+td input[type=text]{padding:6px 10px;font-size:13px;}
+td input.changed{border-color:var(--acc);}
+.row-actions{display:flex;gap:6px;}
+.ic-btn{background:none;border:none;cursor:pointer;color:var(--text2);font-size:16px;padding:4px;line-height:1;}
+.ic-btn:hover{color:var(--red);}
+.bar{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;}
+.bar-r{display:flex;gap:10px;flex-wrap:wrap;}
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#1a1d23;color:#fff;padding:10px 20px;border-radius:30px;font-size:13px;font-weight:600;opacity:0;pointer-events:none;transition:opacity .25s;z-index:999;}
+.toast.show{opacity:1;}
+.err{color:var(--red);font-size:13px;margin-top:8px;min-height:18px;}
+.rey-bar{display:flex;gap:8px;flex-wrap:wrap;}
+.rey-btn{background:transparent;border:1.5px solid var(--bd2);border-radius:10px;padding:9px 14px;font-family:inherit;font-size:13px;font-weight:600;cursor:pointer;color:var(--text1);transition:background .15s,border .15s;}
+.rey-btn:hover{border-color:var(--acc);}
+.rey-btn.act{background:var(--acc);border-color:var(--acc);color:#fff;}
+.rey-count{display:inline-block;margin-left:5px;font-size:11px;opacity:.7;}
+.info-box{background:rgba(79,110,247,.08);border:1px solid rgba(79,110,247,.25);border-radius:10px;padding:12px 14px;font-size:12px;color:var(--text2);margin-top:12px;line-height:1.6;}
+</style>
+</head>
+<body>
+
+<div id="loginBox">
+  <h1>Mail Yapılandırması</h1>
+  <p class="sub">MAG mail adreslerini düzenlemek için giriş yapın.</p>
+  <div class="card">
+    <div style="margin-bottom:14px">
+      <label>Ad Soyad</label>
+      <input type="text" id="lName" placeholder="Adınız Soyadınız" autocomplete="name">
+    </div>
+    <div>
+      <label>PIN</label>
+      <input type="password" id="lPin" placeholder="••••" inputmode="numeric" maxlength="6">
+    </div>
+    <div class="err" id="lErr"></div>
+    <button class="btn bp" onclick="doLogin()">Giriş Yap</button>
+  </div>
+</div>
+
+<div id="configBox">
+  <div class="bar" style="margin-bottom:16px">
+    <div>
+      <h1>Mail Yapılandırması</h1>
+      <p class="sub" style="margin-bottom:0">MAG kodlarına karşılık gelen mail adreslerini düzenleyin.</p>
+    </div>
+    <div class="bar-r">
+      <button class="btn bs" onclick="addRow()">+ Yeni MAG</button>
+      <button class="btn br" onclick="resetConfig()">Sıfırla</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <div id="reyonBar" class="rey-bar"></div>
+    <div id="reyonLbl" style="font-size:12px;color:var(--text2);margin:10px 0 4px"></div>
+    <div class="tbl-wrap">
+      <table id="cfgTable">
+        <thead>
+          <tr>
+            <th style="width:90px">MAG Kodu</th>
+            <th>Mail Adresleri (noktalı virgülle ayırın)</th>
+            <th style="width:40px"></th>
+          </tr>
+        </thead>
+        <tbody id="cfgBody"></tbody>
+      </table>
+    </div>
+    <div class="info-box">
+      Birden fazla mail adresi için <strong>;</strong> kullanın. Örnek: <code>ali@lcw.com;veli@lcw.com</code><br>
+      Değiştirilmemiş satırlar kaydedilmez — yalnızca farklı olanlar aktif olur.
+    </div>
+    <button class="btn bp" onclick="saveConfig()" style="margin-top:16px">Kaydet</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// Reyon → MAG kodları (index.html MAG_MAP ile aynı)
+var REYON_MAGS={
+  'Kadın':['BGA','BGAS','BGAT','BGC','BGCS','BGCT','BGE+','BGEA','BGEJ','BGEM','BGG','BGH','BGJW','BGK','BGQ','BGQM','BGR','BGRD','BGSH','BGSL','BGSP','BGSY','BGSİ','BGWL','BGXE','BGXJ','BGXN','BGZ','BGZ+','BGZA'],
+  'Erkek':['BUC','BUB','BUL','BUXL','BUMH','BUCF','BUGA','BUJD','BUJW','BUK','BUR','BUS','BUSP','BUA','BUAS','BUAT'],
+  // CK4K/CK1K/CU4K/CU1K çocuk aksesuar MAG'leri iki reyonda da yer alır
+  'Kız Çocuk':['CK1A','CK1E','CK1G','CK1K','CK1S','CK1Y','CK4A','CK4E','CK4K','CK4R','CK4S','CKB','CKBK','CKBR','CU1K','CU4K'],
+  'Erkek Çocuk':['CU1A','CU1E','CU1G','CU1K','CU1S','CU1Y','CU4+','CU4A','CU4E','CU4K','CU4R','CU4S','CU4V','CUB','CUBK','CUBR','CK1K','CK4K'],
+  'Ev':['EVBA','EVHA','EVKO','EVLI','EVMS','EVMU','EVSA','EVW','EVYA','EVYT']
+};
+var REYON_ICONS={'Kadın':'👗','Erkek':'👔','Kız Çocuk':'👧','Erkek Çocuk':'👦','Ev':'🏠'};
+var CUR_REYON='Erkek';
+
+var DEFAULT_MAP={
+  'BUK':'ERKEKAKSESUAR@Lcwaikiki.com',
+  'BUGA':'BUCASUALBPADTEAM@Lcwaikiki.com',
+  'BUAS':'ERKEKAKSESUAR@Lcwaikiki.com',
+  'BUA':'',
+  'BUXL':'BUCASUALBPADTEAM@Lcwaikiki.com',
+  'BUR':'',
+  'BUJW':'DENIMMARKADIREKTORLUGU@Lcwaikiki.com',
+  'BUJD':'DENIMMARKADIREKTORLUGU@Lcwaikiki.com',
+  'BUCF':'BUEBPADTEAM@Lcwaikiki.com',
+  'BUS':'ERKEKICGIYIMKATEGORIDIREKTORLUGU@Lcwaikiki.com',
+  'BUC':'BUEBPADTEAM@Lcwaikiki.com',
+  'BUSP':'ERKEKICGIYIMKATEGORIDIREKTORLUGU@Lcwaikiki.com',
+  'BUAT':'',
+  'BUB':'BUSOUTHBLUEBPADTEAM@Lcwaikiki.com',
+  'BUL':'BUVISIONBPADTEAM@Lcwaikiki.com',
+  'BUMH':'BUEBPADTEAM@Lcwaikiki.com',
+  'CK4K':'KIDSACCESSORIESMANAGEMENTTEAM@Lcwaikiki.com;KIDSACCESSORIESTEAM@Lcwaikiki.com',
+  'CK1K':'KIDSACCESSORIESMANAGEMENTTEAM@Lcwaikiki.com;KIDSACCESSORIESTEAM@Lcwaikiki.com',
+  'CU4K':'KIDSACCESSORIESMANAGEMENTTEAM@Lcwaikiki.com;KIDSACCESSORIESTEAM@Lcwaikiki.com',
+  'CU1K':'KIDSACCESSORIESMANAGEMENTTEAM@Lcwaikiki.com;KIDSACCESSORIESTEAM@Lcwaikiki.com'
+};
+
+// Tüm MAG kodları için tam harita — tanımsız olanlar boş kalır
+function getCurrentMap(){
+  var map={};
+  Object.keys(REYON_MAGS).forEach(function(rey){
+    REYON_MAGS[rey].forEach(function(mag){ map[mag]=''; });
+  });
+  Object.assign(map, DEFAULT_MAP);
+  try{
+    var saved=JSON.parse(localStorage.getItem('gemba_mail_config')||'null');
+    if(saved&&typeof saved==='object') Object.assign(map,saved);
+  }catch(e){}
+  return map;
+}
+
+function selReyon(rey){
+  CUR_REYON=rey;
+  renderReyonBar();
+  renderTable();
+}
+
+function renderReyonBar(){
+  var el=document.getElementById('reyonBar');
+  if(!el) return;
+  el.innerHTML=Object.keys(REYON_MAGS).map(function(rey){
+    var act=rey===CUR_REYON?' act':'';
+    return '<button class="rey-btn'+act+'" onclick="selReyon(\''+rey+'\')">'
+      +(REYON_ICONS[rey]||'')+' '+rey+' <span class="rey-count">'+REYON_MAGS[rey].length+'</span></button>';
+  }).join('');
+}
+
+function toast(msg){
+  var el=document.getElementById('toast');
+  el.textContent=msg;el.classList.add('show');
+  setTimeout(function(){el.classList.remove('show');},2200);
+}
+
+function doLogin(){
+  var name=document.getElementById('lName').value.trim();
+  var pin=document.getElementById('lPin').value.trim();
+  if(!name||!pin){document.getElementById('lErr').textContent='Ad ve PIN gerekli.';return;}
+  document.getElementById('lErr').textContent='';
+  fetch('/auth/login',{
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({name:name,pin:pin})
+  }).then(function(r){return r.json();}).then(function(d){
+    if(d&&d.ok){
+      document.getElementById('loginBox').style.display='none';
+      document.getElementById('configBox').style.display='block';
+      renderReyonBar();
+      renderTable();
+    } else {
+      document.getElementById('lErr').textContent='Giriş başarısız. PIN hatalı.';
+    }
+  }).catch(function(){
+    document.getElementById('lErr').textContent='Sunucuya ulaşılamadı.';
+  });
+}
+
+function renderTable(){
+  var map=getCurrentMap();
+  var tbody=document.getElementById('cfgBody');
+  tbody.innerHTML='';
+  var mags=REYON_MAGS[CUR_REYON]||[];
+  mags.forEach(function(mag){
+    addRowWithValues(mag,map[mag]||'',DEFAULT_MAP[mag]);
+  });
+  // Bu reyona ait olmayan ama elle eklenmiş MAG'ler
+  var known={};
+  Object.keys(REYON_MAGS).forEach(function(r){
+    REYON_MAGS[r].forEach(function(m){ known[m]=1; });
+  });
+  Object.keys(map).forEach(function(mag){
+    if(!known[mag]) addRowWithValues(mag,map[mag]||'',DEFAULT_MAP[mag]);
+  });
+  var lbl=document.getElementById('reyonLbl');
+  if(lbl) lbl.textContent=CUR_REYON+' — '+mags.length+' MAG';
+}
+
+function isKnownMag(mag){
+  var found=false;
+  Object.keys(REYON_MAGS).forEach(function(r){
+    if(REYON_MAGS[r].indexOf(mag)>=0) found=true;
+  });
+  return found;
+}
+
+function addRowWithValues(mag,mail,defaultMail){
+  var tbody=document.getElementById('cfgBody');
+  var tr=document.createElement('tr');
+  var isChanged=mail!==(defaultMail||'');
+  tr.innerHTML='<td><input type="text" class="mag-inp" value="'+escHtml(mag)+'" style="width:80px;font-family:monospace;font-weight:600;font-size:12px"'+( mag&&isKnownMag(mag)?' readonly':'')+' placeholder="MAG"></td>'
+    +'<td><input type="text" class="mail-inp'+(isChanged?' changed':'')+'" value="'+escHtml(mail)+'" placeholder="mail@lcwaikiki.com" oninput="markChanged(this,\''+escHtml(mag)+'\')"></td>'
+    +'<td><button class="ic-btn" onclick="removeRow(this)" title="Sil">✕</button></td>';
+  tbody.appendChild(tr);
+}
+
+function addRow(){
+  addRowWithValues('','',undefined);
+  var rows=document.querySelectorAll('#cfgBody tr');
+  if(rows.length){
+    var last=rows[rows.length-1];
+    var inp=last.querySelector('.mag-inp');
+    if(inp) inp.focus();
+  }
+}
+
+function removeRow(btn){
+  var tr=btn.closest('tr');
+  if(tr) tr.remove();
+}
+
+function markChanged(input,mag){
+  var def=DEFAULT_MAP[mag]||'';
+  if(input.value!==def){
+    input.classList.add('changed');
+  } else {
+    input.classList.remove('changed');
+  }
+}
+
+function saveConfig(){
+  // Mevcut kayıtlı ayarları koru — tabloda yalnızca seçili reyon görünüyor
+  var overrides={};
+  try{
+    var saved=JSON.parse(localStorage.getItem('gemba_mail_config')||'null');
+    if(saved&&typeof saved==='object') overrides=saved;
+  }catch(e){}
+
+  var rows=document.querySelectorAll('#cfgBody tr');
+  rows.forEach(function(tr){
+    var magInp=tr.querySelector('.mag-inp');
+    var mailInp=tr.querySelector('.mail-inp');
+    if(!magInp||!mailInp) return;
+    var mag=magInp.value.trim().toUpperCase();
+    var mail=mailInp.value.trim();
+    if(!mag) return;
+    if(mail===(DEFAULT_MAP[mag]||'')) delete overrides[mag]; // varsayılana eşit
+    else overrides[mag]=mail;
+  });
+  if(Object.keys(overrides).length===0){
+    localStorage.removeItem('gemba_mail_config');
+    toast('Varsayılan ayarlara döndü.');
+  } else {
+    localStorage.setItem('gemba_mail_config',JSON.stringify(overrides));
+    toast('✓ Kaydedildi!');
+  }
+  renderTable();
+}
+
+function resetConfig(){
+  if(!confirm('Tüm özel mail ayarları silinecek. Devam edilsin mi?')) return;
+  localStorage.removeItem('gemba_mail_config');
+  toast('Sıfırlandı.');
+  renderTable();
+}
+
+function escHtml(s){
+  return String(s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+// Enter key on login
+document.getElementById('lPin').addEventListener('keydown',function(e){if(e.key==='Enter') doLogin();});
+document.getElementById('lName').addEventListener('keydown',function(e){if(e.key==='Enter') document.getElementById('lPin').focus();});
+</script>
+</body>
+</html>

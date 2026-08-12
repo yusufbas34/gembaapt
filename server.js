@@ -301,7 +301,7 @@ app.post('/ratings/all', (req, res) => {
 // Cleanup - duplicate ziyaretleri temizle
 app.get('/admin/cleanup', (req, res) => {
   const key = req.query.key;
-  const BACKUP_KEY = process.env.BACKUP_KEY || 'gemba2024';
+  const BACKUP_KEY = process.env.BACKUP_KEY || '122333';
   if(key !== BACKUP_KEY) return res.json({ok:false, error:'Unauthorized'});
   
   const data = loadData();
@@ -329,7 +329,7 @@ app.get('/admin/cleanup', (req, res) => {
 // ── İstatistikler ────────────────────────────────────────────────────────────
 app.get('/admin/stats', (req, res) => {
   const key = req.query.key;
-  const BACKUP_KEY = process.env.BACKUP_KEY || 'gemba2024';
+  const BACKUP_KEY = process.env.BACKUP_KEY || '122333';
   if(key !== BACKUP_KEY) return res.json({ok:false, error:'Unauthorized'});
 
   const data = loadData();
@@ -387,7 +387,7 @@ app.get('/kw/load', (req, res) => {
 // Model auth endpoint
 app.post('/models/auth', (req, res) => {
   const {pin} = req.body||{};
-  const MODEL_PIN = process.env.MODEL_PIN || '1923';
+  const MODEL_PIN = process.env.MODEL_PIN || '122333';
   res.json({ok: pin === MODEL_PIN});
 });
 
@@ -1031,9 +1031,9 @@ app.get('/models/load', (req, res) => {
 });
 
 // ── Backup / Restore ─────────────────────────────────────────────────────────
-const BACKUP_KEY = process.env.BACKUP_KEY || 'gemba2024';
+const BACKUP_KEY = process.env.BACKUP_KEY || '122333';
 
-// Backup indir: /admin/backup?key=gemba2024
+// Backup indir: /admin/backup?key=122333
 app.get('/admin/backup', (req, res) => {
   if(req.query.key !== BACKUP_KEY) return res.status(403).send('Yetkisiz');
   const data = loadData();
@@ -1043,7 +1043,7 @@ app.get('/admin/backup', (req, res) => {
   res.send(JSON.stringify(data, null, 2));
 });
 
-// Restore: POST /admin/restore?key=gemba2024
+// Restore: POST /admin/restore?key=122333
 app.post('/admin/restore', (req, res) => {
   if(req.query.key !== BACKUP_KEY) return res.status(403).send('Yetkisiz');
   const data = req.body;
