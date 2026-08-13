@@ -3372,11 +3372,15 @@ function kwScore(text, mag, reyonName, modelHint){
       if(modelMatch) o.modelHint=modelMatch;
       o.pct=matchPctFor(o);
       // Metinde hiç ürün tipi geçmiyorsa ("basic, sade tasarımlar" gibi)
-      // eşleşme sadece sıfata dayanıyordur — kesinlik iddia edilemez,
-      // kararı AI versin.
+      // eşleşme sadece sıfata dayanıyordur. Klasman ASLA tahmin edilmez —
+      // hangi üründen bahsedildiği belli değil. Buyer grup düşük güvenle
+      // kalır, kararı AI verir.
       if(!textType){
         o.weak=true;
-        o.pct=Math.min(o.pct,60);
+        o.kl=null;
+        o.best='partial';
+        o.hits=1;
+        o.pct=55;
       }
       return o;
     };
@@ -3968,7 +3972,7 @@ function openAIMail(score){
   var body=window._aiMailBody||'';
   if(score){
     var boldFn=typeof toBold==='function'?toBold:function(s){return s;};
-    var line='⭐ '+boldFn(store+' mağazasında yapılan ziyarete ait müşteri odaklılık puanı: '+score+'/10');
+    var line='⭐ '+boldFn(store+' mağazasında yapılan ziyarete ait müşteri takıntılılığı puanı: '+score+'/10');
     // İmzadan hemen önce ekle
     var idx=body.lastIndexOf('İyi çalışmalar dilerim,');
     body=idx>=0 ? body.slice(0,idx)+line+'\n\n'+body.slice(idx) : body+'\n\n'+line;

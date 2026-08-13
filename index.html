@@ -1014,7 +1014,7 @@ function openMailFallback(score){
     Object.values(m.bgs).forEach(g=>{body+='  👔 '+toBold(g.bg)+'\n';Object.values(g.kls).forEach(k=>{if(k.kl)body+='  🏷 '+k.kl+'\n';k.items.forEach(i=>body+='      • '+i+'\n');});body+='\n';});
     body+='━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n';
   });
-  if(score) body+='⭐ '+toBold(store+' mağazasında yapılan ziyarete ait müşteri odaklılık puanı: '+score+'/10')+'\n\n';
+  if(score) body+='⭐ '+toBold(store+' mağazasında yapılan ziyarete ait müşteri takıntılılığı puanı: '+score+'/10')+'\n\n';
   body+='İyi çalışmalar dilerim,\n'+toBold(user.name)+'\nLC Waikiki';
   // Her zaman güncel hesapla, window._to boş olabilir
   const {to:calcTo}=getMailRecipients();
