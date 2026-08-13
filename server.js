@@ -607,10 +607,11 @@ app.post('/telegram/create-token', (req, res) => {
   const data = loadData();
   const userKey = Object.keys(data.users||{}).find(k => {
     const u = data.users[k];
-    return u.name === name && u.pin === pin;
+    return u.name === name && verifyPin(u, pin);
   });
   if(!userKey) return res.json({ok:false, error:'Kullanıcı bulunamadı'});
-  
+  saveData(data); // verifyPin hash migrasyonu yaptıysa kalıcı olsun
+
   // Token üret
   const token = Math.random().toString(36).slice(2) + Math.random().toString(36).slice(2);
   const tokens = loadTGTokens();
@@ -638,7 +639,7 @@ app.post('/telegram/get-link', (req, res) => {
   const data = loadData();
   const userKey = Object.keys(data.users||{}).find(k => {
     const u = data.users[k];
-    return u.name === name && u.pin === pin;
+    return u.name === name && verifyPin(u, pin);
   });
   if(!userKey) return res.json({ok:false});
   const tgUsers = loadTGUsers();
