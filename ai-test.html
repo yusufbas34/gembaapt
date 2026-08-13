@@ -4,36 +4,50 @@
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"/>
 <title>GembaGPT AI Test</title>
-<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet"/>
 <style>
-:root{--bg:#fff;--bg2:#f6f5f2;--bg3:#eeedea;--text:#1a1a18;--text2:#6b6b67;--text3:#aeaea9;--bd:rgba(0,0,0,0.09);--bd2:rgba(0,0,0,0.16);--acc:#1a1a18;--green:#1a9e6e;--red:#e03e3e;--yellow:#c8900a;--r:12px;}
+:root{
+  --bg:#fff;--bg2:#f7f7f5;--bg3:#ececea;
+  --text:#16161a;--text2:#5f6066;--text3:#9a9ba1;
+  --bd:rgba(18,18,23,0.07);--bd2:rgba(18,18,23,0.13);
+  --acc:#16161a;--accent:#4f46e5;
+  --green:#0f9d68;--red:#dc2626;--yellow:#b45309;
+  --r:14px;
+  --sh:0 1px 2px rgba(18,18,23,.05), 0 4px 16px rgba(18,18,23,.05);
+  --sh2:0 8px 30px rgba(18,18,23,.10);
+}
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
-body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;padding:0 0 80px}
-.hdr{text-align:center;padding:20px 20px 0;background:#fff;border-bottom:0.5px solid var(--bd)}
-.hdr-logo{display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:4px}
-.hdr-icon{width:32px;height:32px;background:#1a1a18;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0}
-.hdr h1{font-size:20px;font-weight:700;letter-spacing:-.5px;color:#1a1a18}
+body{background:var(--bg2);color:var(--text);font-family:'DM Sans',sans-serif;padding:0 0 80px;-webkit-font-smoothing:antialiased}
+.hdr{text-align:center;padding:22px 20px 2px;background:#fff;border-bottom:1px solid var(--bd)}
+.hdr-logo{display:flex;align-items:center;justify-content:center;gap:10px;margin-bottom:5px}
+.hdr-icon{width:34px;height:34px;background:linear-gradient(140deg,#26262e,#0d0d10);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0;box-shadow:0 2px 8px rgba(18,18,23,.18)}
+.hdr h1{font-size:21px;font-weight:700;letter-spacing:-.6px;color:var(--text)}
 .hdr h1 span{color:var(--text3);font-weight:400}
-.badge{display:inline-block;background:var(--bg2);border:0.5px solid var(--bd2);border-radius:100px;padding:3px 12px;font-size:10px;color:var(--text3);margin-bottom:12px;letter-spacing:.04em}
+.badge{display:inline-block;background:var(--bg2);border:1px solid var(--bd);border-radius:100px;padding:4px 13px;font-size:10px;font-weight:600;color:var(--text2);margin-bottom:14px;letter-spacing:.06em;text-transform:uppercase}
 .tabs{background:#fff;border-bottom:0.5px solid var(--bd);padding:0 16px;display:flex;gap:0}
 .tab{flex:1;padding:11px 4px;text-align:center;font-size:13px;font-weight:500;color:var(--text3);cursor:pointer;border-radius:0;background:none;border-bottom:2px solid transparent;transition:all .15s}
 .tab.on{color:#1a1a18;border-bottom-color:#1a1a18;font-weight:600}
 .pg{padding:16px}
-.tabs{display:flex;padding:0 16px;gap:6px;margin-bottom:14px}
-.tab{flex:1;padding:10px 4px;text-align:center;font-size:13px;font-weight:500;color:var(--text3);cursor:pointer;border-radius:10px;background:var(--bg2);transition:all .15s}
-.tab.on{background:var(--acc);color:#fff}
+.tabs{display:flex;padding:12px 16px 0;gap:6px;margin-bottom:16px;background:#fff;border-bottom:1px solid var(--bd)}
+.tab{flex:1;padding:11px 4px;text-align:center;font-size:13px;font-weight:600;color:var(--text3);cursor:pointer;border-radius:10px 10px 0 0;background:none;border-bottom:2.5px solid transparent;transition:color .18s,border-color .18s}
+.tab:hover{color:var(--text2)}
+.tab.on{background:none;color:var(--text);border-bottom-color:var(--text)}
 .pg{display:none;padding:0 16px}
 .pg.on{display:block}
-.card{background:var(--bg2);border-radius:14px;padding:16px;margin-bottom:12px;border:0.5px solid var(--bd)}
-.lbl{font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.08em;margin-bottom:10px}
-select,textarea,input[type=text]{width:100%;padding:12px 14px;border:0.5px solid var(--bd2);border-radius:var(--r);font-family:'DM Sans',sans-serif;font-size:15px;color:var(--text);background:var(--bg);outline:none;-webkit-appearance:none}
-textarea{resize:vertical;line-height:1.6}
-.btn{width:100%;padding:14px;border:none;border-radius:var(--r);font-family:'DM Sans',sans-serif;font-size:15px;font-weight:500;cursor:pointer;margin-bottom:10px}
-.bp{background:#1a1a18;color:#fff}
-.bs{background:var(--bg2);color:var(--text);border:0.5px solid var(--bd2)}
-.btn:disabled{opacity:.4}
-.steps{display:flex;gap:6px;margin-bottom:16px;padding:0 4px}
-.stp{flex:1;height:4px;border-radius:2px;background:var(--bg3);transition:background .3s}
+.card{background:#fff;border-radius:var(--r);padding:18px;margin-bottom:12px;border:1px solid var(--bd);box-shadow:var(--sh)}
+.lbl{font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.09em;margin-bottom:10px}
+select,textarea,input[type=text]{width:100%;padding:13px 14px;border:1px solid var(--bd2);border-radius:11px;font-family:'DM Sans',sans-serif;font-size:15px;color:var(--text);background:var(--bg);outline:none;-webkit-appearance:none;transition:border-color .15s,box-shadow .15s}
+select:focus,textarea:focus,input[type=text]:focus{border-color:var(--text);box-shadow:0 0 0 3px rgba(18,18,23,.07)}
+textarea{resize:vertical;line-height:1.65}
+.btn{width:100%;padding:14px;border:none;border-radius:11px;font-family:'DM Sans',sans-serif;font-size:15px;font-weight:600;cursor:pointer;margin-bottom:10px;transition:transform .12s,opacity .15s,box-shadow .15s}
+.btn:active{transform:scale(.985)}
+.bp{background:linear-gradient(140deg,#26262e,#0d0d10);color:#fff;box-shadow:0 2px 10px rgba(18,18,23,.20)}
+.bp:hover{box-shadow:0 4px 16px rgba(18,18,23,.26)}
+.bs{background:#fff;color:var(--text);border:1px solid var(--bd2)}
+.bs:hover{border-color:var(--text3);background:var(--bg2)}
+.btn:disabled{opacity:.4;transform:none}
+.steps{display:flex;gap:6px;margin-bottom:18px;padding:0 4px}
+.stp{flex:1;height:5px;border-radius:3px;background:var(--bg3);transition:background .35s}
 .stp.done{background:var(--green)}.stp.act{background:var(--acc)}
 /* Store search */
 .swrap{position:relative}
@@ -65,14 +79,15 @@ textarea{resize:vertical;line-height:1.6}
 .magcbx-opt.sel{color:var(--acc);font-weight:600}
 .magcbx-none{padding:16px;text-align:center;font-size:12px;color:var(--text3)}
 .chips{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px}
-.chip2{padding:8px 16px;border-radius:100px;border:0.5px solid var(--bd2);font-size:13px;font-weight:500;color:var(--text2);background:var(--bg);cursor:pointer;transition:all .15s}
-.chip2.on{background:var(--acc);color:#fff;border-color:var(--acc)}
+.chip2{padding:9px 17px;border-radius:100px;border:1px solid var(--bd2);font-size:13px;font-weight:600;color:var(--text2);background:#fff;cursor:pointer;transition:all .18s}
+.chip2:hover{border-color:var(--text3);color:var(--text)}
+.chip2.on{background:linear-gradient(140deg,#26262e,#0d0d10);color:#fff;border-color:transparent;box-shadow:0 2px 8px rgba(18,18,23,.20)}
 /* Results */
 .rcard{background:var(--bg2);border-radius:var(--r);padding:14px;margin-bottom:10px;border:0.5px solid var(--bd)}
 .rcard.ok{border-color:var(--green)}.rcard.skip{opacity:.6}
 .rtxt{font-size:14px;line-height:1.5;margin-bottom:8px}
 .tags{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:8px}
-.tag{font-size:11px;font-weight:600;padding:3px 10px;border-radius:100px}
+.tag{font-size:11px;font-weight:700;padding:4px 11px;border-radius:100px;letter-spacing:.01em}
 .tm{background:var(--bg3);color:var(--text2);border:0.5px solid var(--bd2)}
 .tmodel{background:#e6fff4;color:#007050;border:0.5px solid #99ddc8}
 .tai{background:#ede8ff;color:#5040a0;border:0.5px solid #c4b8f0}
@@ -81,8 +96,8 @@ textarea{resize:vertical;line-height:1.6}
 .tkl{background:#fef3cd;color:#7a5200;border:0.5px solid #e8d080}
 /* Editable tags */
 .etag{display:inline-flex;align-items:center;gap:3px;font-size:11px;font-weight:600;padding:3px 8px 3px 10px;border-radius:100px;cursor:pointer;user-select:none}
-.etag-bg{background:#e1f5ee;color:#085041;border:0.5px solid #99d4c0}
-.etag-kl{background:#fef3cd;color:#7a5200;border:0.5px solid #e8d080}
+.etag-bg{background:#e7f6f1;color:#075645;border:1px solid #a8dccb}
+.etag-kl{background:#fdf4d8;color:#7a5200;border:1px solid #ecd58c}
 .etag-empty{background:var(--bg3);color:var(--text3);border:0.5px dashed var(--bd2)}
 .etag-x{font-size:13px;opacity:.6;font-weight:400}
 /* Tooltip */
@@ -223,6 +238,11 @@ textarea{resize:vertical;line-height:1.6}
     <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap">
       <button class="btn bs" style="flex:1;min-width:150px" onclick="autoGenKW(false)">⚡ Bu reyonu doldur</button>
       <button class="btn bs" style="flex:1;min-width:150px" onclick="autoGenKW(true)">⚡ Tüm reyonları doldur</button>
+    </div>
+    <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap">
+      <button class="btn bs" style="flex:1;min-width:150px" onclick="exportKW()">⬇ Kuralları yedekle</button>
+      <button class="btn bs" style="flex:1;min-width:150px" onclick="document.getElementById('kwImp').click()">⬆ Yedekten yükle</button>
+      <input type="file" id="kwImp" accept=".json" style="display:none" onchange="importKW(this)">
     </div>
     <div style="font-size:11px;color:var(--text3);margin-top:6px">Eksik klasmanlara 3-5 tahmini kelime ekler, mevcut kurallara dokunmaz. Sonra <strong>Kaydet</strong>'e basın.</div>
   </div>
@@ -2802,6 +2822,7 @@ var DEFAULT_KW = [
 /* ═══ MODEL AUTH ═══ */
 var MODEL_UNLOCKED = false;
 var MODEL_ADMIN_PIN = '122333'; // PIN ile koruma - Railway variable ile değiştirilebilir
+var ADMIN_PIN_USED = '';        // kilidi açan gerçek PIN — kayıt isteklerinde gönderilir
 
 function checkModelAuth(){
   if(MODEL_UNLOCKED){ goTab('m'); return; }
@@ -2811,12 +2832,12 @@ function checkModelAuth(){
   fetch('/models/auth',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({pin:pin})})
     .then(function(r){return r.json();})
     .then(function(d){
-      if(d.ok){ MODEL_UNLOCKED=true; goTab('m'); toast('Model sayfası açıldı'); var wc=document.getElementById('webhookCard'); if(wc) wc.style.display='block'; }
+      if(d.ok){ ADMIN_PIN_USED=pin; MODEL_UNLOCKED=true; goTab('m'); toast('Model sayfası açıldı'); var wc=document.getElementById('webhookCard'); if(wc) wc.style.display='block'; }
       else { toast('Yanlış PIN'); }
     })
     .catch(function(){
       // Fallback: client-side check
-      if(pin===MODEL_ADMIN_PIN){ MODEL_UNLOCKED=true; goTab('m'); toast('Model sayfası açıldı'); var wc=document.getElementById('webhookCard'); if(wc) wc.style.display='block'; }
+      if(pin===MODEL_ADMIN_PIN){ ADMIN_PIN_USED=pin; MODEL_UNLOCKED=true; goTab('m'); toast('Model sayfası açıldı'); var wc=document.getElementById('webhookCard'); if(wc) wc.style.display='block'; }
       else { toast('Yanlış PIN'); }
     });
 }
@@ -2831,11 +2852,11 @@ function checkKwAuth(){
   fetch('/models/auth',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({pin:pin})})
     .then(function(r){return r.json();})
     .then(function(d){
-      if(d.ok){ KW_UNLOCKED=true; goTab('k'); toast('Kelimeler sayfası açıldı'); }
+      if(d.ok){ ADMIN_PIN_USED=pin; KW_UNLOCKED=true; goTab('k'); toast('Kelimeler sayfası açıldı'); }
       else { toast('Yanlış PIN'); }
     })
     .catch(function(){
-      if(pin===MODEL_ADMIN_PIN){ KW_UNLOCKED=true; goTab('k'); toast('Kelimeler sayfası açıldı'); }
+      if(pin===MODEL_ADMIN_PIN){ ADMIN_PIN_USED=pin; KW_UNLOCKED=true; goTab('k'); toast('Kelimeler sayfası açıldı'); }
       else { toast('Yanlış PIN'); }
     });
 }
@@ -4257,6 +4278,40 @@ function genRulesForReyon(rey){
   return added;
 }
 
+// Kuralları JSON olarak indir — kaza ile silinmeye karşı yedek
+function exportKW(){
+  if(!KW||!KW.length){ toast('Yedeklenecek kural yok'); return; }
+  var blob=new Blob([JSON.stringify(KW,null,1)],{type:'application/json'});
+  var d=new Date(), p=function(x){return x<10?'0'+x:''+x;};
+  var name='gemba-kelimeler-'+d.getFullYear()+p(d.getMonth()+1)+p(d.getDate())
+    +'-'+p(d.getHours())+p(d.getMinutes())+'.json';
+  var url=URL.createObjectURL(blob);
+  var a=document.createElement('a');
+  a.href=url; a.download=name;
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  setTimeout(function(){URL.revokeObjectURL(url);},1000);
+  toast('✓ '+KW.length+' kural indirildi');
+}
+
+// Yedekten geri yükle
+function importKW(inp){
+  var f=inp.files&&inp.files[0];
+  if(!f) return;
+  var rd=new FileReader();
+  rd.onload=function(){
+    var rules;
+    try{ rules=JSON.parse(rd.result); }
+    catch(e){ toast('Dosya okunamadı'); inp.value=''; return; }
+    if(!Array.isArray(rules)||!rules.length){ toast('Geçersiz yedek'); inp.value=''; return; }
+    if(!confirm(rules.length+' kural yüklenecek. Mevcut '+(KW||[]).length+' kural DEĞİŞTİRİLECEK.\n\nDevam edilsin mi?')){ inp.value=''; return; }
+    KW=rules;
+    renderKW();
+    toast('✓ '+rules.length+' kural yüklendi — Kaydet\'e basın');
+    inp.value='';
+  };
+  rd.readAsText(f);
+}
+
 function autoGenKW(all){
   var reys=all?Object.keys(AI_MAG_MAP):[KW_REYON];
   var label=all?'TÜM reyonlar':KW_REYON;
@@ -4432,7 +4487,7 @@ function addRule(){
 }
 async function saveKW(){
   try{
-    var r=await fetch('/kw/save',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({rules:KW})});
+    var r=await fetch('/kw/save',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({rules:KW,pin:ADMIN_PIN_USED||MODEL_ADMIN_PIN})});
     var d=await r.json();
     if(d.ok) toast('✓ '+d.count+' kural kaydedildi');
     else toast('Kayıt hatası');
@@ -4569,7 +4624,7 @@ function renderMtbl(){
 }
 async function saveMDB(){
   try{
-    var r=await fetch('/models/save',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({models:MDB})});
+    var r=await fetch('/models/save',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({models:MDB,pin:ADMIN_PIN_USED||MODEL_ADMIN_PIN})});
     var d=await r.json();
     if(d.ok) toast('✓ '+d.count+' model kaydedildi');
   }catch(e){

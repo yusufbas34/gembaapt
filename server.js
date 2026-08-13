@@ -27,13 +27,75 @@ function sendTelegram(msg){
 // ── Data store (JSON file) ───────────────────────────────────────────────────
 const DATA_FILE = process.env.DATA_PATH || path.join('/app/data', 'data.json');
 
+const ARCHIVE_FILE = path.join(path.dirname(DATA_FILE), 'visits_archive.json');
+
 function loadData(){
   try{ return JSON.parse(fs.readFileSync(DATA_FILE,'utf8')); }
-  catch(e){ return {users:{}}; }
+  catch(e){
+    // Ana dosya bozuksa son sağlam yedeği dene
+    try{ return JSON.parse(fs.readFileSync(DATA_FILE+'.bak','utf8')); }
+    catch(e2){ return {users:{}}; }
+  }
 }
 
+// Atomik yazma: önce geçici dosyaya yaz, sonra yerine taşı.
+// Sunucu yazma sırasında ölse bile data.json yarım kalmaz.
 function saveData(data){
-  fs.writeFileSync(DATA_FILE, JSON.stringify(data, null, 2));
+  const json = JSON.stringify(data, null, 2);
+  const tmp = DATA_FILE + '.tmp';
+  try{
+    fs.writeFileSync(tmp, json);
+    // Bir önceki sağlam sürümü yedekle
+    if(fs.existsSync(DATA_FILE)) fs.copyFileSync(DATA_FILE, DATA_FILE+'.bak');
+    fs.renameSync(tmp, DATA_FILE);
+  }catch(e){
+    console.error('saveData:', e.message);
+    try{ fs.writeFileSync(DATA_FILE, json); }catch(e2){}
+  }
+}
+
+// ── PIN güvenliği ────────────────────────────────────────────────────────────
+// PIN'ler artık hash'li saklanır. Eski düz metin kayıtlar ilk girişte
+// otomatik hash'e çevrilir — mevcut kullanıcılar etkilenmez.
+const crypto = require('crypto');
+const PIN_SALT = process.env.PIN_SALT || 'gemba-static-salt-v1';
+
+function hashPin(pin){
+  return crypto.createHash('sha256').update(PIN_SALT + ':' + String(pin)).digest('hex');
+}
+
+// PIN doğrula; eski düz metin kaydı yakalarsa hash'e yükseltir.
+function verifyPin(user, pin){
+  if(!user || pin===undefined || pin===null) return false;
+  if(user.pinHash) return user.pinHash === hashPin(pin);
+  if(user.pin !== undefined && String(user.pin) === String(pin)){
+    user.pinHash = hashPin(pin);   // migrasyon
+    delete user.pin;
+    return true;
+  }
+  return false;
+}
+
+// ── Ziyaret arşivi ───────────────────────────────────────────────────────────
+// Eski ziyaretler artık SİLİNMİYOR; sınırı aşanlar arşiv dosyasına taşınır.
+const VISIT_LIMIT = 300;
+
+function archiveVisits(userKey, visits){
+  if(!visits || !visits.length) return;
+  let arch = {};
+  try{ arch = JSON.parse(fs.readFileSync(ARCHIVE_FILE,'utf8')); }catch(e){ arch = {}; }
+  if(!arch[userKey]) arch[userKey] = [];
+  arch[userKey] = visits.concat(arch[userKey]);
+  const tmp = ARCHIVE_FILE + '.tmp';
+  try{
+    fs.writeFileSync(tmp, JSON.stringify(arch));
+    fs.renameSync(tmp, ARCHIVE_FILE);
+  }catch(e){ console.error('archiveVisits:', e.message); }
+}
+
+function loadArchive(){
+  try{ return JSON.parse(fs.readFileSync(ARCHIVE_FILE,'utf8')); }
+  catch(e){ return {}; }
 }
 
 // ── Auth endpoints ───────────────────────────────────────────────────────────
@@ -53,7 +115,7 @@ app.post('/auth/register', (req, res) => {
 
   data.users[key] = {
     name: name.trim(),
-    pin,
+    pinHash: hashPin(pin),
     visits: visits||[],
     createdAt: new Date().toISOString()
   };
@@ -75,7 +137,8 @@ app.post('/auth/login', (req, res) => {
   const user = data.users[key];
 
   if(!user) return res.json({ok:false, error:'Kullanıcı bulunamadı. Kayıt olun.'});
-  if(user.pin !== pin) return res.json({ok:false, error:'PIN hatalı.'});
+  if(!verifyPin(user, pin)) return res.json({ok:false, error:'PIN hatalı.'});
+  saveData(data); // olası hash migrasyonunu kalıcı yap
 
   const now = new Date().toLocaleString('tr-TR',{timeZone:'Europe/Istanbul'});
   sendTelegram(`🔑 <b>Giriş</b>\n\nİsim: <b>${name}</b>\nZaman: ${now}`);
@@ -93,7 +156,7 @@ app.post('/visits/save', (req, res) => {
   const key = name.trim().toLowerCase().replace(/\s+/g,'_');
   const user = data.users[key];
 
-  if(!user||user.pin!==pin) return res.json({ok:false, error:'Yetkisiz'});
+  if(!user||!verifyPin(user, pin)) return res.json({ok:false, error:'Yetkisiz'});
 
   if(!user.visits) user.visits=[];
   // Var olan ziyareti güncelle (id eşleşmesi)
@@ -103,7 +166,10 @@ app.post('/visits/save', (req, res) => {
   } else {
     user.visits.unshift(visit); // yeni ekle
   }
-  if(user.visits.length>100) user.visits.splice(100);
+  // Sınırı aşan eski ziyaretler silinmez, arşive taşınır
+  if(user.visits.length > VISIT_LIMIT){
+    archiveVisits(key, user.visits.splice(VISIT_LIMIT));
+  }
   saveData(data);
 
   const now = new Date().toLocaleString('tr-TR',{timeZone:'Europe/Istanbul'});
@@ -120,7 +186,7 @@ app.post('/visits/delete', (req, res) => {
   const data = loadData();
   const key = name.trim().toLowerCase().replace(/\s+/g,'_');
   const user = data.users[key];
-  if(!user||user.pin!==pin) return res.json({ok:false, error:'Yetkisiz'});
+  if(!user||!verifyPin(user, pin)) return res.json({ok:false, error:'Yetkisiz'});
 
   user.visits=(user.visits||[]).filter(v=>v.id!==visitId);
   saveData(data);
@@ -291,7 +357,7 @@ app.post('/visits/save-rating', (req, res) => {
   const data = loadData();
   const key = name.trim().toLowerCase().replace(/\s+/g,'_');
   const user = data.users[key];
-  if(!user||user.pin!==pin) return res.json({ok:false, error:'Yetkisiz'});
+  if(!user||!verifyPin(user, pin)) return res.json({ok:false, error:'Yetkisiz'});
 
   const visit = (user.visits||[]).find(v => v.id === visitId);
   if(!visit) return res.json({ok:false, error:'Ziyaret bulunamadı'});
@@ -310,12 +376,24 @@ app.post('/ratings/all', (req, res) => {
   const data = loadData();
   const key = name.trim().toLowerCase().replace(/\s+/g,'_');
   const user = data.users[key];
-  if(!user||user.pin!==pin) return res.json({ok:false, error:'Yetkisiz'});
+  if(!user||!verifyPin(user, pin)) return res.json({ok:false, error:'Yetkisiz'});
 
+  // Yetki kademesi: ADMIN_NAMES tanımlıysa yalnızca o kişiler tüm
+  // kullanıcıların ziyaretini görebilir. Tanımlı değilse davranış
+  // değişmez (mevcut kurulumu bozmamak için).
+  const adminNames = (process.env.ADMIN_NAMES||'').split(',')
+    .map(s=>s.trim().toLowerCase()).filter(Boolean);
+  const isAdmin = !adminNames.length
+    || adminNames.includes(String(user.name||'').toLowerCase())
+    || isAdminPin(req.body.adminPin);
+
+  const archive = loadArchive();
   const allVisits = [];
   Object.keys(data.users||{}).forEach(function(uk){
+    if(!isAdmin && uk !== key) return;   // admin değilse yalnızca kendi kayıtları
     const u = data.users[uk];
-    (u.visits||[]).forEach(function(v){
+    const own = (u.visits||[]).concat(archive[uk]||[]);
+    own.forEach(function(v){
       allVisits.push({
         id: v.id,
         user: u.name,
@@ -336,7 +414,7 @@ app.post('/ratings/all', (req, res) => {
   });
 
   allVisits.sort((a,b) => (b.id||0) - (a.id||0));
-  res.json({ok:true, visits: allVisits});
+  res.json({ok:true, visits: allVisits, admin: isAdmin});
 });
 
 // Cleanup - duplicate ziyaretleri temizle
@@ -413,8 +491,10 @@ function loadKWFile(){ try{ return JSON.parse(fs.readFileSync(KW_FILE,'utf8')); 
 function saveKWFile(data){ fs.writeFileSync(KW_FILE, JSON.stringify(data)); }
 
 app.post('/kw/save', (req, res) => {
-  const {rules} = req.body||{};
+  const {rules, pin} = req.body||{};
+  if(!isAdminPin(pin)) return res.json({ok:false, error:'Yetkisiz — PIN gerekli'});
   if(!Array.isArray(rules)) return res.json({ok:false, error:'Gecersiz veri'});
+  if(!rules.length) return res.json({ok:false, error:'Boş kural listesi reddedildi'});
   saveKWFile(rules);
   res.json({ok:true, count:rules.length});
 });
@@ -426,10 +506,15 @@ app.get('/kw/load', (req, res) => {
 
 
 // Model auth endpoint
+// Yönetici PIN'i — kelimeler, modeller ve tüm-ziyaret görüntüleme için
+function isAdminPin(pin){
+  const MODEL_PIN = process.env.MODEL_PIN || '122333';
+  return String(pin||'') === MODEL_PIN;
+}
+
 app.post('/models/auth', (req, res) => {
   const {pin} = req.body||{};
-  const MODEL_PIN = process.env.MODEL_PIN || '122333';
-  res.json({ok: pin === MODEL_PIN});
+  res.json({ok: isAdminPin(pin)});
 });
 
 
@@ -1059,7 +1144,8 @@ function saveModels(data){
 
 // Model listesini kaydet
 app.post('/models/save', (req, res) => {
-  const {models} = req.body||{};
+  const {models, pin} = req.body||{};
+  if(!isAdminPin(pin)) return res.json({ok:false, error:'Yetkisiz — PIN gerekli'});
   if(!Array.isArray(models)) return res.json({ok:false, error:'Geçersiz veri'});
   saveModels(models);
   res.json({ok:true, count:models.length});
@@ -1130,6 +1216,12 @@ app.get('/manifest.json',(req,res)=>{
 app.use(express.static(path.join(__dirname)));
 app.get('/ai-test.html',(req,res)=>res.sendFile(path.join(__dirname,'ai-test.html')));
 app.get('*',(req,res)=>res.sendFile(path.join(__dirname,'index.html')));
+
+// GET dışı bilinmeyen uçlar HTML değil JSON 404 döndürür — istemci
+// "Bağlantı hatası" yerine gerçek sebebi görsün.
+app.use((req,res)=>{
+  res.status(404).json({ok:false, error:'Bilinmeyen uç: '+req.method+' '+req.path});
+});
 
 app.listen(PORT,()=>{
   console.log(`Server running on port ${PORT}`);
