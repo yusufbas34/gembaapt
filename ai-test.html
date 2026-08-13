@@ -46,6 +46,24 @@ textarea{resize:vertical;line-height:1.6}
 .sopt.sel{color:var(--acc);font-weight:500}
 .sempty{padding:12px 14px;font-size:13px;color:var(--text3);text-align:center}
 /* Chips */
+.magcbx{position:relative}
+.magcbx-btn{width:100%;display:flex;align-items:center;gap:8px;text-align:left;padding:12px 14px;border:0.5px solid var(--bd2);border-radius:var(--r);background:var(--card,#fff);color:var(--text1);font-family:inherit;font-size:14px;cursor:pointer}
+.magcbx-btn:hover{border-color:var(--acc)}
+.magcbx.open .magcbx-btn{border-color:var(--acc)}
+.magcbx-txt{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.magcbx-txt.ph{color:var(--text3)}
+.magcbx-car{color:var(--text3);font-size:10px;flex-shrink:0}
+.magcbx-pop{display:none;position:absolute;z-index:60;top:calc(100% + 4px);left:0;right:0;background:var(--card,#fff);border:0.5px solid var(--bd2);border-radius:var(--r);box-shadow:0 8px 28px rgba(0,0,0,.18);overflow:hidden}
+.magcbx.open .magcbx-pop{display:block}
+.magcbx-sw{padding:8px;border-bottom:0.5px solid var(--bd)}
+.magcbx-sw input{width:100%;padding:9px 11px;font-size:13px;border:0.5px solid var(--bd2);border-radius:8px;background:var(--bg);color:var(--text1);font-family:inherit;outline:none;margin:0}
+.magcbx-sw input:focus{border-color:var(--acc)}
+.magcbx-list{max-height:240px;overflow-y:auto}
+.magcbx-opt{display:flex;align-items:center;padding:10px 13px;font-size:13px;cursor:pointer;border-bottom:0.5px solid var(--bd)}
+.magcbx-opt:last-child{border-bottom:none}
+.magcbx-opt:hover{background:var(--bg)}
+.magcbx-opt.sel{color:var(--acc);font-weight:600}
+.magcbx-none{padding:16px;text-align:center;font-size:12px;color:var(--text3)}
 .chips{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px}
 .chip2{padding:8px 16px;border-radius:100px;border:0.5px solid var(--bd2);font-size:13px;font-weight:500;color:var(--text2);background:var(--bg);cursor:pointer;transition:all .15s}
 .chip2.on{background:var(--acc);color:#fff;border-color:var(--acc)}
@@ -2985,14 +3003,20 @@ function addBlock(){
   }
   wrap.appendChild(hdr);
 
-  // MAG select — seçili reyonun MAG'leri
+  // MAG seçimi — aramalı açılır liste (değer gizli input'ta tutulur)
   var magRow=document.createElement('div');
   magRow.id='magrow'+n;
   magRow.style.marginBottom='8px';
-  var magSel=document.createElement('select');
-  magSel.className='bmagsel';
-  magSel.style.marginBottom='0';
-  magRow.appendChild(magSel);
+  magRow.innerHTML=
+    '<div class="magcbx" id="magcbx'+n+'">'
+    +'<input type="hidden" class="bmagsel" id="bmagsel'+n+'" value="">'
+    +'<button type="button" class="magcbx-btn" onclick="magCbxToggle('+n+')">'
+    +'<span class="magcbx-txt ph" id="magtxt'+n+'">MAG seçin...</span>'
+    +'<span class="magcbx-car">▼</span></button>'
+    +'<div class="magcbx-pop">'
+    +'<div class="magcbx-sw"><input type="text" id="magq'+n+'" placeholder="MAG ara..." oninput="magCbxRender('+n+')"></div>'
+    +'<div class="magcbx-list" id="maglist'+n+'"></div>'
+    +'</div></div>';
   wrap.appendChild(magRow);
 
   // Textarea
@@ -3028,24 +3052,77 @@ function magsOfReyon(rey){
   return m?Object.keys(m).sort():[];
 }
 
-// Reyon değişince tüm MAG select'lerini yeniden doldur (seçimi koru)
+/* ═══ MAG COMBOBOX (aramalı) ═══ */
+var MAG_CBX_OPEN=null;
+
+function magCbxRender(n){
+  var list=document.getElementById('maglist'+n);
+  if(!list) return;
+  var q=document.getElementById('magq'+n);
+  var term=q?q.value.toLowerCase().trim():'';
+  var cur=(document.getElementById('bmagsel'+n)||{}).value||'';
+  var mags=magsOfReyon(AI_REYON).filter(function(m){
+    return !term || m.toLowerCase().indexOf(term)>=0;
+  });
+  if(!mags.length){ list.innerHTML='<div class="magcbx-none">Sonuç yok</div>'; return; }
+  list.innerHTML=mags.map(function(m){
+    return '<div class="magcbx-opt'+(m===cur?' sel':'')+'" onclick="magCbxPick('+n+',this.dataset.v)" data-v="'+m.replace(/"/g,'&quot;')+'">'
+      +m+(m===cur?' <span style="margin-left:auto">✓</span>':'')+'</div>';
+  }).join('');
+}
+
+function magCbxToggle(n){
+  if(MAG_CBX_OPEN===n){ magCbxClose(); return; }
+  magCbxClose();
+  MAG_CBX_OPEN=n;
+  var el=document.getElementById('magcbx'+n);
+  if(el) el.classList.add('open');
+  var q=document.getElementById('magq'+n);
+  if(q){ q.value=''; setTimeout(function(){q.focus();},30); }
+  magCbxRender(n);
+}
+
+function magCbxClose(){
+  if(MAG_CBX_OPEN===null) return;
+  var el=document.getElementById('magcbx'+MAG_CBX_OPEN);
+  if(el) el.classList.remove('open');
+  MAG_CBX_OPEN=null;
+}
+
+function magCbxPick(n,val){
+  var inp=document.getElementById('bmagsel'+n);
+  if(inp) inp.value=val;
+  magCbxLabel(n);
+  magCbxClose();
+}
+
+function magCbxLabel(n){
+  var inp=document.getElementById('bmagsel'+n);
+  var txt=document.getElementById('magtxt'+n);
+  if(!inp||!txt) return;
+  if(inp.value){ txt.textContent=inp.value; txt.className='magcbx-txt'; }
+  else { txt.textContent='MAG seçin...'; txt.className='magcbx-txt ph'; }
+}
+
+document.addEventListener('click',function(e){
+  if(MAG_CBX_OPEN===null) return;
+  var el=document.getElementById('magcbx'+MAG_CBX_OPEN);
+  if(el&&!el.contains(e.target)) magCbxClose();
+});
+
+// Reyon değişince MAG listelerini tazele; geçersiz kalan seçimi temizle
 function updateMagRows(){
   var mags=magsOfReyon(AI_REYON);
   var show=mags.length>0;
+  magCbxClose();
   document.querySelectorAll('[id^="magrow"]').forEach(function(el){
     el.style.display=show?'block':'none';
-    var sel=el.querySelector('.bmagsel');
-    if(!sel) return;
-    var cur=sel.value;
-    sel.innerHTML='';
-    var o0=document.createElement('option');
-    o0.value='';o0.textContent='MAG seçin...';
-    sel.appendChild(o0);
-    mags.forEach(function(m){
-      var o=document.createElement('option');o.value=m;o.textContent=m;
-      sel.appendChild(o);
-    });
-    if(mags.indexOf(cur)>=0) sel.value=cur;
+    var inp=el.querySelector('.bmagsel');
+    if(!inp) return;
+    if(inp.value && mags.indexOf(inp.value)<0) inp.value='';
+    var n=inp.id.replace('bmagsel','');
+    magCbxLabel(n);
+    magCbxRender(n);
   });
 }
 
@@ -3058,13 +3135,52 @@ selReyon=function(el){
 
 
 /* ═══ SMART KW MATCH ═══ */
+/* ═══ EŞLEŞME ORANI ═══
+   Ham puanlar kaynağa göre farklı ölçekte olduğu için tek bir
+   yüzdeye normalize edilir:
+     Model DB  → %100 (birebir model adı, kilitli)
+     AI        → güven: high %95, medium %75, low %55
+     KW        → öncelikli (!kelime) eşleşme %95
+                 aksi hâlde 45 + puan*2, tavan %90
+   Sınıflandırma yapılamadıysa %0.                                   */
+// KW sonucunun oranı: en güçlü eşleşme tipi taban, ek eşleşme başına +5
+var PCT_BASE={priority:95, bg:90, exact:80, includes:65, partial:55};
+function matchPctFor(o){
+  if(!o||(!o.bg&&!o.kl)) return 0;
+  var base=PCT_BASE[o.best||'includes']||65;
+  var extra=Math.min(10,(Math.max(1,o.hits||1)-1)*5);
+  return Math.min(95, base+extra);
+}
+
+function matchPct(r){
+  if(!r) return 0;
+  if(!r.bg && !r.kl) return 0;
+  if(r.src==='ai'){
+    var c=String(r.aiConf||'').toLowerCase();
+    return c==='high'?95:c==='medium'?75:c==='low'?55:70;
+  }
+  if(r.src==='scan') return 61;
+  if(r.src==='genel') return 0;
+  return Number(r.pct||0);
+}
+
+function matchBadge(r){
+  var p=(r&&r.pct!==undefined)?Number(r.pct):matchPct(r);
+  if(!p) return '';
+  var col=p>=85?'#1a9e6e':p>=65?'#c8900a':'#c0392b';
+  var bg =p>=85?'#e8f6f0':p>=65?'#fdf6e3':'#fdecea';
+  return '<span class="tag" style="background:'+bg+';color:'+col+';border-color:'+col+'" '
+    +'title="Eşleşme oranı — KW ham puanı: '+(r.kwScore||0)+'">'
+    +'%'+p+'</span>';
+}
+
 function kwScore(text, mag, reyonName, modelHint){
   var n=nr(text);
   var md = magDef(mag, reyonName) || RD[reyonName] || null;
   if(!md) return {bg:null,kl:null,src:'empty',score:0};
 
-  // 1. Model DB - AI tarafından çıkarılan model adıyla exact search
-  // Bu fonksiyon artık dışarıdan modelHint ile çağrılabilir
+  // 1. Model DB — artık KİLİTLİ değil; AI'ya ipucu olarak taşınır
+  var modelMatch=null;
   if(modelHint){
     var hint = nr(modelHint).replace(/[.,\-\/]/g,' ').trim();
     var found = null;
@@ -3083,65 +3199,93 @@ function kwScore(text, mag, reyonName, modelHint){
         }
       }
     }
-    if(found){
-      return {bg:found.bg||null, kl:found.kl||null, src:'model', model:found.model, score:100};
-    }
+    if(found) modelMatch={bg:found.bg||null, kl:found.kl||null, model:found.model, score:3};
   }
   var textWords = n.split(/[\s,.\/\-]+/).filter(function(p){return p.length>1;});
 
-  // 2. Check if text contains a BG name directly
+  // 2. Metin doğrudan bir BG adı içeriyor mu? (puan 3)
   var bgList = md.bg || [];
   for(var i=0;i<bgList.length;i++){
     var bgNorm=nr(bgList[i]);
     if(n.includes(bgNorm) || bgNorm.includes(n.replace(/[^a-z ]/g,'').trim())){
-      // BG found in text - focus on KL scoring
-      return scoreBG(bgList[i], n, md, 'kw', 80);
+      var direct=scoreBG(bgList[i], n, md, 'kw', 3);
+      direct.best='bg'; direct.hits=1;
+      direct.candidates=[{bg:direct.bg,kl:direct.kl,score:3}];
+      if(modelMatch) direct.modelHint=modelMatch;
+      direct.pct=matchPctFor(direct);
+      return direct;
     }
   }
 
   // 3. KW scoring - score ALL rules, pick highest
   // Priority rules win immediately if matched
-  var scores={};
+  // Ağırlıklar: birebir 2, içerir 1, kısmi 1, öncelikli 3 (+kesinlik bayrağı)
+  var scores={}, prio={}, hits={}, bestType={};
+  var TYPE_RANK={partial:1,includes:2,exact:3,priority:4};
   (KW||[]).forEach(function(rule){
     if(rule.mag && rule.mag!==mag) return;
     if(!bgList.includes(rule.bg)) return;
-    var ruleScore=0;
-    var hasPriorityHit=false;
+    var ruleScore=0, hasPriorityHit=false, ruleHits=0, ruleBest=null;
     (rule.kw||[]).forEach(function(kw){
       var isPriority = typeof kw==='object' ? kw.p : (kw.charAt(0)==='!');
       var kwStr = typeof kw==='object' ? kw.w : (isPriority ? kw.slice(1) : kw);
       var kwn=nr(kwStr);
-      var matchScore=0;
-      if(n===kwn) matchScore=10;
-      else if(n.includes(kwn)) matchScore=5;
-      else if(kwn.includes(n)) matchScore=2;
+      var matchScore=0, type=null;
+      if(n===kwn){ matchScore=2; type='exact'; }
+      else if(n.includes(kwn)){ matchScore=1; type='includes'; }
+      // Kısmi eşleşme yalnızca metin yeterince uzunsa sayılır
+      else if(kwn.includes(n) && n.length>=4){ matchScore=1; type='partial'; }
       if(matchScore>0){
-        if(isPriority && matchScore>=5){
-          ruleScore+=matchScore+100;
-          hasPriorityHit=true;
-        } else {
-          ruleScore+=matchScore;
-        }
+        if(isPriority){ matchScore=3; type='priority'; hasPriorityHit=true; }
+        ruleScore+=matchScore;
+        ruleHits++;
+        if(!ruleBest||TYPE_RANK[type]>TYPE_RANK[ruleBest]) ruleBest=type;
       }
     });
     if(ruleScore>0){
       var key=rule.bg+'|||'+(rule.kl||'');
       scores[key]=(scores[key]||0)+ruleScore;
-      if(hasPriorityHit) scores[key+'__priority']=true;
+      hits[key]=(hits[key]||0)+ruleHits;
+      if(!bestType[key]||TYPE_RANK[ruleBest]>TYPE_RANK[bestType[key]]) bestType[key]=ruleBest;
+      if(hasPriorityHit) prio[key]=true;
     }
   });
 
-  // Find best scoring rule
+  // Öncelikli kelime yakaladıysa toplam puana bakılmaksızın o kural kazanır
   var bestKey=null, bestScore=0;
   Object.keys(scores).forEach(function(k){
-    if(scores[k]>bestScore){bestScore=scores[k];bestKey=k;}
+    var isPrio=prio[k]===true, curPrio=bestKey?prio[bestKey]===true:false;
+    if(isPrio && !curPrio){ bestKey=k; bestScore=scores[k]; return; }
+    if(!isPrio && curPrio) return;
+    if(scores[k]>bestScore){ bestScore=scores[k]; bestKey=k; }
   });
+
+  // AI'ya sunulacak ilk 2 aday
+  var candidates=Object.keys(scores)
+    .sort(function(a,b){
+      var pa=prio[a]===true?1:0, pb=prio[b]===true?1:0;
+      if(pa!==pb) return pb-pa;
+      return scores[b]-scores[a];
+    })
+    .slice(0,2)
+    .map(function(k){
+      var p=k.split('|||');
+      return {bg:p[0], kl:p[1]||null, score:scores[k], priority:prio[k]===true};
+    });
 
   if(bestKey && bestScore>0){
     var parts2=bestKey.split('|||');
     var selectedBG = parts2[0];
     var selectedKL = parts2[1]||null;
-    var winnerHadPriority = scores[bestKey+'__priority']===true;
+    var winnerHadPriority = prio[bestKey]===true;
+    var wrap=function(o){
+      o.candidates=candidates;
+      o.hits=hits[bestKey]||1;
+      o.best=winnerHadPriority?'priority':(bestType[bestKey]||'includes');
+      if(modelMatch) o.modelHint=modelMatch;
+      o.pct=matchPctFor(o);
+      return o;
+    };
 
     // KUMAŞ/MODEL KELİMESİ kontrolü - yaka tipinden önce gelir
     // Metinde kumaş/model özelliği varsa yaka KL'yi override et
@@ -3161,7 +3305,7 @@ function kwScore(text, mag, reyonName, modelHint){
     // TRİKO BG - sadece çizgi/desen eşleştiyse ve net triko ifadesi yoksa BG null yap
     if(parts2[0]==='TRİKO' && !winnerHadPriority){
       var hasTrikoClear = n.includes('triko') || n.includes('kazak') || n.includes('orgu') || n.includes('knitwear') || n.includes('suveter');
-      if(!hasTrikoClear) return {bg:'GENEL', kl:null, src:'kw', score:0};
+      if(!hasTrikoClear) return wrap({bg:'TRİKO', kl:null, src:'kw', score:bestScore});
     }
     // ÖRME BASIC - sadece "hırka/hirka" varsa ama sweat/örme bağlamı yoksa null
     if((parts2[0]==='ÖRME' || parts2[0]==='ÖRME BASIC') && !winnerHadPriority){
@@ -3173,7 +3317,7 @@ function kwScore(text, mag, reyonName, modelHint){
         var hasTrikCtx = n.includes('triko') || n.includes('orgu') || n.includes('kazak');
         if(!hasOrmeCtx && !hasTrikCtx){
           // Bağlam yok - KL null, BG kalsın (ÖRME ya da ÖRME BASIC)
-          return {bg:parts2[0], kl:null, src:'kw', score:bestScore};
+          return wrap({bg:parts2[0], kl:null, src:'kw', score:bestScore});
         }
       }
     }
@@ -3190,10 +3334,22 @@ function kwScore(text, mag, reyonName, modelHint){
       }
     }
 
-    return {bg:selectedBG, kl:selectedKL, src:'kw', score:bestScore};
+    return wrap({bg:selectedBG, kl:selectedKL, src:'kw', score:bestScore});
   }
 
-  // 4. KL puanlama sistemi - tüm KL'lere puan ver
+  // KW hiçbir şey bulamadı — 4. aşama (klasman adı taraması) artık
+  // burada çalışmaz; yalnızca AI hata verirse klNameScan() ile devreye girer.
+  return {bg:null,kl:null,src:'empty',score:0,candidates:[],pct:0,
+          modelHint:modelMatch||null};
+}
+
+// 4. aşama — YEDEK: yalnızca AI başarısız olduğunda çağrılır.
+// Klasman adlarındaki kelimeleri metinde arar.
+function klNameScan(text, mag, reyonName){
+  var n=nr(text);
+  var md = magDef(mag, reyonName) || RD[reyonName] || null;
+  if(!md) return {bg:null,kl:null,src:'empty',score:0,pct:0};
+  var textWords = n.split(/[\s,.\/\-]+/).filter(function(p){return p.length>1;});
   var klData=md.kl||{};
   var klScores=[];
   var STOP_WORDS=['key','basic','cl','orme','dokuma','triko','icgym','aksesuar','classic','sort','takim','gomlek','ince','kalin','orta','uzun','kisa','alt','ust','pant'];
@@ -3228,11 +3384,11 @@ function kwScore(text, mag, reyonName, modelHint){
     var winner=klScores[0];
     // Minimum eşik: skor anlamlı olmalı
     if(winner.score>=8){
-      return {bg:winner.bg, kl:winner.kl, src:'kw', score:winner.score};
+      return {bg:winner.bg, kl:winner.kl, src:'scan', score:winner.score, pct:61};
     }
   }
 
-  return {bg:null,kl:null,src:'empty',score:0};
+  return {bg:null,kl:null,src:'empty',score:0,pct:0};
 }
 
 function scoreBG(bg, n, md, src, baseScore){
@@ -3261,8 +3417,8 @@ function runKWPhase(all, fbs, mags, modelHints){
     var hint = modelHints[i] ? modelHints[i].model : null;
     var r=kwScore(item.text, item.mag, item.reyon, hint);
     kwRes.push(r);
-    if(r.src==='model') addLog('✓ '+(i+1)+'. 📦 Model: '+r.model+' → '+r.bg,'#1a9e6e');
-    else if(r.bg) addLog('✓ '+(i+1)+'. ['+item.mag+'] KW: '+r.bg+(r.kl?' / '+r.kl:''),'#1a9e6e');
+    if(r.modelHint) addLog('📦 '+(i+1)+'. Model ipucu: '+r.modelHint.model+' → '+(r.modelHint.bg||'?')+' (AI değerlendirecek)','#5040a0');
+    if(r.bg) addLog('✓ '+(i+1)+'. ['+item.mag+'] KW: '+r.bg+(r.kl?' / '+r.kl:'')+' — %'+(r.pct||0),'#1a9e6e');
     else addLog('? '+(i+1)+'. ['+item.mag+'] eşleşme yok','#c8900a');
   });
 
@@ -3371,13 +3527,7 @@ function buildResults(all,kwRes,aiRes){
     var ai=(aiRes||[]).find(function(a){return a.index===i;})||{};
     var kw=kwRes[i];
     var finalBG,finalKL,finalSrc;
-    if(kw.src==='model'){
-      // Model DB eşleşmesi — KİLİTLİ, AI ezemez
-      finalBG=kw.bg;finalKL=kw.kl;finalSrc='model';
-      if(ai.bg && ai.bg!==kw.bg){
-        addLog('⚠ '+(i+1)+'. Model DB korundu: '+kw.bg+' (AI önerisi: '+ai.bg+' görmezden gelindi)','#c8900a');
-      }
-    } else if(ai.bg){
+    if(ai.bg){
       // AI her zaman kazanır — doğru düşünmesi için prompt güçlendirildi
       if(ai.bg!==kw.bg && kw.bg){
         addLog('↻ '+(i+1)+'. AI: '+kw.bg+' → '+ai.bg+' ('+ai.confidence+')','#5040a0');
@@ -3392,9 +3542,18 @@ function buildResults(all,kwRes,aiRes){
       finalSrc=kw.src;
       if(kw.bg) addLog('→ '+(i+1)+'. KW kullanıldı: '+kw.bg,'#6b6b67');
     }
-    // Hiçbir şey bulunamadıysa GENEL'e at
+    // AI de KW de sonuç vermedi — yedek: klasman adı taraması
+    if(!finalBG){
+      var scan=klNameScan(item.text, item.mag, item.reyon);
+      if(scan.bg){
+        finalBG=scan.bg; finalKL=scan.kl; finalSrc='scan';
+        addLog('⚙ '+(i+1)+'. Yedek tarama: '+scan.bg,'#c8900a');
+      }
+    }
+    // Hâlâ boşsa GENEL'e at
     if(!finalBG){ finalBG='GENEL'; finalKL='GENEL'; finalSrc='genel'; }
-    RES.push({id:i,text:item.text,mag:item.mag,reyon:item.reyon,bg:finalBG,kl:finalKL,src:finalSrc,reason:ai.reason||'',kwScore:kw.score||0,aiConf:ai.confidence||'',model:kw.model||'',status:'pending',edit:false});
+    var pctSrc={src:finalSrc,bg:finalBG,kl:finalKL,aiConf:ai.confidence||'',pct:kw.pct||0};
+    RES.push({id:i,text:item.text,mag:item.mag,reyon:item.reyon,bg:finalBG,kl:finalKL,src:finalSrc,reason:ai.reason||'',kwScore:kw.score||0,pct:matchPct(pctSrc),aiConf:ai.confidence||'',model:(kw.modelHint&&kw.modelHint.model)||'',status:'pending',edit:false});
   });
   document.getElementById('phase').innerHTML='<span style="color:#1a9e6e;font-weight:500">✓ Tamamlandı</span>';
   renderRes();
@@ -3404,9 +3563,13 @@ function buildResults(all,kwRes,aiRes){
 async function callAI(mag,fbs,kwRes,mags,reyon){
   // MAG'in BG/KL tanımını da gönder — sunucu tüm reyonları böyle tanıyor
   var md=magDef(mag,reyon);
+  // KW'nin ilk 2 adayı + model ipucu AI'ya taşınır
+  var hints=(kwRes||[]).map(function(k){
+    return {candidates:(k&&k.candidates)||[], model:(k&&k.modelHint)||null};
+  });
   var r=await fetch('/ai/analyze',{
     method:'POST',headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({mag:mag,feedbacks:fbs,kwResults:kwRes,mags:mags,reyon:reyon,magData:md||null})
+    body:JSON.stringify({mag:mag,feedbacks:fbs,kwResults:kwRes,hints:hints,mags:mags,reyon:reyon,magData:md||null})
   });
   var d=await r.json();
   if(!d.ok) throw new Error(d.error||'AI hatası');
@@ -3419,9 +3582,9 @@ function buildTagsHTML(r){
   var id=r.id;
   var magTag=r.mag?'<span class="tag tm">'+r.mag+'</span>':'';
   // Tooltip bilgisi
-  var srcInfo = r.src==='model' ? ('Model: '+r.model+' | Puan: 100 (kilitli)')
-              : r.src==='ai' ? ('AI | Güven: '+(r.aiConf||'?'))
-              : r.src==='kw' ? ('KW eşleşme puanı: '+(r.kwScore||0))
+  var srcInfo = r.src==='ai' ? ('AI | Güven: '+(r.aiConf||'?')+(r.model?' | Model ipucu: '+r.model:''))
+              : r.src==='kw' ? ('KW puanı: '+(r.kwScore||0))
+              : r.src==='scan' ? 'Yedek tarama (AI sonuç vermedi)'
               : 'Kaynak yok';
   var bgInfo = 'BG: '+(r.bg||'?')+' | '+srcInfo;
   var klInfo = 'KL: '+(r.kl||'?')+' | '+srcInfo;
@@ -3429,7 +3592,9 @@ function buildTagsHTML(r){
   var srcTag=r.src==='model'?'<span class="tag tmodel" title="'+srcInfo+'">📦 Model</span>':
              r.src==='ai'?'<span class="tag tai" title="'+srcInfo+'">🤖 AI</span>':
              r.src==='kw'?'<span class="tag tkw" title="'+srcInfo+'">🔑 KW</span>':
+             r.src==='scan'?'<span class="tag tkw" title="Yedek: klasman adı taraması">⚙ Tarama</span>':
              '<span class="tag tm">— Boş</span>';
+  srcTag+=matchBadge(r);
   var bgTag=r.bg
     ?'<span class="etag etag-bg" onclick="editTagBG('+id+')" title="'+bgInfo+'">'+r.bg+'<span class="etag-x" onclick="event.stopPropagation();delTagBG('+id+')"> ×</span></span>'
     :'<span class="etag etag-empty" onclick="editTagBG('+id+')">Buyer Grup ?</span>';
@@ -4616,7 +4781,7 @@ async function runVisitAnalysis(idx){
       var noteMag = notes[i].mag||magOrder[0]||'BUC';
       var hint = modelHints[i] ? modelHints[i].model : null;
       var r = kwScore(fb, noteMag, reyon, hint);
-      if(r.src==='model') log('✓ '+(i+1)+'. ['+noteMag+'] 📦 Model: '+r.model+' → '+r.bg,'#1a9e6e');
+      if(r.modelHint) log('📦 '+(i+1)+'. Model ipucu: '+r.modelHint.model+' (AI değerlendirecek)','#5040a0');
       else if(r.bg) log('✓ '+(i+1)+'. ['+noteMag+'] KW: '+r.bg+(r.kl?' / '+r.kl:''),'#1a9e6e');
       else log('? '+(i+1)+'. ['+noteMag+'] eşleşme yok','#c8900a');
       return r;
@@ -4649,9 +4814,7 @@ async function runVisitAnalysis(idx){
     notes.forEach(function(n,i){
       var kw = kwRes[i]||{};
       var ai = allAiRes.find(function(a){return a.index===i;})||{};
-      if(kw.src==='model'){
-        n.bg=kw.bg; n.kl=kw.kl||null; n.src='model'; n.model=kw.model;
-      } else if(ai.bg){
+      if(ai.bg){
         n.bg=ai.bg; n.kl=ai.kl||null; n.src='ai'; n.aiConf=ai.confidence;
         if(kw.bg&&ai.bg!==kw.bg) log('↻ '+(i+1)+'. AI: '+kw.bg+' → '+ai.bg,'#5040a0');
       } else {

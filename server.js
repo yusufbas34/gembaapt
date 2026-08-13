@@ -142,7 +142,7 @@ app.post('/notify-user', (req, res) => {
 
 // ── AI Analiz endpoint ──────────────────────────────────────────────────────
 app.post('/ai/analyze', async (req, res) => {
-  const {mag, feedbacks, kwResults, magData: clientMagData} = req.body||{};
+  const {mag, feedbacks, kwResults, hints, magData: clientMagData} = req.body||{};
   if(!mag||!feedbacks) return res.json({ok:false, error:'Eksik bilgi'});
 
   const ANTHROPIC_KEY = process.env.ANTHROPIC_API_KEY;
@@ -179,7 +179,20 @@ app.post('/ai/analyze', async (req, res) => {
 
   const feedbacksWithKW = feedbacks.map((f,i) => {
     const kw = kwResults[i]||{};
-    return 'index='+i+': "'+f+'" → KW: BG='+(kw.bg||'?')+', KL='+(kw.kl||'?');
+    const h = (hints&&hints[i])||{};
+    let line = 'index='+i+': "'+f+'"';
+    const cands = h.candidates||[];
+    if(cands.length){
+      line += '\n   Adaylar: ' + cands.map((c,ci) =>
+        (ci+1)+') BG='+(c.bg||'?')+' / KL='+(c.kl||'—')+' (puan '+(c.score||0)+(c.priority?', ÖNCELİKLİ':'')+')'
+      ).join('  ');
+    } else {
+      line += '\n   Adaylar: yok — KW: BG='+(kw.bg||'?')+', KL='+(kw.kl||'?');
+    }
+    if(h.model && h.model.model){
+      line += '\n   Model DB: "'+h.model.model+'" adı eşleşti → BG='+(h.model.bg||'?')+', KL='+(h.model.kl||'?');
+    }
+    return line;
   }).join('\n');
 
   const prompt = `LC Waikiki mağaza ziyaret geri bildirim sınıflandırma sistemi.
@@ -206,12 +219,17 @@ TEMEL MANTIK — önce ürün tipini anla:
 
 KURALLAR:
 1. Sadece yukarıdaki listede olan BG ve KL değerlerini kullan.
-2. KW önerisi verilmiş ama sen BAĞIMSIZ düşün — geri bildirimin ürün tipine bak.
-3. KW açıkça yanlışsa (üst ürün → pantolon klasmanı gibi) DÜZELt, high confidence ver.
-4. KW mantıklıysa aynen kabul et.
-5. Emin değilsen null bırak, uydurma.
+2. Her geri bildirim için kelime motoru en fazla 2 ADAY sunar. Önce bu adayları
+   değerlendir: hangisi ürün tipine uyuyor? Uyanı seç.
+3. Adaylardan hiçbiri uymuyorsa listeden doğru olanı sen seç ve high confidence ver.
+4. "ÖNCELİKLİ" işaretli aday kullanıcı tarafından elle onaylanmıştır — çok güçlü
+   kanıt olmadıkça bunu değiştirme.
+5. "Model DB" satırı varsa: o model adı sistemde kayıtlı demektir. Hangi klasmana
+   denk geldiği belirtilmiştir. Bunu güçlü bir ipucu say, ama geri bildirim metni
+   açıkça başka bir ürünü işaret ediyorsa kendi kararını ver.
+6. Emin değilsen null bırak, uydurma.
 
-Geri bildirimler (KW önerisiyle):
+Geri bildirimler (aday ve ipuçlarıyla):
 ${feedbacksWithKW}
 
 JSON döndür:
