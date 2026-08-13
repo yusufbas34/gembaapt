@@ -181,6 +181,7 @@ app.post('/ai/analyze', async (req, res) => {
     const kw = kwResults[i]||{};
     const h = (hints&&hints[i])||{};
     let line = 'index='+i+': "'+f+'"';
+    if(h.type) line += '\n   ÜRÜN TİPİ: '+h.type+' → yalnızca bu ürün tipinin klasmanı seçilebilir';
     const cands = h.candidates||[];
     if(cands.length){
       line += '\n   Adaylar: ' + cands.map((c,ci) =>
@@ -227,7 +228,11 @@ KURALLAR:
 5. "Model DB" satırı varsa: o model adı sistemde kayıtlı demektir. Hangi klasmana
    denk geldiği belirtilmiştir. Bunu güçlü bir ipucu say, ama geri bildirim metni
    açıkça başka bir ürünü işaret ediyorsa kendi kararını ver.
-6. Emin değilsen null bırak, uydurma.
+6. "ÜRÜN TİPİ" belirtilmişse bu MUTLAK kuraldır: gömlek denmişse sweat/pantolon
+   klasmanı SEÇME, tişört denmişse pantolon klasmanı SEÇME. Renk, "basic",
+   "ince", "sade" gibi sıfatlar ürün tipini DEĞİŞTİRMEZ — sadece niteler.
+   O tipe uygun klasman listede yoksa KL null bırak, BG'yi doğru seç.
+7. Emin değilsen null bırak, uydurma.
 
 Geri bildirimler (aday ve ipuçlarıyla):
 ${feedbacksWithKW}

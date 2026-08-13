@@ -3174,6 +3174,76 @@ function matchBadge(r){
     +'%'+p+'</span>';
 }
 
+/* ═══ ÜRÜN TİPİ AYRIŞTIRMA ═══
+   "gömlek" geçen bir geri bildirim asla sweat/pantolon klasmanına düşmemeli.
+   Metindeki ürün tipi ile klasmanın ürün tipi uyuşmuyorsa aday elenir —
+   öncelikli kelime olsa bile. Türkçede asıl ürün cümlenin sonuna yakın
+   geçtiği için EN SON geçen tip esas alınır:
+   "pantolon ve şortla kombinlenebilen tişört" → tişört.                */
+var PRODUCT_TYPES={
+  gomlek:['gomlek'],
+  tisort:['tisort','t shirt','tshirt','t-shirt'],
+  sweat:['sweat','kapuson','kapusonlu'],
+  kazak:['kazak','suveter'],
+  hirka:['hirka'],
+  triko:['triko','orgu'],
+  pantolon:['pantolon','chino','jean','kot','tayt'],
+  sort:['sort','bermuda'],
+  etek:['etek'],
+  elbise:['elbise'],
+  bluz:['bluz'],
+  tunik:['tunik'],
+  mont:['mont','kaban','parka','yelek','ceket','shacket','yagmurluk'],
+  blazer:['blazer'],
+  atlet:['atlet','fanila'],
+  pijama:['pijama'],
+  boxer:['boxer','slip'],
+  corap:['corap'],
+  canta:['canta','cuzdan'],
+  kemer:['kemer'],
+  ayakkabi:['ayakkabi','bot','sandalet','terlik','babet','panduf'],
+  bere:['bere'],
+  kaskol:['kaskol','atki','fular','sal'],
+  eldiven:['eldiven'],
+  sapka:['sapka'],
+  havlu:['havlu','pestamal'],
+  bornoz:['bornoz'],
+  yuzme:['yuzme','mayo','bikini']
+};
+
+// Metinde EN SON geçen ürün tipi (asıl talep edilen ürün)
+function productTypeLast(n){
+  var best=null, bestIdx=-1;
+  Object.keys(PRODUCT_TYPES).forEach(function(t){
+    PRODUCT_TYPES[t].forEach(function(w){
+      var i=n.lastIndexOf(w);
+      if(i>bestIdx){ bestIdx=i; best=t; }
+    });
+  });
+  return best;
+}
+
+// Klasman/BG adının ürün tipi
+function productTypeOf(s){
+  var n=nr(s||'');
+  var best=null, bestIdx=-1;
+  Object.keys(PRODUCT_TYPES).forEach(function(t){
+    PRODUCT_TYPES[t].forEach(function(w){
+      var i=n.indexOf(w);
+      if(i>=0 && (bestIdx<0 || i<bestIdx)){ bestIdx=i; best=t; }
+    });
+  });
+  return best;
+}
+
+// Aday, metnin ürün tipiyle uyumlu mu?
+function typeCompatible(textType, bg, kl){
+  if(!textType) return true;              // metinde ürün tipi yok — filtreleme
+  var t=productTypeOf(kl)||productTypeOf(bg);
+  if(!t) return true;                     // klasman tip taşımıyor (GENEL vb.)
+  return t===textType;
+}
+
 function kwScore(text, mag, reyonName, modelHint){
   var n=nr(text);
   var md = magDef(mag, reyonName) || RD[reyonName] || null;
@@ -3202,12 +3272,14 @@ function kwScore(text, mag, reyonName, modelHint){
     if(found) modelMatch={bg:found.bg||null, kl:found.kl||null, model:found.model, score:3};
   }
   var textWords = n.split(/[\s,.\/\-]+/).filter(function(p){return p.length>1;});
+  var nType=productTypeLast(n);
 
   // 2. Metin doğrudan bir BG adı içeriyor mu? (puan 3)
   var bgList = md.bg || [];
   for(var i=0;i<bgList.length;i++){
     var bgNorm=nr(bgList[i]);
     if(n.includes(bgNorm) || bgNorm.includes(n.replace(/[^a-z ]/g,'').trim())){
+      if(!typeCompatible(nType, bgList[i], null)) continue;
       var direct=scoreBG(bgList[i], n, md, 'kw', 3);
       direct.best='bg'; direct.hits=1;
       direct.candidates=[{bg:direct.bg,kl:direct.kl,score:3}];
@@ -3222,9 +3294,16 @@ function kwScore(text, mag, reyonName, modelHint){
   // Ağırlıklar: birebir 2, içerir 1, kısmi 1, öncelikli 3 (+kesinlik bayrağı)
   var scores={}, prio={}, hits={}, bestType={};
   var TYPE_RANK={partial:1,includes:2,exact:3,priority:4};
+  var textType=productTypeLast(n);
+  var enforceType=true;
+
+  function collect(){
+  scores={}; prio={}; hits={}; bestType={};
   (KW||[]).forEach(function(rule){
     if(rule.mag && rule.mag!==mag) return;
     if(!bgList.includes(rule.bg)) return;
+    // Ürün tipi uyuşmuyorsa aday elenir (öncelikli kelime dahil)
+    if(enforceType && !typeCompatible(textType, rule.bg, rule.kl)) return;
     var ruleScore=0, hasPriorityHit=false, ruleHits=0, ruleBest=null;
     (rule.kw||[]).forEach(function(kw){
       var isPriority = typeof kw==='object' ? kw.p : (kw.charAt(0)==='!');
@@ -3250,6 +3329,14 @@ function kwScore(text, mag, reyonName, modelHint){
       if(hasPriorityHit) prio[key]=true;
     }
   });
+  }
+
+  collect();
+  // Ürün tipi filtresi her şeyi eledi ise filtresiz tekrar dene
+  if(textType && !Object.keys(scores).length){
+    enforceType=false;
+    collect();
+  }
 
   // Öncelikli kelime yakaladıysa toplam puana bakılmaksızın o kural kazanır
   var bestKey=null, bestScore=0;
@@ -3284,6 +3371,13 @@ function kwScore(text, mag, reyonName, modelHint){
       o.best=winnerHadPriority?'priority':(bestType[bestKey]||'includes');
       if(modelMatch) o.modelHint=modelMatch;
       o.pct=matchPctFor(o);
+      // Metinde hiç ürün tipi geçmiyorsa ("basic, sade tasarımlar" gibi)
+      // eşleşme sadece sıfata dayanıyordur — kesinlik iddia edilemez,
+      // kararı AI versin.
+      if(!textType){
+        o.weak=true;
+        o.pct=Math.min(o.pct,60);
+      }
       return o;
     };
 
@@ -3354,8 +3448,10 @@ function klNameScan(text, mag, reyonName){
   var klScores=[];
   var STOP_WORDS=['key','basic','cl','orme','dokuma','triko','icgym','aksesuar','classic','sort','takim','gomlek','ince','kalin','orta','uzun','kisa','alt','ust','pant'];
 
+  var scanType=productTypeLast(n);
   Object.keys(klData).forEach(function(bg){
     (klData[bg]||[]).forEach(function(kl){
+      if(!typeCompatible(scanType, bg, kl)) return;
       var klNorm=nr(kl).replace(/[.\/\-]/g,' ');
       var klWords=klNorm.split(' ').filter(function(w){
         return w.length>2 && !STOP_WORDS.includes(w);
@@ -3564,8 +3660,12 @@ async function callAI(mag,fbs,kwRes,mags,reyon){
   // MAG'in BG/KL tanımını da gönder — sunucu tüm reyonları böyle tanıyor
   var md=magDef(mag,reyon);
   // KW'nin ilk 2 adayı + model ipucu AI'ya taşınır
-  var hints=(kwRes||[]).map(function(k){
-    return {candidates:(k&&k.candidates)||[], model:(k&&k.modelHint)||null};
+  var hints=(kwRes||[]).map(function(k,i){
+    return {
+      candidates:(k&&k.candidates)||[],
+      model:(k&&k.modelHint)||null,
+      type:productTypeLast(nr(fbs[i]||''))
+    };
   });
   var r=await fetch('/ai/analyze',{
     method:'POST',headers:{'Content-Type':'application/json'},
