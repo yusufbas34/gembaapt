@@ -431,6 +431,13 @@ function notify(action,extra){
 }
 
 function gwn(d){const dd=new Date(Date.UTC(d.getFullYear(),d.getMonth(),d.getDate()));dd.setUTCDate(dd.getUTCDate()+4-(dd.getUTCDay()||7));return Math.ceil((((dd-new Date(Date.UTC(dd.getUTCFullYear(),0,1)))/86400000)+1)/7)}
+// Ziyaret geçen hafta yapıldıysa hafta numarası bir azalır.
+// (Pazar ziyaret + Pazartesi mail durumu)
+var _weekAdj=0;
+function curWeek(){
+  var w=gwn(new Date())+_weekAdj;
+  return w<1?52:w;   // yıl başında geriye sarma
+}
 function wl(){const n=new Date(),w=gwn(n),m=["Oca","Şub","Mar","Nis","May","Haz","Tem","Ağu","Eyl","Eki","Kas","Ara"];return w+'. Hafta · '+n.getDate()+' '+m[n.getMonth()]+' '+n.getFullYear()}
 document.getElementById('topWeek').textContent=wl();
 
@@ -576,7 +583,7 @@ function goHome(){
   }
   if(notes.length&&!confirm('Ana sayfaya dönmek istediğinize emin misiniz?'))return;
   notes=[];reyon='';inlinePhotos=[];editingNoteId=null;lastMAG='';
-  window._indexCurrentVisitId=null;window._indexRatingDone=false;_degScore=null;
+  window._indexCurrentVisitId=null;window._indexRatingDone=false;_degScore=null;_weekAdj=0;
   var degPopup=document.getElementById('degPopup');if(degPopup)degPopup.style.display='none';
   document.querySelectorAll('.chip').forEach(c=>c.classList.remove('sel'));
   closeSD();
@@ -871,7 +878,7 @@ function getMailTo(){const{to}=getMailRecipients();return to||'';}
 function getAllPhotos(){let all=[];notes.forEach(n=>{(n.photos||[]).forEach(p=>all.push(p));});inlinePhotos.forEach(p=>all.push(p));return all;}
 
 function buildPV(){
-  const store=getStore(),user=getUser(),wn=gwn(new Date());
+  const store=getStore(),user=getUser(),wn=curWeek();
   const userName=user?.name||'';
   const subj=wn+'. Hafta '+store+' '+reyon+' Reyonu Mağaza Ziyaret Notları';
   let magMap={};
@@ -926,7 +933,7 @@ async function smartSendMail(){
   const btn=document.getElementById('mailBtn');
   btn.textContent='⏳ Hazırlanıyor...';btn.disabled=true;
   try{
-    notify('mail',{store:getStore(),reyon,week:gwn(new Date())});
+    notify('mail',{store:getStore(),reyon,week:curWeek()});
     // Ziyareti otomatik kaydet (visit ID için)
     await autoSaveVisitForMail();
     // Önce değerlendirmeyi sor, maili sonra aç
@@ -939,7 +946,7 @@ async function autoSaveVisitForMail(){
   if(window._indexCurrentVisitId) return; // zaten kaydedildi
   if(!notes.length) return;
   buildPV();
-  const store=getStore(),user=getUser(),wn=gwn(new Date());
+  const store=getStore(),user=getUser(),wn=curWeek();
   const visitId=Date.now();
   window._indexCurrentVisitId=visitId;
   const notesNoPhotos=notes.map(n=>({...n,photos:[]}));
@@ -995,17 +1002,34 @@ function showOutlookWarning(){
           Mail gönderilirken <strong>LC Waikiki kurumsal hesabının</strong> seçili olduğundan emin ol.<br><br>
           Outlook → Profil fotoğrafına bas → LC Waikiki hesabını seç
         </div>
+        <label for="lastWeekChk" style="display:flex;align-items:flex-start;gap:10px;background:#f6f5f2;border:1px solid #e5e5e5;border-radius:12px;padding:14px;margin-bottom:16px;cursor:pointer;text-align:left">
+          <input type="checkbox" id="lastWeekChk" style="width:18px;height:18px;margin-top:1px;flex-shrink:0;cursor:pointer">
+          <span style="font-size:13px;color:#1a1a18;line-height:1.5">
+            <strong>Bu ziyareti geçen hafta yaptım</strong><br>
+            <span style="color:#6b6b67">Hafta numarası <b id="lwPrev"></b> yerine <b id="lwNew"></b> olarak yazılır.</span>
+          </span>
+        </label>
         <button id="warnOk" style="width:100%;background:#1a1a18;color:#fff;border:none;border-radius:12px;padding:16px;font-size:16px;font-weight:500;font-family:DM Sans,sans-serif;cursor:pointer;margin-bottom:10px">✅ Anladım, mail gönder</button>
         <button id="warnCancel" style="width:100%;background:none;border:0.5px solid #ddd;border-radius:12px;padding:14px;font-size:15px;color:#6b6b67;font-family:DM Sans,sans-serif;cursor:pointer">İptal</button>
       </div>`;
     document.body.appendChild(overlay);
-    document.getElementById('warnOk').onclick=()=>{overlay.remove();resolve(true);};
+    // Hafta bilgisini yaz; kutu her açılışta mevcut seçimi yansıtsın
+    const thisW=gwn(new Date());
+    document.getElementById('lwPrev').textContent=thisW;
+    document.getElementById('lwNew').textContent=(thisW-1<1?52:thisW-1);
+    const chk=document.getElementById('lastWeekChk');
+    chk.checked=(_weekAdj===-1);
+    document.getElementById('warnOk').onclick=()=>{
+      _weekAdj=chk.checked?-1:0;
+      buildPV();               // önizleme ve mail konusu yeni haftayla yenilensin
+      overlay.remove();resolve(true);
+    };
     document.getElementById('warnCancel').onclick=()=>{overlay.remove();resolve(false);};
   });
 }
 
 function openMailFallback(score){
-  const store=getStore(),user=getUser()||{name:''},wn=gwn(new Date());
+  const store=getStore(),user=getUser()||{name:''},wn=curWeek();
   let magMap={};
   notes.forEach(n=>{const mk=n.mag||'__noMag__';if(!magMap[mk])magMap[mk]={mag:n.mag,bgs:{}};const bgk=n.bg;if(!magMap[mk].bgs[bgk])magMap[mk].bgs[bgk]={bg:n.bg,kls:{}};const klk=n.kl||'__noKl__';if(!magMap[mk].bgs[bgk].kls[klk])magMap[mk].bgs[bgk].kls[klk]={kl:n.kl,items:[]};n.tx.split('\n').filter(l=>l.trim()).forEach(l=>magMap[mk].bgs[bgk].kls[klk].items.push(l.trim()));});
   let body='Merhabalar,\n\n'+wn+'. Hafta '+store+' mağazasına ait ziyaret notlarım aşağıdaki gibidir.\n\n';
@@ -1020,7 +1044,7 @@ function openMailFallback(score){
   const {to:calcTo}=getMailRecipients();
   const to=calcTo||window._to||'';
   const cc=GEMBA_CC;
-  const wn2=gwn(new Date());
+  const wn2=curWeek();
   const subj=window._ms||(wn2+'. Hafta '+store+' '+reyon+' Reyonu Mağaza Ziyaret Notları');
   // iOS: ms-outlook scheme ile direkt Outlook aç
   const isIOS=/iphone|ipad|ipod/i.test(navigator.userAgent);
@@ -1102,7 +1126,7 @@ let currentHistVisit=null;
 async function saveVisit(){
   if(!notes.length){toast('Kaydedilecek geri bildirim yok.','warn');return}
   buildPV();
-  const store=getStore(),user=getUser(),wn=gwn(new Date());
+  const store=getStore(),user=getUser(),wn=curWeek();
   const notesNoPhotos=notes.map(n=>({...n,photos:[]}));
   const visitId=window._indexCurrentVisitId||Date.now();
   window._indexCurrentVisitId=visitId;

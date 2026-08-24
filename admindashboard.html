@@ -362,9 +362,10 @@ function renderUsr(){
       <td style="font-size:11px;color:var(--muted2)">${uStores.length} mağaza</td>
       <td style="font-size:11px;color:var(--purple);font-family:monospace">${magSay>0?magTop:'—'}</td>
       <td class="tdate">${u.lastVisit||'—'}</td>
+      <td onclick="event.stopPropagation()"><button class="delbtn" style="border-color:#3a3f4b;color:#9aa0aa" onclick="resetPin('${String(u.name||'').replace(/'/g,"\\'")}')">PIN sıfırla</button></td>
     </tr>
     <tr class="exprow" id="${rid}">
-      <td class="expcell" colspan="9">
+      <td class="expcell" colspan="10">
         <div class="expinner">
           <div class="expblock" style="min-width:220px"><div class="exptitle">Mağazalar (${uStores.length})</div>${mkList(uStores,false)}</div>
           <div class="expblock"><div class="exptitle">Reyonlar</div>${mkList(uReyons,false)}</div>
@@ -376,8 +377,8 @@ function renderUsr(){
   document.getElementById('tc-usr').innerHTML=`<div class="fadein">
     <div class="sh">Tüm Kullanıcılar — Satıra tıklayarak mağaza / reyon / MAG detayı görün</div>
     <div class="twrap"><table>
-      <thead><tr><th>#</th><th>Kullanıcı</th><th>Toplam Ziyaret</th><th>Manuel</th><th>Telegram</th><th>Mail</th><th>Mağaza</th><th>MAG (top)</th><th>Son Ziyaret</th></tr></thead>
-      <tbody>${rows||'<tr><td colspan="9" class="empty">Kullanıcı yok</td></tr>'}</tbody>
+      <thead><tr><th>#</th><th>Kullanıcı</th><th>Toplam Ziyaret</th><th>Manuel</th><th>Telegram</th><th>Mail</th><th>Mağaza</th><th>MAG (top)</th><th>Son Ziyaret</th><th></th></tr></thead>
+      <tbody>${rows||'<tr><td colspan="10" class="empty">Kullanıcı yok</td></tr>'}</tbody>
     </table></div>
   </div>`;
 }
@@ -388,7 +389,8 @@ function renderZiy(){
   Object.entries(users).forEach(([uk,u])=>{
     (u.visits||[]).forEach(v=>{
       const mags=[...new Set((v.notes||[]).map(n=>n.mag).filter(Boolean))];
-      all.push({userKey:uk,userName:u.name||uk,visitId:v.id,date:v.date||'',store:v.store||'—',reyon:v.reyon||'—',mags:mags.join(', ')||'—',notes:(v.notes||[]).length,source:v.source||'manuel'});
+      all.push({userKey:uk,userName:u.name||uk,visitId:v.id,date:v.date||'',store:v.store||'—',reyon:v.reyon||'—',mags:mags.join(', ')||'—',notes:(v.notes||[]).length,source:v.source||'manuel',
+        week:v.week||'—',rating:v.rating||null,mailSent:!!v.mailSent,subject:v.subject||'',noteList:(v.notes||[]).map(n=>({mag:n.mag||'',bg:n.bg||'',kl:n.kl||'',tx:n.tx||''}))});
     });
   });
   all.sort((a,b)=>b.visitId-a.visitId);
@@ -428,8 +430,70 @@ function applyFilter(){
       <td><span class="badge bp" style="font-family:monospace">${x.mags}</span></td>
       <td><span class="badge bb">${x.notes}</span></td>
       <td><span class="badge ${x.source==='telegram'?'ba':'bm'}">${x.source}</span></td>
-      <td><button class="delbtn" onclick="deleteVisit('${x.userKey}',${x.visitId})">Sil</button></td>
+      <td style="white-space:nowrap"><button class="delbtn" style="border-color:#3a3f4b;color:#9aa0aa;margin-right:6px" onclick="showVisit(${x.visitId})">Gör</button><button class="delbtn" onclick="deleteVisit('${x.userKey}',${x.visitId})">Sil</button></td>
     </tr>`).join('');
+}
+
+// PIN sıfırla — şifresini unutan kullanıcı için
+async function resetPin(name){
+  const np=prompt(name+' için YENİ PIN (4 haneli):');
+  if(np===null) return;
+  if(!/^\d{4}$/.test(np.trim())){ alert('PIN 4 haneli sayı olmalı.'); return; }
+  if(!confirm(name+' kullanıcısının PIN\'i '+np.trim()+' olarak değiştirilecek.\n\nOnaylıyor musunuz?')) return;
+  const r=await fetch(`${API}/admin/reset-pin?key=${encodeURIComponent(apiKey)}`,{
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({name:name,newPin:np.trim()})
+  }).then(x=>x.json()).catch(()=>({ok:false,error:'Bağlantı hatası'}));
+  if(r.ok) alert('✓ '+r.name+' kullanıcısının PIN\'i güncellendi.\nYeni PIN: '+np.trim());
+  else alert('Sıfırlanamadı: '+(r.error||'Hata'));
+}
+
+// Ziyaret içeriğini göster — silmeden önce gerçek mi kontrol edilebilsin
+function showVisit(visitId){
+  const v=(window._ziyAll||[]).find(x=>x.visitId===visitId);
+  if(!v) return;
+  const esc=s=>String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  let rows=(v.noteList||[]).map(n=>`<tr>
+      <td style="padding:7px 9px;border-bottom:1px solid #23262e;font-family:monospace;font-size:11px;color:#8b93a1">${esc(n.mag)||'—'}</td>
+      <td style="padding:7px 9px;border-bottom:1px solid #23262e;font-size:12px">${esc(n.bg)||'—'}</td>
+      <td style="padding:7px 9px;border-bottom:1px solid #23262e;font-size:12px;color:#8b93a1">${esc(n.kl)||'—'}</td>
+      <td style="padding:7px 9px;border-bottom:1px solid #23262e;font-size:13px">${esc(n.tx)}</td>
+    </tr>`).join('');
+  if(!rows) rows='<tr><td colspan="4" style="padding:22px;text-align:center;color:#6b7280;font-size:13px">Bu ziyarette not yok — muhtemelen sadece mail kaydı</td></tr>';
+  const ov=document.createElement('div');
+  ov.id='visitModal';
+  ov.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px';
+  ov.onclick=e=>{ if(e.target===ov) ov.remove(); };
+  ov.innerHTML=`<div style="background:#14161c;border:1px solid #2a2e38;border-radius:14px;max-width:900px;width:100%;max-height:85vh;overflow:auto">
+    <div style="padding:18px 20px;border-bottom:1px solid #23262e;display:flex;justify-content:space-between;align-items:flex-start;gap:14px;position:sticky;top:0;background:#14161c">
+      <div>
+        <div style="font-size:16px;font-weight:700;color:#e8eaf0">${esc(v.store)}</div>
+        <div style="font-size:12px;color:#8b93a1;margin-top:4px">
+          ${esc(v.userName)} &nbsp;·&nbsp; ${esc(v.date)} &nbsp;·&nbsp; ${esc(v.reyon)} &nbsp;·&nbsp; ${v.week}. hafta
+          &nbsp;·&nbsp; ${v.notes} not
+          ${v.rating?' &nbsp;·&nbsp; ⭐ '+v.rating+'/10':''}
+          ${v.mailSent?' &nbsp;·&nbsp; ✉ mail gönderildi':''}
+        </div>
+        ${v.subject?`<div style="font-size:11px;color:#6b7280;margin-top:6px">Konu: ${esc(v.subject)}</div>`:''}
+      </div>
+      <button onclick="document.getElementById('visitModal').remove()" style="background:none;border:1px solid #2a2e38;color:#9aa0aa;border-radius:8px;padding:6px 12px;cursor:pointer;font-family:inherit;flex-shrink:0">Kapat</button>
+    </div>
+    <table style="width:100%;border-collapse:collapse">
+      <thead><tr>
+        <th style="text-align:left;padding:9px;font-size:11px;color:#6b7280;border-bottom:1px solid #23262e">MAG</th>
+        <th style="text-align:left;padding:9px;font-size:11px;color:#6b7280;border-bottom:1px solid #23262e">BUYER GRUP</th>
+        <th style="text-align:left;padding:9px;font-size:11px;color:#6b7280;border-bottom:1px solid #23262e">KLASMAN</th>
+        <th style="text-align:left;padding:9px;font-size:11px;color:#6b7280;border-bottom:1px solid #23262e">GERİ BİLDİRİM</th>
+      </tr></thead>
+      <tbody>${rows}</tbody>
+    </table>
+    <div style="padding:14px 20px;border-top:1px solid #23262e;display:flex;gap:10px;justify-content:flex-end">
+      <button onclick="document.getElementById('visitModal').remove()" style="background:none;border:1px solid #2a2e38;color:#9aa0aa;border-radius:8px;padding:9px 16px;cursor:pointer;font-family:inherit">Vazgeç</button>
+      <button onclick="document.getElementById('visitModal').remove();deleteVisit('${v.userKey}',${v.visitId})" style="background:#7f1d1d;border:1px solid #b91c1c;color:#fff;border-radius:8px;padding:9px 16px;cursor:pointer;font-family:inherit;font-weight:600">Bu ziyareti sil</button>
+    </div>
+  </div>`;
+  document.body.appendChild(ov);
 }
 
 async function deleteVisit(userKey,visitId){

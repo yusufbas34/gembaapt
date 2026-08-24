@@ -36,8 +36,8 @@ body{background:var(--bg2);color:var(--text);font-family:'DM Sans',sans-serif;pa
 .pg.on{display:block}
 .card{background:#fff;border-radius:var(--r);padding:18px;margin-bottom:12px;border:1px solid var(--bd);box-shadow:var(--sh)}
 .lbl{font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.09em;margin-bottom:10px}
-select,textarea,input[type=text]{width:100%;padding:13px 14px;border:1px solid var(--bd2);border-radius:11px;font-family:'DM Sans',sans-serif;font-size:15px;color:var(--text);background:var(--bg);outline:none;-webkit-appearance:none;transition:border-color .15s,box-shadow .15s}
-select:focus,textarea:focus,input[type=text]:focus{border-color:var(--text);box-shadow:0 0 0 3px rgba(18,18,23,.07)}
+select,textarea,input[type=text],input[type=password],input[type=number],input[type=search]{width:100%;padding:13px 14px;border:1px solid var(--bd2);border-radius:11px;font-family:'DM Sans',sans-serif;font-size:15px;color:var(--text);background:var(--bg);outline:none;-webkit-appearance:none;transition:border-color .15s,box-shadow .15s}
+select:focus,textarea:focus,input[type=text]:focus,input[type=password]:focus,input[type=number]:focus,input[type=search]:focus{border-color:var(--text);box-shadow:0 0 0 3px rgba(18,18,23,.07)}
 textarea{resize:vertical;line-height:1.65}
 .btn{width:100%;padding:14px;border:none;border-radius:11px;font-family:'DM Sans',sans-serif;font-size:15px;font-weight:600;cursor:pointer;margin-bottom:10px;transition:transform .12s,opacity .15s,box-shadow .15s}
 .btn:active{transform:scale(.985)}
@@ -318,6 +318,9 @@ const GEMBA_CC='lcwgembagpt@lcwaikiki.com';
 try{var _mc=JSON.parse(localStorage.getItem('gemba_mail_config')||'null');if(_mc&&typeof _mc==='object')Object.assign(magMailMap,_mc);}catch(e){}
 function toBold(str){return[...str].map(c=>{const code=c.codePointAt(0);if(code>=65&&code<=90)return String.fromCodePoint(0x1D400+code-65);if(code>=97&&code<=122)return String.fromCodePoint(0x1D41A+code-97);if(code>=48&&code<=57)return String.fromCodePoint(0x1D7CE+code-48);return c;}).join('');}
 function gwn(d){const dd=new Date(Date.UTC(d.getFullYear(),d.getMonth(),d.getDate()));dd.setUTCDate(dd.getUTCDate()+4-(dd.getUTCDay()||7));return Math.ceil((((dd-new Date(Date.UTC(dd.getUTCFullYear(),0,1)))/86400000)+1)/7)}
+// Ziyaret geçen hafta yapıldıysa hafta numarası bir azalır
+var _weekAdj=0;
+function curWeek(){ var w=gwn(new Date())+_weekAdj; return w<1?52:w; }
 function wl(){const n=new Date(),w=gwn(n),m=["Oca","Şub","Mar","Nis","May","Haz","Tem","Ağu","Eyl","Eki","Kas","Ara"];return w+'. Hafta · '+n.getDate()+' '+m[n.getMonth()]+' '+n.getFullYear()}
 var DEFAULT_KW = [
   {
@@ -3232,13 +3235,29 @@ var PRODUCT_TYPES={
   yuzme:['yuzme','mayo','bikini']
 };
 
+// Kelime KÖKÜ eşleşmesi: kelime bir sözcüğün başında olmalı.
+// Türkçe ekler serbest ("gömlekte", "şortla" eşleşir) ama sözcük
+// içinde kalan parçalar eşleşmez — "tişört" içindeki "şort" gibi.
+function wordStarts(n, w){
+  var esc=w.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
+  var re=new RegExp('(?:^|[^a-z0-9])('+esc+')','g');
+  var m, idx=[];
+  while((m=re.exec(n))!==null){
+    idx.push(m.index + (m[0].length - m[1].length));
+    re.lastIndex=m.index+1;
+  }
+  return idx;
+}
+
 // Metinde EN SON geçen ürün tipi (asıl talep edilen ürün)
 function productTypeLast(n){
   var best=null, bestIdx=-1;
   Object.keys(PRODUCT_TYPES).forEach(function(t){
     PRODUCT_TYPES[t].forEach(function(w){
-      var i=n.lastIndexOf(w);
-      if(i>bestIdx){ bestIdx=i; best=t; }
+      var hits=wordStarts(n,w);
+      if(!hits.length) return;
+      var last=hits[hits.length-1];
+      if(last>bestIdx){ bestIdx=last; best=t; }
     });
   });
   return best;
@@ -3250,8 +3269,10 @@ function productTypeOf(s){
   var best=null, bestIdx=-1;
   Object.keys(PRODUCT_TYPES).forEach(function(t){
     PRODUCT_TYPES[t].forEach(function(w){
-      var i=n.indexOf(w);
-      if(i>=0 && (bestIdx<0 || i<bestIdx)){ bestIdx=i; best=t; }
+      var hits=wordStarts(n,w);
+      if(!hits.length) return;
+      var first=hits[0];
+      if(bestIdx<0 || first<bestIdx){ bestIdx=first; best=t; }
     });
   });
   return best;
@@ -3686,10 +3707,22 @@ async function callAI(mag,fbs,kwRes,mags,reyon){
   var md=magDef(mag,reyon);
   // KW'nin ilk 2 adayı + model ipucu AI'ya taşınır
   var hints=(kwRes||[]).map(function(k,i){
+    var t=productTypeLast(nr(fbs[i]||''));
+    // AI'nın seçebileceği klasmanları ürün tipine göre daralt —
+    // yanlış tipte klasman seçmesi fiziksel olarak imkânsız olsun
+    var allowed=[];
+    if(t && md && md.kl){
+      Object.keys(md.kl).forEach(function(bg){
+        (md.kl[bg]||[]).forEach(function(kl){
+          if(typeCompatible(t,bg,kl)) allowed.push(bg+' / '+kl);
+        });
+      });
+    }
     return {
       candidates:(k&&k.candidates)||[],
       model:(k&&k.modelHint)||null,
-      type:productTypeLast(nr(fbs[i]||''))
+      type:t,
+      allowed:allowed.slice(0,40)
     };
   });
   var r=await fetch('/ai/analyze',{
@@ -3862,6 +3895,7 @@ function showSummary(){
   document.getElementById('summary').innerHTML=html;
 
   // Build mail
+  window._aiGroups=groups;   // hafta düzeltmesinde yeniden kurmak için
   buildMailPreview(groups);
 
   // Ziyareti kaydet — stable ID, sendMail da aynı ID'yi kullanır (mükerrer önleme)
@@ -3875,7 +3909,7 @@ async function saveAnalysisVisit(groups){
     try{ auth = JSON.parse(localStorage.getItem('gemba_auth')||'null'); }catch(e){}
     if(!auth||!auth.name||!auth.pin) return;
 
-    var wn = gwn(new Date());
+    var wn = curWeek();
     var store = AI_STORE||'';
     var reyon = AI_REYON||'Erkek';
     var notes = [];
@@ -3922,7 +3956,7 @@ async function saveAnalysisVisit(groups){
 function buildMailPreview(groups){
   var store=AI_STORE||'—';
   var reyon=AI_REYON||'—';
-  var wn=typeof gwn==='function'?gwn(new Date()):0;
+  var wn=curWeek();
   var auth2=null;
   try{ auth2=JSON.parse(localStorage.getItem('gemba_auth')||'null'); }catch(e){}
   var userName = (auth2&&auth2.name) ? auth2.name : '';
@@ -3974,6 +4008,16 @@ function getMailTo(){
 }
 
 function sendMail(){
+  // Pazar ziyaret / Pazartesi mail durumu — hafta numarasını doğrula
+  var thisW=gwn(new Date());
+  var prevW=thisW-1<1?52:thisW-1;
+  if(confirm('Bu ziyareti GEÇEN HAFTA mı yaptınız?\n\nTamam → '+prevW+'. Hafta olarak yazılır\nİptal → '+thisW+'. Hafta olarak yazılır')){
+    _weekAdj=-1;
+  } else {
+    _weekAdj=0;
+  }
+  buildMailPreview(window._aiGroups||null);  // konu/gövde yeni haftayla yenilensin
+
   var store=window._aiMailStore||'';
   var reyon=window._aiMailReyon||'';
   var wn=window._aiMailWn||0;

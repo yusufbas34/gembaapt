@@ -247,7 +247,11 @@ app.post('/ai/analyze', async (req, res) => {
     const kw = kwResults[i]||{};
     const h = (hints&&hints[i])||{};
     let line = 'index='+i+': "'+f+'"';
-    if(h.type) line += '\n   ÜRÜN TİPİ: '+h.type+' → yalnızca bu ürün tipinin klasmanı seçilebilir';
+    if(h.type) line += '\n   ÜRÜN TİPİ: '+h.type;
+    if(h.allowed && h.allowed.length){
+      line += '\n   İZİN VERİLEN KLASMANLAR (BAŞKASINI SEÇME): '
+        + h.allowed.map(x=>'"'+x+'"').join(' | ');
+    }
     const cands = h.candidates||[];
     if(cands.length){
       line += '\n   Adaylar: ' + cands.map((c,ci) =>
@@ -294,11 +298,15 @@ KURALLAR:
 5. "Model DB" satırı varsa: o model adı sistemde kayıtlı demektir. Hangi klasmana
    denk geldiği belirtilmiştir. Bunu güçlü bir ipucu say, ama geri bildirim metni
    açıkça başka bir ürünü işaret ediyorsa kendi kararını ver.
-6. "ÜRÜN TİPİ" belirtilmişse bu MUTLAK kuraldır: gömlek denmişse sweat/pantolon
-   klasmanı SEÇME, tişört denmişse pantolon klasmanı SEÇME. Renk, "basic",
-   "ince", "sade" gibi sıfatlar ürün tipini DEĞİŞTİRMEZ — sadece niteler.
-   O tipe uygun klasman listede yoksa KL null bırak, BG'yi doğru seç.
-7. Emin değilsen null bırak, uydurma.
+6. "İZİN VERİLEN KLASMANLAR" listelenmişse SADECE o listeden seç. Liste dışı
+   bir klasman yazman kesin hatadır. Uygun olan yoksa KL null bırak.
+7. "ÜRÜN TİPİ" MUTLAK kuraldır: gömlek denmişse sweat/pantolon/şort klasmanı
+   SEÇME; tişört denmişse şort/pantolon SEÇME. Renk, "basic", "ince", "sade",
+   "fermuarlı", "düz" gibi sıfatlar ürün tipini DEĞİŞTİRMEZ — sadece niteler.
+8. Yaka tipi ayrımı: "polo yaka" → polo yaka klasmanı, "v yaka" → v yaka,
+   "bisiklet yaka" → bisiklet yaka. "yakasız" ise yaka klasmanı SEÇME.
+   Yaka ifadesi ürünün kendisini değil biçimini belirtir — ürün yine tişörttür.
+9. Emin değilsen null bırak, uydurma.
 
 Geri bildirimler (aday ve ipuçlarıyla):
 ${feedbacksWithKW}
@@ -1160,6 +1168,33 @@ app.get('/models/load', (req, res) => {
 
 // ── Backup / Restore ─────────────────────────────────────────────────────────
 const BACKUP_KEY = process.env.BACKUP_KEY || '122333';
+
+// PIN sıfırla: POST /admin/reset-pin?key=...  body:{name, newPin}
+// Şifresini unutan kullanıcı için yöneticinin kullandığı yol.
+app.post('/admin/reset-pin', (req, res) => {
+  if(req.query.key !== BACKUP_KEY) return res.json({ok:false, error:'Yetkisiz'});
+  const {name, newPin} = req.body||{};
+  if(!name || !newPin) return res.json({ok:false, error:'Eksik bilgi'});
+  if(!/^\d{4}$/.test(String(newPin))) return res.json({ok:false, error:'PIN 4 haneli olmalı'});
+
+  const data = loadData();
+  // Önce slug anahtarla, bulunamazsa isimle ara
+  let key = String(name).trim().toLowerCase().replace(/\s+/g,'_');
+  if(!data.users[key]){
+    key = Object.keys(data.users||{}).find(k =>
+      String(data.users[k].name||'').trim().toLowerCase() === String(name).trim().toLowerCase()
+    );
+  }
+  if(!key || !data.users[key]) return res.json({ok:false, error:'Kullanıcı bulunamadı'});
+
+  data.users[key].pinHash = hashPin(String(newPin));
+  delete data.users[key].pin;
+  saveData(data);
+
+  const now = new Date().toLocaleString('tr-TR',{timeZone:'Europe/Istanbul'});
+  sendTelegram(`🔑 <b>PIN sıfırlandı</b>\n\nKullanıcı: <b>${data.users[key].name}</b>\nZaman: ${now}`);
+  res.json({ok:true, name:data.users[key].name});
+});
 
 // Panelden ziyaret sil: DELETE /admin/visit?key=...  body:{userKey, visitId}
 app.delete('/admin/visit', (req, res) => {
