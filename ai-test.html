@@ -3966,7 +3966,7 @@ function buildMailPreview(groups){
 
   // Group by MAG
   var magMap={};
-  Object.values(groups).forEach(function(g){
+  Object.values(groups||{}).forEach(function(g){
     var mk=g.mag||'__';
     if(!magMap[mk]) magMap[mk]={mag:g.mag,bgs:{}};
     if(!magMap[mk].bgs[g.bg]) magMap[mk].bgs[g.bg]={bg:g.bg,kls:{}};
@@ -4016,7 +4016,8 @@ function sendMail(){
   } else {
     _weekAdj=0;
   }
-  buildMailPreview(window._aiGroups||null);  // konu/gövde yeni haftayla yenilensin
+  // Konu/gövde yeni haftayla yenilensin (gruplar hazırsa)
+  if(window._aiGroups) buildMailPreview(window._aiGroups);
 
   var store=window._aiMailStore||'';
   var reyon=window._aiMailReyon||'';
