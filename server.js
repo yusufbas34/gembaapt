@@ -1249,6 +1249,146 @@ app.get('/manifest.json',(req,res)=>{
   res.setHeader('Content-Type','application/manifest+json');
   res.sendFile(path.join(__dirname,'manifest.json'));
 });
+
+// ── Geri bildirim dışa aktarım (salt okunur) ─────────────────────────────────
+// Sample Planlama uygulaması bu adresi kullanır. Tarayıcıdan ve file://
+// (Origin: null) kaynağından çağrıldığı için CORS YALNIZCA bu adreste açıktır;
+// site genelinde değil. Çerez/credentials kullanılmaz, koruma anahtardadır.
+const EXPORT_PATH = '/api/export/geribildirim';
+
+function exportCors(res){
+  res.set('Access-Control-Allow-Origin', '*');
+}
+
+// Anahtar sabit zamanlı karşılaştırılır. Önce SHA-256 alınır; böylece
+// karşılaştırma hem sabit uzunlukta hem de anahtar uzunluğunu sızdırmaz.
+function exportKeyValid(provided){
+  const expected = process.env.GEMBA_EXPORT_KEY || '';
+  if(!expected || !provided) return false;
+  const a = crypto.createHash('sha256').update(String(provided)).digest();
+  const b = crypto.createHash('sha256').update(expected).digest();
+  return crypto.timingSafeEqual(a, b);
+}
+
+// Basit hız sınırı: IP başına dakikada 30 istek
+const EXPORT_LIMIT = 30, EXPORT_WINDOW_MS = 60000;
+const exportHits = new Map();
+function exportRateLimited(req){
+  const ip = req.ip || (req.connection && req.connection.remoteAddress) || 'bilinmeyen';
+  const now = Date.now();
+  let e = exportHits.get(ip);
+  if(!e || now - e.start >= EXPORT_WINDOW_MS){ e = {start: now, count: 0}; exportHits.set(ip, e); }
+  e.count++;
+  if(exportHits.size > 1000){            // ara sıra süpür
+    for(const [k, v] of exportHits){ if(now - v.start >= EXPORT_WINDOW_MS) exportHits.delete(k); }
+  }
+  return e.count > EXPORT_LIMIT;
+}
+
+// Kayıtlardaki tarih "20.10.2026" ya da "20.10.2026 14:30" biçiminde.
+// Hepsi YYYY-MM-DD'ye çevrilir; okunamazsa kayıt kimliğindeki zaman damgasına düşülür.
+function exportDate(visit){
+  const s = String(visit.date || '').trim();
+  const m = s.match(/^(\d{1,2})\.(\d{1,2})\.(\d{4})/);
+  if(m) return m[3] + '-' + m[2].padStart(2,'0') + '-' + m[1].padStart(2,'0');
+  const iso = s.match(/^(\d{4}-\d{2}-\d{2})/);
+  if(iso) return iso[1];
+  if(typeof visit.id === 'number' && visit.id > 1e12){
+    return new Date(visit.id).toISOString().slice(0, 10);
+  }
+  return '';
+}
+
+const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
+
+// Ön kontrol (preflight)
+app.options(EXPORT_PATH, (req, res) => {
+  exportCors(res);
+  res.set('Access-Control-Allow-Methods', 'GET, OPTIONS');
+  res.set('Access-Control-Allow-Headers', 'Authorization, Content-Type');
+  res.set('Access-Control-Max-Age', '86400');
+  res.status(204).end();
+});
+
+app.get(EXPORT_PATH, (req, res) => {
+  exportCors(res);                        // hata cevaplarında da bulunmalı
+  res.set('Content-Type', 'application/json; charset=utf-8');
+
+  // Anahtar tanımlı değilse uç kapalıdır
+  if(!process.env.GEMBA_EXPORT_KEY){
+    return res.status(503).json({error: 'export kapalı'});
+  }
+
+  // Authorization: Bearer <anahtar>   (anahtar hiçbir yere loglanmaz)
+  const auth = req.get('authorization') || '';
+  const token = auth.startsWith('Bearer ') ? auth.slice(7).trim() : '';
+  if(!exportKeyValid(token)){
+    return res.status(401).json({error: 'yetkisiz'});
+  }
+
+  if(exportRateLimited(req)){
+    return res.status(429).json({error: 'çok fazla istek'});
+  }
+
+  const since = req.query.since ? String(req.query.since).trim() : '';
+  const until = req.query.until ? String(req.query.until).trim() : '';
+  if((since && !DATE_RE.test(since)) || (until && !DATE_RE.test(until))){
+    return res.status(400).json({error: 'since/until YYYY-MM-DD biçiminde olmalı'});
+  }
+
+  try{
+    const data = loadData();
+    const archive = loadArchive();
+    const satirlar = [];
+
+    Object.keys(data.users || {}).forEach(function(uk){
+      const u = data.users[uk] || {};
+      const visits = (u.visits || []).concat(archive[uk] || []);
+      visits.forEach(function(v){
+        const tarih = exportDate(v);
+        if(since && (!tarih || tarih < since)) return;
+        if(until && (!tarih || tarih > until)) return;
+        const hafta = (v.week === 0 || v.week) ? 'H' + v.week : '';
+        const tur = (v.rating === 0 || v.rating) ? String(v.rating) : '';
+        (v.notes || []).forEach(function(n, ni){
+          // CSV dışa aktarımıyla aynı mantık: her satır ayrı geri bildirim
+          String(n.tx || '').split('\n').forEach(function(line, li){
+            const t = line.trim();
+            if(!t) return;
+            satirlar.push({
+              id: String(v.id) + '-' + ni + '-' + li,
+              tarih: tarih,
+              hafta: hafta,
+              mag: n.mag || '',
+              magaza: v.store || '',
+              buyerGrup: n.bg || '',
+              klasman: n.kl || '',
+              geriBildirim: t,
+              kullanici: u.name || v.user || '',
+              tur: tur
+            });
+          });
+        });
+      });
+    });
+
+    // Eskiden yeniye
+    satirlar.sort(function(a, b){
+      if(a.tarih !== b.tarih) return a.tarih < b.tarih ? -1 : 1;
+      return a.id < b.id ? -1 : (a.id > b.id ? 1 : 0);
+    });
+
+    res.status(200).json({
+      kaynak: 'gembaapt',
+      olusturma: new Date().toISOString(),
+      adet: satirlar.length,
+      satirlar: satirlar
+    });
+  }catch(e){
+    res.status(500).json({error: String(e && e.message || e)});
+  }
+});
+
 app.use(express.static(path.join(__dirname)));
 app.get('/ai-test.html',(req,res)=>res.sendFile(path.join(__dirname,'ai-test.html')));
 app.get('*',(req,res)=>res.sendFile(path.join(__dirname,'index.html')));
