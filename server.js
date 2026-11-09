@@ -27,7 +27,10 @@ const BAKIM_SAYFASI = `<!DOCTYPE html>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="robots" content="noindex">
-<title>GembaGPT</title>
+<title>Bilgilendirme</title>
+<meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
 <style>
   *{box-sizing:border-box;margin:0;padding:0}
   html,body{height:100%}
@@ -46,6 +49,26 @@ const BAKIM_SAYFASI = `<!DOCTYPE html>
 </head>
 <body>
   <p>${BAKIM_MESAJI}</p>
+<script>
+// Cihazda kalmış kopyaları temizle: varsa service worker kaydını sil ve
+// tarayıcı önbelleğini boşalt. Kullanıcı verisine (localStorage) DOKUNMAZ.
+(function(){
+  try{
+    if(navigator.serviceWorker && navigator.serviceWorker.getRegistrations){
+      navigator.serviceWorker.getRegistrations().then(function(rs){
+        rs.forEach(function(r){ r.unregister(); });
+      }).catch(function(){});
+    }
+  }catch(e){}
+  try{
+    if(window.caches && caches.keys){
+      caches.keys().then(function(ks){ ks.forEach(function(k){ caches.delete(k); }); }).catch(function(){});
+    }
+  }catch(e){}
+  // Geri/ileri tuşuyla önbellekten eski sayfa açılırsa sunucudan tazele
+  window.addEventListener('pageshow', function(ev){ if(ev.persisted) location.reload(); });
+})();
+</script>
 </body>
 </html>`;
 
