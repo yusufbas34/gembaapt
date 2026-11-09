@@ -7,6 +7,63 @@ const PORT = process.env.PORT || 3000;
 
 app.use(express.json({limit:'10mb'}));
 
+// ── ERİŞİME KAPATMA (BAKIM MODU) ────────────────────────────────────────────
+// Uygulama şirket kararıyla geçici olarak kullanıma kapatıldı.
+// Bu blok, en başta durduğu için TÜM sayfaları ve tüm uçları karşılar;
+// altındaki hiçbir koda ulaşılmaz. Veriye dokunmaz, hiçbir şey silmez.
+//
+// YENİDEN AÇMAK İÇİN (iki yoldan biri):
+//   1) Railway > Variables > BAKIM_MODU = 0  → kod değişmeden açılır
+//   2) Aşağıdaki '1' varsayılanını '0' yapıp yayınla
+const BAKIM_MODU = (process.env.BAKIM_MODU || '1') !== '0';
+
+const BAKIM_MESAJI = 'Bu hizmet, yürütülen güvenlik ve sistem iyileştirme ' +
+  'çalışmaları nedeniyle geçici olarak kullanıma kapatılmıştır. ' +
+  'Anlayışınız için teşekkür ederiz.';
+
+const BAKIM_SAYFASI = `<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex">
+<title>GembaGPT</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%}
+  body{
+    display:flex;align-items:center;justify-content:center;
+    min-height:100vh;padding:32px;background:#ffffff;color:#1a1a18;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;
+    -webkit-font-smoothing:antialiased;
+  }
+  p{
+    max-width:560px;text-align:center;
+    font-size:17px;line-height:1.7;font-weight:400;
+  }
+  @media (max-width:480px){ p{font-size:16px} body{padding:24px} }
+</style>
+</head>
+<body>
+  <p>${BAKIM_MESAJI}</p>
+</body>
+</html>`;
+
+if(BAKIM_MODU){
+  app.use((req, res) => {
+    // Kapatma kalkınca tarayıcıda eski sayfa kalmasın
+    res.set('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0');
+    res.set('Pragma', 'no-cache');
+    // Tarayıcı sayfa bekliyorsa bilgilendirme sayfası, program bekliyorsa JSON
+    if(String(req.get('accept') || '').includes('text/html')){
+      res.set('Content-Type', 'text/html; charset=utf-8');
+      return res.status(200).send(BAKIM_SAYFASI);
+    }
+    return res.status(503).json({error: BAKIM_MESAJI});
+  });
+}
+
+
 // ── Telegram ────────────────────────────────────────────────────────────────
 const TG_TOKEN = process.env.TELEGRAM_TOKEN || process.env.TELEGRAM_BOT_TOKEN;
 const TG_CHAT  = process.env.TELEGRAM_CHAT_ID;
